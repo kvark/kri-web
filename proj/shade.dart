@@ -1,26 +1,37 @@
-class Unit {
-  final WebGLShader handle;
+#library('shade');
+#import('dart:dom');
+
+
+class Base  {
   bool _ready = false;
   String _infoLog = null;
-
-  Unit(WebGLRenderingContext gl, int type, String text): handle = gl.createShader(type) {
-    gl.shaderSource( handle, text );
-    gl.compileShader( handle );
-    _infoLog = gl.getShaderInfoLog( handle );
-    num status = gl.getShaderParameter( handle, WebGLRenderingContext.COMPILE_STATUS );
-    _ready = status>0;
-  }
-
-  Unit.invalid(): handle=null;
+  
   bool isReady() => _ready;
   String getLog() => _infoLog;
 }
 
 
-class Program  {
+class Unit extends Base {
+  final WebGLShader handle;
+
+  Unit(WebGLRenderingContext gl, int type, String text): handle = gl.createShader(type) {
+    gl.shaderSource( handle, text );
+    gl.compileShader( handle );
+    _infoLog = gl.getShaderInfoLog( handle );
+    _ready = gl.getShaderParameter( handle, WebGLRenderingContext.COMPILE_STATUS );
+  }
+  
+  Unit.vertex(WebGLRenderingContext gl, String text)
+    : this( gl, WebGLRenderingContext.VERTEX_SHADER, text );
+  Unit.fragment(WebGLRenderingContext gl, String text)
+  : this( gl, WebGLRenderingContext.FRAGMENT_SHADER, text );
+  
+  Unit.invalid(): handle=null;
+}
+
+
+class Program extends Base {
   final WebGLProgram handle;
-  bool _ready = false;
-  String _infoLog = null;
   
   Program(WebGLRenderingContext gl, List<Unit> units): handle = gl.createProgram() {
     for (final unit in units) {
@@ -29,11 +40,12 @@ class Program  {
     }
     gl.linkProgram( handle );
     _infoLog = gl.getProgramInfoLog( handle );
-    num status = gl.getProgramParameter( handle, WebGLRenderingContext.LINK_STATUS );
-    _ready = status>0;
+    _ready = gl.getProgramParameter( handle, WebGLRenderingContext.LINK_STATUS );
   }
 
   Program.invalid(): handle=null;
-  bool isReady() => _ready;
-  String getLog() => _infoLog;
+  
+  void bind(WebGLRenderingContext gl) {
+    gl.useProgram( handle );
+  }
 }
