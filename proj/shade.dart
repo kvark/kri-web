@@ -49,3 +49,18 @@ class Program extends Base {
     gl.useProgram( handle );
   }
 }
+
+
+class Effect extends Program  {
+  final Map<int,WebGLActiveInfo> attributes;
+  
+  Effect(WebGLRenderingContext gl, List<Unit> units)
+  : super(gl,units), attributes = new Map<int,WebGLActiveInfo>()  {
+    final int nAt = gl.getProgramParameter( handle, WebGLRenderingContext.ACTIVE_ATTRIBUTES );
+    for (int i=0; i<nAt; ++i) {
+      final WebGLActiveInfo info = gl.getActiveAttrib( handle, i );
+      final int loc = gl.getAttribLocation( handle, info.name );
+      attributes[loc] = info;
+    }
+  }
+}

@@ -23,10 +23,10 @@ class test {
     shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
     final String fragText = 'void main() {gl_FragColor=vec4(1.0,0.0,0.0,1.0);}';
     shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
-    shade.Program prog = new shade.Program( gl, [shVert,shFrag] );
+    shade.Effect effect = new shade.Effect( gl, [shVert,shFrag] );
 
-    write( prog.isReady() ? 'yes' : 'no' );
-    int atPos = gl.getAttribLocation( prog.handle, 'a_position' );
+    write( effect.isReady() ? 'yes' : 'no' );
+    int atPos = gl.getAttribLocation( effect.handle, 'a_position' );
     
     List<double> vertices = [
                     0.0,  1.0,  0.0,
@@ -34,16 +34,24 @@ class test {
                     1.0, -1.0,  0.0
                ];
     Float32Array data = new Float32Array.fromList(vertices);
-    WebGLBuffer buf = gl.createBuffer();
-    gl.bindBuffer( WebGLRenderingContext.ARRAY_BUFFER, buf );
+    
+    buff.Unit buffer = new buff.Unit(gl);
+    //WebGLBuffer buf = gl.createBuffer();
+    gl.bindBuffer( WebGLRenderingContext.ARRAY_BUFFER, buffer.handle );
     gl.bufferData( WebGLRenderingContext.ARRAY_BUFFER, data, WebGLRenderingContext.STATIC_DRAW );
-    gl.vertexAttribPointer( atPos, 3, WebGLRenderingContext.FLOAT, false, 0, 0 );
-    gl.enableVertexAttribArray( atPos );
+    //gl.vertexAttribPointer( atPos, 3, WebGLRenderingContext.FLOAT, false, 0, 0 );
+    //gl.enableVertexAttribArray( atPos );
+    
+    mesh.Elem elem = new mesh.Elem( buffer, WebGLRenderingContext.FLOAT, false, 3, 0, 0 );
+    mesh.Mesh me = new mesh.Mesh();
+    me.nVert = 3;
+    me.elements['a_position'] = elem;
     
     // draw  scene
     gl.clear( WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT );
-    gl.useProgram( prog.handle );
-    gl.drawArrays( WebGLRenderingContext.TRIANGLES, 0, 3 );
+    //gl.useProgram( effect.handle );
+    //gl.drawArrays( WebGLRenderingContext.TRIANGLES, 0, 3 );
+    me.draw( gl, effect );
   }
   
   void write(String message) {
