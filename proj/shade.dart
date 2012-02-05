@@ -69,6 +69,12 @@ class Effect extends Program  {
       final int loc = gl.getAttribLocation( handle, info.name );
       attributes[loc] = info;
     }
+    final int nUn = gl.getProgramParameter( handle, WebGLRenderingContext.ACTIVE_UNIFORMS );
+    for (int i=0; i<nUn; ++i) {
+      final WebGLActiveInfo info = gl.getActiveUniform( handle, i );
+      final WebGLUniformLocation loc = gl.getUniformLocation( handle, info.name );
+      uniforms.add( new Uniform(loc,info) );
+    }
   }
 }
 

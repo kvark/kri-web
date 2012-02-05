@@ -26,12 +26,12 @@ class Elem  {
 
 
 class Mesh {
-  final HashMap<String,Elem> elements;
+  final Map<String,Elem> elements;
   Elem indices = null;
   int nVert = 0, nInd = 0;
   int polyType = WebGLRenderingContext.TRIANGLES;
   
-  Mesh(): elements = new HashMap<String,Elem>();
+  Mesh(): elements = new Map<String,Elem>();
   
   bool contains(final WebGLActiveInfo info)  {
     final Elem el = elements[info.name];
