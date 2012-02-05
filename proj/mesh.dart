@@ -5,13 +5,19 @@
 
 
 class Elem  {
-  final buff.Unit buffer;
+  // semantics
   final int type;
   final bool normalized;
   final int count;
+  // location
+  final buff.Unit buffer;
   final int offset, stride;
   
-  Elem( this.buffer, this.type, this.normalized, this.count, this.offset, this.stride );
+  Elem( this.type, this.normalized, this.count, this.buffer, this.offset, this.stride );
+  Elem.float(this.count, this.buffer, this.offset, this.stride)
+  : type = WebGLRenderingContext.FLOAT, normalized=false;
+  Elem.index(this.buffer, this.offset)
+  : type = WebGLRenderingContext.UNSIGNED_SHORT, stride=0, count=0, normalized=false;
   
   void bind(WebGLRenderingContext gl, int loc)  {
     gl.vertexAttribPointer( loc, count, type, normalized, offset, stride );
@@ -22,8 +28,7 @@ class Elem  {
 class Mesh {
   final HashMap<String,Elem> elements;
   Elem indices = null;
-  int nVert = 0;
-  int nPoly = 0;
+  int nVert = 0, nInd = 0;
   int polyType = WebGLRenderingContext.TRIANGLES;
   
   Mesh(): elements = new HashMap<String,Elem>();
@@ -41,25 +46,30 @@ class Mesh {
       if(!contains(info))
         return false;
     }
-    // helpers
-    buff.Binding bindArray = new buff.Binding.array();
-    buff.Binding bindIndex = new buff.Binding.index();
-    shade.Program zeroProg = new shade.Program.invalid();
     // prepare
+    buff.Binding bindArray = new buff.Binding.array();
     effect.attributes.forEach((int loc, final WebGLActiveInfo info) {
       final Elem el = elements[info.name];
       bindArray.put( gl, el.buffer );
       el.bind( gl, loc );
       gl.enableVertexAttribArray( loc );
     });
+    bindArray.clear( gl );
     effect.bind( gl );
     // draw
-    gl.drawArrays( polyType, 0, nVert );
+    if (false && indices != null)  {
+      buff.Binding bindIndex = new buff.Binding.index();
+      bindIndex.put( gl, indices.buffer );
+      gl.drawElements( polyType, nInd, indices.type, 0 );
+      bindIndex.clear( gl );
+    }else {
+      gl.drawArrays( polyType, 0, nVert ); 
+    }
     // cleanup
     for(int loc in effect.attributes.getKeys()) {
       gl.disableVertexAttribArray( loc );
     }
-    zeroProg.bind( gl );
+    new shade.Program.invalid().bind( gl );
     return true;
   }
 }

@@ -7,11 +7,9 @@
 
 class test {
  
-  test() {}
+  test();
   
   void run() {
-    //write("Hello World!");
-    
     final HTMLCanvasElement canvas = document.getElementById('canvas');
     final WebGLRenderingContext gl = canvas.getContext('experimental-webgl');
     
@@ -24,39 +22,43 @@ class test {
     final String fragText = 'void main() {gl_FragColor=vec4(1.0,0.0,0.0,1.0);}';
     shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
     shade.Effect effect = new shade.Effect( gl, [shVert,shFrag] );
-
     write( effect.isReady() ? 'yes' : 'no' );
-    int atPos = gl.getAttribLocation( effect.handle, 'a_position' );
     
     List<double> vertices = [
                     0.0,  1.0,  0.0,
                    -1.0, -1.0,  0.0,
                     1.0, -1.0,  0.0
                ];
-    Float32Array data = new Float32Array.fromList(vertices);
+    final Float32Array vData = new Float32Array.fromList(vertices);
+    List<int> indices = [0,1,2];
+    final Int16Array iData = new Int16Array.fromList(indices);
     
-    buff.Unit buffer = new buff.Unit(gl);
-    //WebGLBuffer buf = gl.createBuffer();
-    gl.bindBuffer( WebGLRenderingContext.ARRAY_BUFFER, buffer.handle );
-    gl.bufferData( WebGLRenderingContext.ARRAY_BUFFER, data, WebGLRenderingContext.STATIC_DRAW );
-    //gl.vertexAttribPointer( atPos, 3, WebGLRenderingContext.FLOAT, false, 0, 0 );
-    //gl.enableVertexAttribArray( atPos );
+    buff.Unit vBuffer = new buff.Unit( gl );
+    gl.bindBuffer( WebGLRenderingContext.ARRAY_BUFFER, vBuffer.handle );
+    gl.bufferData( WebGLRenderingContext.ARRAY_BUFFER, vData, WebGLRenderingContext.STATIC_DRAW );
+    buff.Unit vIndex = new buff.Unit( gl );
+    gl.bindBuffer( WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, vIndex.handle );
+    gl.bufferData( WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, iData, WebGLRenderingContext.STATIC_DRAW );
     
-    mesh.Elem elem = new mesh.Elem( buffer, WebGLRenderingContext.FLOAT, false, 3, 0, 0 );
+    mesh.Elem vElem = new mesh.Elem.float( 3, vBuffer,0,0 );
+    mesh.Elem iElem = new mesh.Elem.index( vIndex,0 );
     mesh.Mesh me = new mesh.Mesh();
     me.nVert = 3;
-    me.elements['a_position'] = elem;
+    me.nInd = 3;
+    me.elements['a_position'] = vElem;
+    me.indices = iElem;
     
     // draw  scene
     gl.clear( WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT );
-    //gl.useProgram( effect.handle );
-    //gl.drawArrays( WebGLRenderingContext.TRIANGLES, 0, 3 );
     me.draw( gl, effect );
+    
+    int err = gl.getError();
+    if(err!=0)
+      write("Error: $err");
   }
   
   void write(String message) {
     // the HTML library defines a global "document" variable
-    //document.query('#status').innerHTML = message;
     HTMLLabelElement  l = document.getElementById('status'); //  = message;
     l.innerText = message;
   }

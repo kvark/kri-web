@@ -6,7 +6,6 @@ class Unit  {
   final WebGLBuffer handle;
   
   Unit(WebGLRenderingContext gl): handle = gl.createBuffer();
-  Unit.invalid(): handle=null;
 }
 
 
@@ -19,5 +18,8 @@ class Binding {
 
   void put( WebGLRenderingContext gl, Unit unit ) {
     gl.bindBuffer( target, unit.handle );
+  }
+  void clear( WebGLRenderingContext gl) {
+    gl.bindBuffer( target, null );
   }
 }
