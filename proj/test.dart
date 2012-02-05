@@ -10,6 +10,7 @@ class test {
   test();
   
   void run() {
+    final Console log = window.console;
     final HTMLCanvasElement canvas = document.getElementById('canvas');
     final WebGLRenderingContext gl = canvas.getContext('experimental-webgl');
     
@@ -22,7 +23,7 @@ class test {
     final String fragText = 'void main() {gl_FragColor=vec4(1.0,0.0,0.0,1.0);}';
     shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
     shade.Effect effect = new shade.Effect( gl, [shVert,shFrag] );
-    write( effect.isReady() ? 'yes' : 'no' );
+    log.debug( effect.isReady() ? 'yes' : 'no' );
     
     List<double> vertices = [
                     0.0,  1.0,  0.0,
@@ -50,13 +51,7 @@ class test {
     
     int err = gl.getError();
     if(err!=0)
-      write("Error: $err");
-  }
-  
-  void write(String message) {
-    // the HTML library defines a global "document" variable
-    HTMLLabelElement  l = document.getElementById('status'); //  = message;
-    l.innerText = message;
+      log.debug("Error: $err");
   }
 }
 
