@@ -14,9 +14,9 @@ class Elem  {
   final int offset, stride;
   
   Elem( this.type, this.normalized, this.count, this.buffer, this.offset, this.stride );
-  Elem.float(this.count, this.buffer, this.offset, this.stride)
+  Elem.float32(this.count, this.buffer, this.offset, this.stride)
   : type = WebGLRenderingContext.FLOAT, normalized=false;
-  Elem.index(this.buffer, this.offset)
+  Elem.index16(this.buffer, this.offset)
   : type = WebGLRenderingContext.UNSIGNED_SHORT, stride=0, count=0, normalized=false;
   
   void bind(WebGLRenderingContext gl, int loc)  {
@@ -57,7 +57,7 @@ class Mesh {
     bindArray.clear( gl );
     effect.bind( gl );
     // draw
-    if (false && indices != null)  {
+    if (indices != null)  {
       buff.Binding bindIndex = new buff.Binding.index();
       bindIndex.put( gl, indices.buffer );
       gl.drawElements( polyType, nInd, indices.type, 0 );
