@@ -47,7 +47,8 @@ class test {
 
     // draw  scene
     gl.clear( WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT );
-    me.draw( gl, effect );
+    shade.Instance shader = new shade.Instance(effect);
+    me.draw( gl, shader );
     
     int err = gl.getError();
     if(err!=0)

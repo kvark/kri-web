@@ -38,24 +38,23 @@ class Mesh {
     return el!=null;  //todo: check all fields
   }
   
-  bool draw(WebGLRenderingContext gl, final shade.Effect effect)  {
+  bool draw(WebGLRenderingContext gl, final shade.Instance shader)  {
     // check consistency
-    if (!effect.isReady())
-      return false;
-    for (final WebGLActiveInfo info in effect.attributes.getValues()) {
+    for (final WebGLActiveInfo info in shader.effect.attributes.getValues()) {
       if(!contains(info))
         return false;
     }
+    if (!shader.activate(gl))
+      return false;
     // prepare
     buff.Binding bindArray = new buff.Binding.array();
-    effect.attributes.forEach((int loc, final WebGLActiveInfo info) {
+    shader.effect.attributes.forEach((int loc, final WebGLActiveInfo info) {
       final Elem el = elements[info.name];
       bindArray.put( gl, el.buffer );
       el.bind( gl, loc );
       gl.enableVertexAttribArray( loc );
     });
     bindArray.clear( gl );
-    effect.bind( gl );
     // draw
     if (indices != null)  {
       buff.Binding bindIndex = new buff.Binding.index();
@@ -66,7 +65,7 @@ class Mesh {
       gl.drawArrays( polyType, 0, nVert ); 
     }
     // cleanup
-    for(int loc in effect.attributes.getKeys()) {
+    for(int loc in shader.effect.attributes.getKeys()) {
       gl.disableVertexAttribArray( loc );
     }
     new shade.Program.invalid().bind( gl );

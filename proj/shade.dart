@@ -51,16 +51,48 @@ class Program extends Base {
 }
 
 
+class Uniform {
+  final WebGLUniformLocation location;
+  final WebGLActiveInfo info;
+  Uniform( this.location, this.info );
+}
+
 class Effect extends Program  {
   final Map<int,WebGLActiveInfo> attributes;
+  final List<Uniform> uniforms;
   
   Effect(WebGLRenderingContext gl, List<Unit> units)
-  : super(gl,units), attributes = new Map<int,WebGLActiveInfo>()  {
+  : super(gl,units), attributes = new Map<int,WebGLActiveInfo>(), uniforms = new List<Uniform>()  {
     final int nAt = gl.getProgramParameter( handle, WebGLRenderingContext.ACTIVE_ATTRIBUTES );
     for (int i=0; i<nAt; ++i) {
       final WebGLActiveInfo info = gl.getActiveAttrib( handle, i );
       final int loc = gl.getAttribLocation( handle, info.name );
       attributes[loc] = info;
     }
+  }
+}
+
+
+class Instance  {
+  final Effect effect;
+  final Map<String,Object> parameters;
+  
+  Instance(this.effect): parameters = new Map<String,Object>();
+  
+  bool activate(WebGLRenderingContext gl) {
+    if (!effect.isReady())
+      return false;
+    effect.bind( gl );
+    // set parameters
+    for (final Uniform uni in effect.uniforms)  {
+      var value = parameters[uni.info.name];
+      if (!value)
+        return false;
+      switch (uni.info.type)  {
+      case WebGLRenderingContext.FLOAT_VEC4:
+        gl.uniform4fv( uni.location, value );
+      }
+    }
+    return true;
   }
 }
