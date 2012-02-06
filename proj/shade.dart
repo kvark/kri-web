@@ -84,6 +84,8 @@ class Instance  {
   final Map<String,Object> parameters;
   
   Instance(this.effect): parameters = new Map<String,Object>();
+  Instance.from(Instance other): effect = other.effect,
+   parameters = new Map<String,Object>.from(other.parameters);
   
   bool activate(WebGLRenderingContext gl) {
     if (!effect.isReady())
