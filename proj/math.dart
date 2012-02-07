@@ -28,7 +28,44 @@ class Vector {
 
 
 class Matrix  {
-  final Vector v0,v1,v2,v3;
+  final Vector x,y,z,w;
+  
+  Matrix( this.x, this.y, this.z, this.w );
+  Matrix.affine( this.x, this.y, this.z ): w=new Vector.unitW();
+  Matrix.identity(): this( new Vector.unitX(), new Vector.unitY(), new Vector.unitZ(), new Vector.unitW() );
+  Matrix.zero(): this( new Vector.zero(), new Vector.zero(), new Vector.zero(), new Vector.zero() );
+
+  Matrix.fromQuat( final Quaternion q, final double s, final Vector p ):
+      x = new Vector(s*(q.w+q.x*q.x), 0.0, q.x, p.x),
+      y = new Vector(0.0, s*(q.w+q.y*q.y), q.y, p.y),
+      z = new Vector(q.x, q.y, s*q.w*q.w, p.z),
+      w = new Vector.unitW();
+  
+  Matrix operator+(final Matrix m) => new Matrix( x + m.x, y + m.y, z + m.z, w + m.w );
+  
+  Matrix operator*(final Matrix m) {
+    final Matrix t = m.transpose();
+    return new Matrix(
+      new Vector( x.dot(t.x), x.dot(t.y), x.dot(t.z), x.dot(t.w) ),
+      new Vector( y.dot(t.x), y.dot(t.y), y.dot(t.z), y.dot(t.w) ),
+      new Vector( z.dot(t.x), z.dot(t.y), z.dot(t.z), z.dot(t.w) ),
+      new Vector( w.dot(t.x), w.dot(t.y), w.dot(t.z), w.dot(t.w) ));
+  }
+  
+  Matrix transpose() => new Matrix(
+    new Vector(x.x,y.x,z.x,w.x),
+    new Vector(x.y,y.y,z.y,w.y),
+    new Vector(x.z,y.z,z.z,w.z),
+    new Vector(x.w,y.w,z.w,w.w));
+  
+  Matrix scale(double val) => new Matrix( x.scale(val), y.scale(val), z.scale(val), w.scale(val) );
+  Vector mul(final Vector v) => new Vector( v.dot(x), v.dot(y), v.dot(z), v.dot(w) );
+  //double det3()
+  //double det4()
+  
+  //Matrix inverseAffine()
+  //Matrix inverseProj()
+  //bool isAffine()
 }
 
 
@@ -38,12 +75,28 @@ class Quaternion  {
   List<double> toList() => [x,y,z,w];
   
   Quaternion( this.x, this.y, this.z, this.w );
+  Quaternion.identity(): this(0.0,0.0,0.0,1.0);
+  Quaternion.fromBase( final Vector v, this.w ): x=v.x, y=v.y, z=v.z;
   
-  Vector rotate(final Vector v) {
-    final Vector base = new Vector(x,y,z,0.0);
-    final Vector tmp = base.cross(v) + v.scale(w);
-    return v + base.cross(tmp).scale(2.0);
+  Quaternion.fromAxis( double ax, double ay, double az, double angle )  {
+    final double sin = Math.sin( 0.5*angle );
+    w = Math.cos( 0.5*angle );
+    x = ax*sin; y = ay*sin; z = az*sin;
   }
   
+  Vector rotate(final Vector v) {
+    final Vector b = base();
+    final Vector tmp = b.cross(v) + v.scale(w);
+    return v + b.cross(tmp).scale(2.0);
+  }
+  
+  Quaternion operator*(final Quaternion q)  {
+    final Vector a = base(), b = q.base();
+    final Vector v = a.cross(b) + a.scale(q.w) + b.scale(w);
+    final double e = w*q.w - a.dot(b);
+    return new Quaternion.fromBase(v,e);  
+  }
+  
+  Vector base() => new Vector(x,y,z,0.0);
   Quaternion inverse() => new Quaternion(-x,-y,-z,w);
 }
