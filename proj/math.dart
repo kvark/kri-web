@@ -24,6 +24,11 @@ class Vector {
     assert( w==0.0 && v.w==0.0 );
     return new Vector( y*v.z - z*v.y, z*v.x - x*v.z, x*v.y - y*v.z, 0.0 );
   }
+  
+  Vector normalize()  {
+    final double len2 = lengthSquare();
+    return len2>0.0 ? scale(1.0/Math.sqrt(len2)) : this;
+  }
 }
 
 
@@ -99,4 +104,18 @@ class Quaternion  {
   
   Vector base() => new Vector(x,y,z,0.0);
   Quaternion inverse() => new Quaternion(-x,-y,-z,w);
+  double lengthSquare() => x*x + y*y + z*z + w*w;
+  
+  Quaternion normalize()  {
+    final double len2 = lengthSquare();
+    if (len2<=1e-6)
+      return this;
+    final double k = 1.0 / Math.sqrt(len2);
+    return new Quaternion( x*k, y*k, z*k, w*k );
+  }
+  
+  Quaternion lerp(final Quaternion q, final double t) {
+    final double r = 1.0 - t;
+    return new Quaternion( r*x+t*q.x, r*y+t*q.y, r*z+t*q.z, r*w+t*q.w ); 
+  }
 }
