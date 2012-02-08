@@ -41,9 +41,9 @@ class Matrix  {
   Matrix.zero(): this( new Vector.zero(), new Vector.zero(), new Vector.zero(), new Vector.zero() );
 
   Matrix.fromQuat( final Quaternion q, final double s, final Vector p ):
-      x = new Vector(s*(q.w+q.x*q.x), 0.0, q.x, p.x),
-      y = new Vector(0.0, s*(q.w+q.y*q.y), q.y, p.y),
-      z = new Vector(q.x, q.y, s*q.w*q.w, p.z),
+      x = new Vector( 2.0*s*(0.5 - q.y*q.y - q.z*q.z), 2.0*q.x*q.y - 2.0*q.z*q.w, 2.0*q.x*q.z + 2.0*q.y*q.w, p.x ),
+      y = new Vector( 2.0*q.x*q.y + 2.0*q.z*q.w, 2.0*s*(0.5 - q.x*q.x - q.z*q.z), 2.0*q.y*q.y - 2.0*q.x*q.w, p.y ),
+      z = new Vector( 2.0*q.x*q.z - 2.0*q.y*q.w, 2.0*q.y*q.z + 2.0*q.x*q.w, 2.0*s*(0.5 - q.x*q.x - q.y*q.y), p.z ),
       w = new Vector.unitW();
   
   Matrix operator+(final Matrix m) => new Matrix( x + m.x, y + m.y, z + m.z, w + m.w );
@@ -71,6 +71,8 @@ class Matrix  {
   //Matrix inverseAffine()
   //Matrix inverseProj()
   //bool isAffine()
+  //bool isOrthogonal()
+  //bool isOrthonormal()
 }
 
 

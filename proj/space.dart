@@ -11,8 +11,8 @@ class Space {
   
   Space operator*(final Space c) => new Space( c.transform(position), c.orientation * orientation, c.scale * scale);
   
-  Vector transform(final Vector v) => position + orientation.rotate(v).scale(scale);
   Matrix assemble() => new Matrix.fromQuat( orientation, scale, position );
+  Vector transform(final Vector v) => position + orientation.rotate(v).scale(scale);
   
   Space inverse() {
     final Quaternion q = orientation.inverse();
@@ -26,5 +26,10 @@ class Node  {
   Space space;
   Node parent;
   
-  Node(): space = new Space();
+  Node();
+  
+  Matrix getTransorm()  {
+    final Matrix local = space==null ? new Matrix.identity() : space.assemble();
+    return parent==null ? local : parent.getTransorm() * local; 
+  }
 }
