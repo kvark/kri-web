@@ -6,32 +6,36 @@ class Unit  {
   final WebGLBuffer handle;
   
   Unit(WebGLRenderingContext gl): handle = gl.createBuffer();
+  Unit.zero(): handle = null;
 }
 
 
 class Binding {
+  WebGLRenderingContext gl;
   final int target;
+ 
+  Binding( this.gl, this.target );
   
-  Binding(int value): target=value;
-  
-  Binding.array(): this( WebGLRenderingContext.ARRAY_BUFFER );
-  Binding.index(): this( WebGLRenderingContext.ELEMENT_ARRAY_BUFFER );
+  Binding.array(WebGLRenderingContext context):
+    this( context, WebGLRenderingContext.ARRAY_BUFFER );
+  Binding.index(WebGLRenderingContext context):
+    this( context, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER );
 
-  void put(WebGLRenderingContext gl, Unit unit) {
+  void put(final Unit unit) {
     gl.bindBuffer( target, unit.handle );
   }
-  void clear(WebGLRenderingContext gl) {
+  void clear() {
     gl.bindBuffer( target, null );
   }
-  void load(WebGLRenderingContext gl, var data_OR_size) {
+  void load(var data_OR_size) {
     gl.bufferData( target, data_OR_size, WebGLRenderingContext.STATIC_DRAW );
   }
   
-  Unit spawn(WebGLRenderingContext gl, var data_OR_size) {
+  Unit spawn(var data_OR_size) {
     Unit unit = new Unit( gl );
-    put( gl, unit );
-    load( gl, data_OR_size );
-    clear( gl );
+    put( unit );
+    load( data_OR_size );
+    clear();
     return unit;
   }
 }

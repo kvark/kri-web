@@ -47,20 +47,20 @@ class Mesh {
     if (!shader.activate(gl))
       return false;
     // prepare
-    buff.Binding bindArray = new buff.Binding.array();
+    buff.Binding bindArray = new buff.Binding.array(gl);
     shader.effect.attributes.forEach((int loc, final WebGLActiveInfo info) {
       final Elem el = elements[info.name];
-      bindArray.put( gl, el.buffer );
+      bindArray.put( el.buffer );
       el.bind( gl, loc );
       gl.enableVertexAttribArray( loc );
     });
-    bindArray.clear( gl );
+    bindArray.clear();
     // draw
     if (indices != null)  {
-      buff.Binding bindIndex = new buff.Binding.index();
-      bindIndex.put( gl, indices.buffer );
+      buff.Binding bindIndex = new buff.Binding.index(gl);
+      bindIndex.put( indices.buffer );
       gl.drawElements( polyType, nInd, indices.type, 0 );
-      bindIndex.clear( gl );
+      bindIndex.clear();
     }else {
       gl.drawArrays( polyType, 0, nVert ); 
     }
