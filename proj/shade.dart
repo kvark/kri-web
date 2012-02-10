@@ -1,5 +1,5 @@
 #library('shade');
-#import('dart:dom');
+#import('dart:dom', prefix:'dom');
 
 
 class Base  {
@@ -12,67 +12,67 @@ class Base  {
 
 
 class Unit extends Base {
-  final WebGLShader handle;
+  final dom.WebGLShader handle;
 
-  Unit(WebGLRenderingContext gl, int type, String text): handle = gl.createShader(type) {
+  Unit(dom.WebGLRenderingContext gl, int type, String text): handle = gl.createShader(type) {
     gl.shaderSource( handle, text );
     gl.compileShader( handle );
     _infoLog = gl.getShaderInfoLog( handle );
-    _ready = gl.getShaderParameter( handle, WebGLRenderingContext.COMPILE_STATUS );
+    _ready = gl.getShaderParameter( handle, dom.WebGLRenderingContext.COMPILE_STATUS );
   }
   
-  Unit.vertex(WebGLRenderingContext gl, String text)
-    : this( gl, WebGLRenderingContext.VERTEX_SHADER, text );
-  Unit.fragment(WebGLRenderingContext gl, String text)
-  : this( gl, WebGLRenderingContext.FRAGMENT_SHADER, text );
+  Unit.vertex(dom.WebGLRenderingContext gl, String text)
+    : this( gl, dom.WebGLRenderingContext.VERTEX_SHADER, text );
+  Unit.fragment(dom.WebGLRenderingContext gl, String text)
+  : this( gl, dom.WebGLRenderingContext.FRAGMENT_SHADER, text );
   
   Unit.invalid(): handle=null;
 }
 
 
 class Program extends Base {
-  final WebGLProgram handle;
+  final dom.WebGLProgram handle;
   
-  Program(WebGLRenderingContext gl, List<Unit> units): handle = gl.createProgram() {
+  Program(dom.WebGLRenderingContext gl, List<Unit> units): handle = gl.createProgram() {
     for (final unit in units) {
       assert( unit.isReady() );
       gl.attachShader( handle, unit.handle );
     }
     gl.linkProgram( handle );
     _infoLog = gl.getProgramInfoLog( handle );
-    _ready = gl.getProgramParameter( handle, WebGLRenderingContext.LINK_STATUS );
+    _ready = gl.getProgramParameter( handle, dom.WebGLRenderingContext.LINK_STATUS );
   }
 
   Program.invalid(): handle=null;
   
-  void bind(WebGLRenderingContext gl) {
+  void bind(dom.WebGLRenderingContext gl) {
     gl.useProgram( handle );
   }
 }
 
 
 class Uniform {
-  final WebGLUniformLocation location;
-  final WebGLActiveInfo info;
+  final dom.WebGLUniformLocation location;
+  final dom.WebGLActiveInfo info;
   Uniform( this.location, this.info );
 }
 
 class Effect extends Program  {
-  final Map<int,WebGLActiveInfo> attributes;
+  final Map<int,dom.WebGLActiveInfo> attributes;
   final List<Uniform> uniforms;
   
-  Effect(WebGLRenderingContext gl, List<Unit> units)
-  : super(gl,units), attributes = new Map<int,WebGLActiveInfo>(), uniforms = new List<Uniform>()  {
-    final int nAt = gl.getProgramParameter( handle, WebGLRenderingContext.ACTIVE_ATTRIBUTES );
+  Effect(dom.WebGLRenderingContext gl, List<Unit> units)
+  : super(gl,units), attributes = new Map<int,dom.WebGLActiveInfo>(), uniforms = new List<Uniform>()  {
+    final int nAt = gl.getProgramParameter( handle, dom.WebGLRenderingContext.ACTIVE_ATTRIBUTES );
     for (int i=0; i<nAt; ++i) {
-      final WebGLActiveInfo info = gl.getActiveAttrib( handle, i );
+      final dom.WebGLActiveInfo info = gl.getActiveAttrib( handle, i );
       final int loc = gl.getAttribLocation( handle, info.name );
       attributes[loc] = info;
     }
-    final int nUn = gl.getProgramParameter( handle, WebGLRenderingContext.ACTIVE_UNIFORMS );
+    final int nUn = gl.getProgramParameter( handle, dom.WebGLRenderingContext.ACTIVE_UNIFORMS );
     for (int i=0; i<nUn; ++i) {
-      final WebGLActiveInfo info = gl.getActiveUniform( handle, i );
-      final WebGLUniformLocation loc = gl.getUniformLocation( handle, info.name );
+      final dom.WebGLActiveInfo info = gl.getActiveUniform( handle, i );
+      final dom.WebGLUniformLocation loc = gl.getUniformLocation( handle, info.name );
       uniforms.add( new Uniform(loc,info) );
     }
   }
@@ -87,7 +87,7 @@ class Instance  {
   Instance.from(Instance other): effect = other.effect,
    parameters = new Map<String,Object>.from(other.parameters);
   
-  bool activate(WebGLRenderingContext gl) {
+  bool activate(dom.WebGLRenderingContext gl) {
     if (!effect.isReady())
       return false;
     effect.bind( gl );
@@ -97,7 +97,7 @@ class Instance  {
       if (!value)
         return false;
       switch (uni.info.type)  {
-      case WebGLRenderingContext.FLOAT_VEC4:
+      case dom.WebGLRenderingContext.FLOAT_VEC4:
         gl.uniform4fv( uni.location, value );
       }
     }

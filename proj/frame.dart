@@ -1,11 +1,16 @@
 #library('frame');
-#import('dart:dom');
+#import('dart:dom', prefix:'dom');
 
 class Color {
   double r,g,b,a;
-
   Color( this.r, this.g, this.b, this.a );
 }
+
+class Rect  {
+  int x,y,w,h;
+  Rect( this.x, this.y, this.w, this.h );
+}
+
 
 
 class Plane {
@@ -17,129 +22,128 @@ class Plane {
 
 
 class Surface extends Plane  {
-  final WebGLRenderbuffer handle;
+  final dom.WebGLRenderbuffer handle;
   
-  Surface(WebGLRenderingContext gl): handle = gl.CreateRenderbuffer();
+  Surface(dom.WebGLRenderingContext gl): handle = gl.CreateRenderbuffer();
   Surface.zero(): handle = null;
 }
 
 
 class Texture extends Plane  {
-  final WebGLTexture handle;
+  final dom.WebGLTexture handle;
   
-  Texture(WebGLRenderingContext gl): handle = gl.CreateTexture();
+  Texture(dom.WebGLRenderingContext gl): handle = gl.CreateTexture();
   Texture.zero(): handle = null;
 }
 
 
 interface IRender  {
-  Plane getPlane();
-  void bind(WebGLRenderingContext gl, int point);
+  void bind(dom.WebGLRenderingContext gl, int point);
 }
+
 
 class RenderSurface implements IRender {
   final Surface surface;
   
   RenderSurface( this.surface );
-  RenderSurface.zero(): this( new Surface.zero() );
+  RenderSurface.zero(): surface = Surface.zero();
   
-  Plane getPlane() => surface;
-  void bind(WebGLRenderingContext gl, int point)  {
-    gl.framebufferRenderbuffer( WebGLRenderingContext.FRAMEBUFFER, point, WebGLRenderingContext.RENDERBUFFER, surface.handle );
+  void bind(dom.WebGLRenderingContext gl, int point)  {
+    gl.framebufferRenderbuffer( dom.WebGLRenderingContext.FRAMEBUFFER,
+      point, dom.WebGLRenderingContext.RENDERBUFFER, surface.handle );
   }
 }
+
 
 class RenderTexture implements IRender {
   final Texture texture;
   final int level;
   final int side;
   
-  RenderTexture( this.texture, this.level ): side = WebGLRenderingContext.TEXTURE2D;
+  RenderTexture( this.texture, this.level ): side = dom.WebGLRenderingContext.TEXTURE2D;
   RenderTexture.fromCube( this.texture, this.level, this.side );
   
-  Plane getPlane() => texture;
-  void bind(WebGLRenderingContext gl, int point)  {
-    gl.framebufferTexture2D( WebGLRenderingContext.FRAMEBUFFER, point, side, texture.handle, level );
+  void bind(dom.WebGLRenderingContext gl, int point)  {
+    gl.framebufferTexture2D( dom.WebGLRenderingContext.FRAMEBUFFER, point, side, texture.handle, level );
   }
 }
 
 
 class Buffer {
-  final WebGLFramebuffer handle;
-  final Map<String,IRender> _attachments;
-  final List<String> _namesChanged;
+  final dom.WebGLFramebuffer handle;
+  final Map<int,IRender> _attachments;
+  final List<int> _slotsChanged;
   final IRender nullRender;
   
-  Buffer(WebGLRenderingContext gl):
-    handle = gl.createFramebuffer(),
-    _attachments = new Map<String,IRender>(),
-    _namesChanged = new List<String>(),
+  static final Map<String,int> translation = {
+    'd'   : dom.WebGLRenderingContext.DEPTH_ATTACHMENT,
+    's'   : dom.WebGLRenderingContext.STENCIL_ATTACHMENT,
+    'ds'  : dom.WebGLRenderingContext.DEPTH_STENCIL_ATTACHMENT,
+    'c0'  : dom.WebGLRenderingContext.COLOR_ATTACHMENT0,
+    'c1'  : dom.WebGLRenderingContext.COLOR_ATTACHMENT1,
+    'c2'  : dom.WebGLRenderingContext.COLOR_ATTACHMENT2,
+    'c3'  : dom.WebGLRenderingContext.COLOR_ATTACHMENT3,
+  };
+  
+  Buffer( this.handle ):
+    _attachments = new Map<int,Render>(),
+    _slotsChanged = new List<int>(),
     nullRender = new RenderSurface.zero();
   Buffer.main(): handle = null;
   
-  void assign(String name, IRender target)  {
+  void attach(String name, IRender target)  {
     assert( handle != null );
-    _namesChanged.add( name );
-    _attachments[name] = target;
+    final int point = translation[name];
+    _slotsChanged.add( point );
+    _attachments[point] = target;
   }
   
-  IRender query(String name)  {
-    return _attachments[name];
-  }
+  IRender query(String name) => _attachments[translation[name]];
   
-  List<String> flushPending()  {
-    final rez = _namesChanged;
-    _namesChanged.clear();
-    return rez;
+  void updateSlots(dom.WebGLRenderingContext gl)  {
+    for (int point in _slotsChanged) {
+      final IRender target = _attachments[point];
+      (target!=null ? target : nullRender).bind( gl, point );
+    }
+    _slotsChanged.clear();
   }
 }
 
 
 class Control  {
-  final WebGLRenderingContext gl;
-  
-  static final Map<String,int> translation = {
-    'd'   : WebGLRenderingContext.DEPTH_ATTACHMENT,
-    's'   : WebGLRenderingContext.STENCIL_ATTACHMENT,
-    'ds'  : WebGLRenderingContext.DEPTH_STENCIL_ATTACHMENT,
-    'c0'  : WebGLRenderingContext.COLOR_ATTACHMENT0,
-    'c1'  : WebGLRenderingContext.COLOR_ATTACHMENT1,
-    'c2'  : WebGLRenderingContext.COLOR_ATTACHMENT2,
-    'c3'  : WebGLRenderingContext.COLOR_ATTACHMENT3,
-  };
+  final dom.WebGLRenderingContext gl;
   
   Control( this.gl );
   
-  void put(final Buffer buf)  {
-    gl.bindFramebuffer( WebGLRenderingContext.FRAMEBUFFER, buf.handle );
-    if (!buf.handle)
-      return;
-    for (name in buf.flushPending()) {
-      final int point = translation[name];
-      final IRender target = buf.query(name);
-      if (point!=null && target!=null)
-        target.bind( gl, point );
-    }
+  Buffer spawn()  => new Buffer( gl.createFramebuffer() );
+  
+  void bind(final Buffer buf)  {
+    gl.bindFramebuffer( dom.WebGLRenderingContext.FRAMEBUFFER, buf.handle );
+    buf.updateSlots( gl );
   }
   
-  void clear()  {
-    gl.bindFramebuffer( WebGLRenderingContext.FRAMEBUFFER, null );
+  void unbind()  {
+    gl.bindFramebuffer( dom.WebGLRenderingContext.FRAMEBUFFER, null );
   }
   
   // helper functions
   
-  void clearScreen(Color color, double depth, int stencil) {
+  void scissor(final Rect r)  => gl.scissor ( r.x, r.y, r.w, r.h );
+  
+  void viewport(final Rect r) => gl.viewport( r.x, r.y, r.w, r.h ); 
+  
+  void clear(Color color, double depth, int stencil) {
     int mask = 0;
     if (color != null) {
-      mask += WebGLRenderingContext.COLOR_BUFFER_BIT;
+      mask += dom.WebGLRenderingContext.COLOR_BUFFER_BIT;
       gl.clearColor( color.r, color.g, color.b, color.a );
     }
     if (depth != null)  {
-      mask += WebGLRenderingContext.DEPTH_BUFFER_BIT;
+      mask += dom.WebGLRenderingContext.DEPTH_BUFFER_BIT;
       gl.clearDepth( depth );
     }
     if (stencil != null)  {
-      mask += WebGLRenderingContext.STENCIL_BUFFER_BIT;
+      mask += dom.WebGLRenderingContext.STENCIL_BUFFER_BIT;
       gl.clearStencil( stencil );
     }
     gl.clear( mask );

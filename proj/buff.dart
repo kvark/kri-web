@@ -1,41 +1,42 @@
 #library('buff');
-#import('dart:dom');
+#import('dart:dom', prefix:'dom');
 
 
 class Unit  {
-  final WebGLBuffer handle;
+  final dom.WebGLBuffer handle;
   
-  Unit(WebGLRenderingContext gl): handle = gl.createBuffer();
-  Unit.zero(): handle = null;
+  Unit(this.handle);
 }
 
 
 class Binding {
-  WebGLRenderingContext gl;
+  dom.WebGLRenderingContext gl;
   final int target;
  
   Binding( this.gl, this.target );
   
-  Binding.array(WebGLRenderingContext context):
-    this( context, WebGLRenderingContext.ARRAY_BUFFER );
-  Binding.index(WebGLRenderingContext context):
-    this( context, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER );
+  Binding.array(dom.WebGLRenderingContext context):
+    this( context, dom.WebGLRenderingContext.ARRAY_BUFFER );
+  Binding.index(dom.WebGLRenderingContext context):
+    this( context, dom.WebGLRenderingContext.ELEMENT_ARRAY_BUFFER );
 
-  void put(final Unit unit) {
+  void bind(final Unit unit) {
     gl.bindBuffer( target, unit.handle );
   }
-  void clear() {
+  void unbind() {
     gl.bindBuffer( target, null );
   }
   void load(var data_OR_size) {
-    gl.bufferData( target, data_OR_size, WebGLRenderingContext.STATIC_DRAW );
+    gl.bufferData( target, data_OR_size, dom.WebGLRenderingContext.STATIC_DRAW );
   }
   
-  Unit spawn(var data_OR_size) {
-    Unit unit = new Unit( gl );
-    put( unit );
+  Unit spawn() => new Unit( gl.createBuffer() );
+  
+  Unit spawnLoad(var data_OR_size) {
+    final Unit unit = spawn();
+    bind( unit );
     load( data_OR_size );
-    clear();
+    unbind();
     return unit;
   }
 }
