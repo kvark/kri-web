@@ -1,5 +1,6 @@
 #library('shade');
-#import('dart:dom', prefix:'dom');
+#import('dart:dom',   prefix:'dom');
+#import('frame.dart', prefix:'frame');
 
 
 class Base  {
@@ -57,41 +58,76 @@ class Uniform {
   Uniform( this.location, this.info );
 }
 
+
 class Effect extends Program  {
   final Map<int,dom.WebGLActiveInfo> attributes;
   final List<Uniform> uniforms;
   
-  Effect(dom.WebGLRenderingContext gl, List<Unit> units)
-  : super(gl,units), attributes = new Map<int,dom.WebGLActiveInfo>(), uniforms = new List<Uniform>()  {
-    final int nAt = gl.getProgramParameter( handle, dom.WebGLRenderingContext.ACTIVE_ATTRIBUTES );
-    for (int i=0; i<nAt; ++i) {
+  void fillAttributes(dom.WebGLRenderingContext gl) {
+    attributes.clear();
+    final int num = gl.getProgramParameter( handle, dom.WebGLRenderingContext.ACTIVE_ATTRIBUTES );
+    for (int i=0; i<num; ++i) {
       final dom.WebGLActiveInfo info = gl.getActiveAttrib( handle, i );
       final int loc = gl.getAttribLocation( handle, info.name );
       attributes[loc] = info;
     }
-    final int nUn = gl.getProgramParameter( handle, dom.WebGLRenderingContext.ACTIVE_UNIFORMS );
-    for (int i=0; i<nUn; ++i) {
+  }
+  
+  void fillUniforms(dom.WebGLRenderingContext gl) {
+    uniforms.clear();
+    final int num = gl.getProgramParameter( handle, dom.WebGLRenderingContext.ACTIVE_UNIFORMS );
+    for (int i=0; i<num; ++i) {
       final dom.WebGLActiveInfo info = gl.getActiveUniform( handle, i );
       final dom.WebGLUniformLocation loc = gl.getUniformLocation( handle, info.name );
       uniforms.add( new Uniform(loc,info) );
     }
   }
+  
+  Effect(dom.WebGLRenderingContext gl, List<Unit> units)
+  : super(gl,units), attributes = new Map<int,dom.WebGLActiveInfo>(), uniforms = new List<Uniform>()  {
+    fillAttributes( gl );
+    fillUniforms( gl );
+  }
+}
+
+
+interface IDataSource  {
+  Object askData(String name);
 }
 
 
 class Instance  {
   final Effect effect;
   final Map<String,Object> parameters;
+  final List<IDataSource> dataSources;
   
-  Instance(this.effect): parameters = new Map<String,Object>();
+  Instance(this.effect):
+    parameters = new Map<String,Object>(),
+    dataSources = new List<IDataSource>();
+
   Instance.from(Instance other): effect = other.effect,
-   parameters = new Map<String,Object>.from(other.parameters);
+    parameters = new Map<String,Object>.from( other.parameters ),
+    dataSources = new List<IDataSource>.from( other.dataSources );
+   
+  bool gatherData()  {
+    for (final Uniform uni in effect.uniforms)  {
+      bool found = false;
+      for(final IDataSource source in dataSources)  {
+        final Object value = source.askData( uni.info.name );
+        if (value!=null)  {
+          parameters[uni.info.name] = value;
+          found = true;
+          break; 
+        }
+      }
+      if (!found)
+        return false;
+    }
+    return true;
+  }
   
-  bool activate(dom.WebGLRenderingContext gl) {
-    if (!effect.isReady())
-      return false;
-    effect.bind( gl );
-    // set parameters
+  bool _pushData(dom.WebGLRenderingContext gl)  {
+    int texId = dom.WebGLRenderingContext.TEXTURE0;
     for (final Uniform uni in effect.uniforms)  {
       var value = parameters[uni.info.name];
       if (!value)
@@ -99,8 +135,30 @@ class Instance  {
       switch (uni.info.type)  {
       case dom.WebGLRenderingContext.FLOAT_VEC4:
         gl.uniform4fv( uni.location, value );
+      case dom.WebGLRenderingContext.SAMPLER_2D:
+        gl.uniform1i( uni.location, texId );
+        gl.activeTexture( texId );
+        gl.bindTexture( dom.WebGLRenderingContext.TEXTURE_2D, value );
+        ++texId;
+      case dom.WebGLRenderingContext.SAMPLER_CUBE:
+        gl.uniform1i( uni.location, texId );
+        gl.activeTexture( texId );
+        gl.bindTexture( dom.WebGLRenderingContext.TEXTURE_CUBE_MAP, value );
+        ++texId;
       }
     }
     return true;
   }
+  
+  bool activate(dom.WebGLRenderingContext gl) {
+    if (!effect.isReady())
+      return false;
+    effect.bind( gl );
+    // update parameters
+    if (!gatherData())
+      return false;
+    // set parameters
+    return _pushData(gl);
+  }
 }
+

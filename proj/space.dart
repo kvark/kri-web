@@ -2,7 +2,12 @@
 #import('math.dart');
 
 
-class Space {
+interface ITransform  {
+  Matrix getMatrix();
+}
+
+
+class Space implements ITransform {
   final Vector position;
   final Quaternion orientation;
   final double scale;
@@ -12,7 +17,7 @@ class Space {
   
   Space operator*(final Space c) => new Space( c.transform(position), c.orientation * orientation, c.scale * scale);
   
-  Matrix assemble() => new Matrix.fromQuat( orientation, scale, position );
+  Matrix getMatrix() => new Matrix.fromQuat( orientation, scale, position );
   Vector transform(final Vector v) => position + orientation.rotate(v).scale(scale);
   
   Space inverse() {
@@ -23,14 +28,15 @@ class Space {
 }
 
 
-class Node  {
+class Node {
+  final String name;
   Space space;
   Node parent;
   
-  Node();
+  Node(this.name);
   
-  Matrix getTransorm()  {
-    final Matrix local = space==null ? new Matrix.identity() : space.assemble();
-    return parent==null ? local : parent.getTransorm() * local; 
+  Space getWorld()  {
+    final Space local = space==null ? new Space.identity() : space;
+    return parent==null ? local : parent.getWorld() * local; 
   }
 }

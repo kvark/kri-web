@@ -91,11 +91,13 @@ class Buffer {
     nullRender = new RenderSurface.zero();
   Buffer.main(): handle = null;
   
-  void attach(String name, IRender target)  {
-    assert( handle != null );
+  bool attach(String name, IRender target)  {
     final int point = translation[name];
+    if (handle==null || point==null)
+      return false;
     _slotsChanged.add( point );
     _attachments[point] = target;
+    return true;
   }
   
   IRender query(String name) => _attachments[translation[name]];

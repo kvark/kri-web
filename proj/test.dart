@@ -5,6 +5,7 @@
 #import('math.dart',  prefix:'math');
 #import('space.dart', prefix:'space');
 #import('frame.dart', prefix:'frame');
+#import('view.dart',  prefix:'view');
 
 
 class App {
