@@ -1,5 +1,5 @@
-DART_PATH	=../dart/dart
-PAGE_PATH	=code/test.html
+DART_PATH	=/Volumes/MacExtra/Applications/dart/dart-sdk/bin/frogc
+ENTRY_PATH	=test.dart
 
 all:
-	python ${DART_PATH}/client/tools/htmlconverter.py ${PAGE_PATH} -o out/
+	cd proj && ${DART_PATH} ${ENTRY_PATH}

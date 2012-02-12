@@ -6,6 +6,7 @@
 #import('space.dart', prefix:'space');
 #import('frame.dart', prefix:'frame');
 #import('view.dart',  prefix:'view');
+#import('load.dart',  prefix:'load');
 
 
 class App {
@@ -54,13 +55,23 @@ class App {
     frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
     con.viewport( rect );
     
+    view.Camera camera = new view.Camera();
+    camera.setFov( 45.0, 45.0 / rect.aspect() );
+    camera.setRange( 1.0, 10.0 );
+    view.DataSource data = new view.DataSrouce( null, camera );
+    
     shade.Instance shader = new shade.Instance(effect);
+    shader.dataSources.add( data );
     shader.parameters['color'] = new dom.Float32Array.fromList([1.0,0.0,0.0,1.0]);
     me.draw( gl, shader );
     
     int err = gl.getError();
     if(err!=0)
       log.debug("Error: $err");
+    
+    load.Loader loader = new load.Loader('http://demo.kvatom.com/'); 
+    final binary = loader.fetch('sample.bin');
+    log.debug("Loaded: " + binary);
   }
 }
 

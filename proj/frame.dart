@@ -2,13 +2,14 @@
 #import('dart:dom', prefix:'dom');
 
 class Color {
-  double r,g,b,a;
+  final double r,g,b,a;
   Color( this.r, this.g, this.b, this.a );
 }
 
 class Rect  {
-  int x,y,w,h;
+  final int x,y,w,h;
   Rect( this.x, this.y, this.w, this.h );
+  double aspect() => w.toDouble() / h.toDouble();
 }
 
 

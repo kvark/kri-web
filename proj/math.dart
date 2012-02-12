@@ -27,6 +27,8 @@ class Vector {
   
   bool isZero() => lengthSquare() < epselon;
   
+  Vector inverse() => new Vector( 1.0/x, 1.0/y, 1.0/z, 1.0/w );
+  
   Vector cross(final Vector v)  {
     assert( w==0.0 && v.w==0.0 );
     return new Vector( y*v.z - z*v.y, z*v.x - x*v.z, x*v.y - y*v.z, 0.0 );
