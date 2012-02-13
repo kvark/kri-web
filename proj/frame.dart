@@ -38,12 +38,12 @@ class Texture extends Plane  {
 }
 
 
-interface IRender  {
+interface ITarget  {
   void bind(dom.WebGLRenderingContext gl, int point);
 }
 
 
-class RenderSurface implements IRender {
+class RenderSurface implements ITarget {
   final Surface surface;
   
   RenderSurface( this.surface );
@@ -56,7 +56,7 @@ class RenderSurface implements IRender {
 }
 
 
-class RenderTexture implements IRender {
+class RenderTexture implements ITarget {
   final Texture texture;
   final int level;
   final int side;
@@ -72,9 +72,9 @@ class RenderTexture implements IRender {
 
 class Buffer {
   final dom.WebGLFramebuffer handle;
-  final Map<int,IRender> _attachments;
+  final Map<int,ITarget> _attachments;
   final List<int> _slotsChanged;
-  final IRender nullRender;
+  final ITarget nullRender;
   
   static final Map<String,int> translation = {
     'd'   : dom.WebGLRenderingContext.DEPTH_ATTACHMENT,
@@ -87,12 +87,12 @@ class Buffer {
   };
   
   Buffer( this.handle ):
-    _attachments = new Map<int,Render>(),
+    _attachments = new Map<int,ITarget>(),
     _slotsChanged = new List<int>(),
     nullRender = new RenderSurface.zero();
   Buffer.main(): handle = null;
   
-  bool attach(String name, IRender target)  {
+  bool attach(String name, ITarget target)  {
     final int point = translation[name];
     if (handle==null || point==null)
       return false;
@@ -101,11 +101,11 @@ class Buffer {
     return true;
   }
   
-  IRender query(String name) => _attachments[translation[name]];
+  ITarget query(String name) => _attachments[translation[name]];
   
   void updateSlots(dom.WebGLRenderingContext gl)  {
     for (int point in _slotsChanged) {
-      final IRender target = _attachments[point];
+      final ITarget target = _attachments[point];
       (target!=null ? target : nullRender).bind( gl, point );
     }
     _slotsChanged.clear();

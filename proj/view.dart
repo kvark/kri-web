@@ -4,41 +4,41 @@
 #import('shade.dart', prefix:'shade');
 
 
-final double degreesToHalfRadians = 90.0 / Math.PI;
+final double degreesToHalfRadians = Math.PI / 360.0 ;
 
 
-class Projector implements space.ITransform {
-  space.Node node;
-  bool perspective;
-  Vector c0,c1; // frustum corners
+class Projector implements space.IMatrix  {
+  final bool perspective;
+  final Vector c0,c1;
   
-  Projector(): perspective=false,
-    c0 = new Vector(-1.0,-1.0,1.0,0.0),
-    c1 = new Vector(+1.0,+1.0,100.0,1.0);
+  Projector( this.perspective, this.c0, this.c1 );
+  Projector.identity(): this( false, new Vector.one().scale(-1.0), new Vector.one() );
   
-  void setFov(double fovDegreesX, double fovDegreesY) {
-    double fx = fovDegreesX * degreesToHalfRadians;
-    double fy = fovDegreesY * degreesToHalfRadians;
-    c0 = new Vector(-fx,-fy, c0.z, 0.0 );
-    c1 = new Vector( fx, fy, c1.z, 1.0 );
-    perspective = true;
+  factory Projector.perspective( double fovDegreesX, double fovDegreesY, double near, double far )  {
+    double fx = near * Math.tan( fovDegreesX * degreesToHalfRadians );
+    double fy = near * Math.tan( fovDegreesY * degreesToHalfRadians );
+    final c0 = new Vector(-fx,-fy, -near, 0.0 );
+    final c1 = new Vector( fx, fy, -far, 1.0 );
+    return new Projector( true, c0, c1 );
   }
   
-  void setRange(double near, double far)  {
-    c0 = new Vector( c0.x, c0.y, near, 0.0 );
-    c1 = new Vector( c1.x, c1.y, far, 1.0 );
+  factory Projector.ortho( double width, double height, double near, double far ) {
+    final c0 = new Vector(-0.5*width,-0.5*height, -near, 0.0 );
+    final c1 = new Vector( 0.5*width, 0.5*height, -far, 1.0 );
+    return new Projector( false, c0, c1 );
   }
   
-  Matrix getPerspectiveMatrix()  {
-    final Vector den = (c1-c0).inverse(), sum = c1+c0;
+  Matrix _getPerspectiveMatrix()  {
+    final Vector den = (c0-c1).inverse(), sum = c1+c0;
+    // note: W has to be positive or it will not work at all
     return new Matrix(
       new Vector( 2.0*c0.z * den.x, 0.0, sum.x * den.x, 0.0 ),
       new Vector( 0.0, 2.0*c0.z * den.y, sum.y * den.y, 0.0 ),
       new Vector( 0.0, 0.0, -sum.z * den.z, -2.0*c0.z*c1.z * den.z ),
-      new Vector( 0.0, 0.0, -1.0, 0.0 ));
+      new Vector( 0.0, 0.0, 1.0, 0.0 ));
   }
   
-  Matrix getOrthoMatrix() {
+  Matrix _getOrthoMatrix() {
     final Vector den = (c1-c0).inverse(), sum = c1+c0;
     return new Matrix(
       new Vector( +2.0*den.x, 0.0, 0.0, -sum.x * den.x ),
@@ -47,34 +47,36 @@ class Projector implements space.ITransform {
       new Vector.unitW());
   }
   
-  Matrix getMatrix() => (perspective ? getPerspectiveMatrix() : getOrthoMatrix());
+  Matrix getMatrix() => (perspective ? _getPerspectiveMatrix() : _getOrthoMatrix());
+}
+
+
+class Camera  {
+  space.Node node;
+  Projector projector;
+  
+  Camera();
   
   Matrix getInverseWorld()  {
-    final Matrix local = getMatrix();
+    final Matrix local = projector==null ? new Matrix.identity() : projector.getMatrix();
     if (node==null)
       return local;
     final Matrix base = node.getWorld().inverse().getMatrix();
-    return getMatrix() * base;
+    return local * base;
   }
 }
 
 
-
-class Camera extends Projector  {
-  Camera();
-}
-
-
-class Light extends Projector {
+class Light {
   Light();
 }
 
 
 class DataSource implements shade.IDataSource {
   final space.Node modelNode;
-  final Projector projector;
+  final Camera camera;
   
-  DataSource( this.modelNode, this.projector );
+  DataSource( this.modelNode, this.camera );
   
   Matrix getModelMatrix() => (modelNode==null ?
     new Matrix.identity() : modelNode.getWorld().getMatrix() );
@@ -84,15 +86,15 @@ class DataSource implements shade.IDataSource {
     case 'mx_model':
       return getModelMatrix();
     case 'mx_modelview':
-      return (projector.node==null ? modelNode.getWorld() :
-        modelNode.getWorld() * projector.node.getWorld().inverse()).
+      return (camera.node==null ? modelNode.getWorld() :
+        modelNode.getWorld() * camera.node.getWorld().inverse()).
         getMatrix();
     case 'mx_viewproj':
-      return projector.getInverseWorld();
+      return camera.getInverseWorld();
     case 'mx_projection':
-      return projector.getMatrix();
+      return camera.projector.getMatrix();
     case 'mx_mvp':
-      return projector.getInverseWorld() * getModelMatrix();
+      return camera.getInverseWorld() * getModelMatrix();
     }
     return null;
   }

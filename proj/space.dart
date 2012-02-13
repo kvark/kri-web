@@ -2,18 +2,19 @@
 #import('math.dart');
 
 
-interface ITransform  {
+interface IMatrix  {
   Matrix getMatrix();
 }
 
 
-class Space implements ITransform {
+class Space implements IMatrix {
   final Vector position;
   final Quaternion orientation;
   final double scale;
   
   Space( this.position, this.orientation, this.scale );
-  Space.identity(): this( Vector.zero(), Quaternion.identity(), 1.0 );
+  Space.identity(): this( new Vector.zero(), new Quaternion.identity(), 1.0 );
+  Space.fromMoveScale(double x, double y, double z, double s): this( new Vector(x,y,z,1.0), new Quaternion.identity(), s );
   
   Space operator*(final Space c) => new Space( c.transform(position), c.orientation * orientation, c.scale * scale);
   

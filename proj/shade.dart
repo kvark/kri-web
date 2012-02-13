@@ -108,22 +108,25 @@ class Instance  {
   Instance.from(Instance other): effect = other.effect,
     parameters = new Map<String,Object>.from( other.parameters ),
     dataSources = new List<IDataSource>.from( other.dataSources );
-   
-  bool gatherData()  {
+  
+  // note: some parameters might not be there
+  void gatherData()  {
     for (final Uniform uni in effect.uniforms)  {
-      bool found = false;
       for(final IDataSource source in dataSources)  {
         final Object value = source.askData( uni.info.name );
         if (value!=null)  {
           parameters[uni.info.name] = value;
-          found = true;
           break; 
         }
       }
-      if (!found)
-        return false;
     }
-    return true;
+  }
+  
+  void loadDefaults(dom.WebGLRenderingContext gl) {
+    for(final Uniform uni in effect.uniforms) {
+      final val = gl.getUniform( effect.handle, uni.location );
+      parameters[uni.info.name] = val;
+    }
   }
   
   bool _pushData(dom.WebGLRenderingContext gl)  {
@@ -134,17 +137,24 @@ class Instance  {
         return false;
       switch (uni.info.type)  {
       case dom.WebGLRenderingContext.FLOAT_VEC4:
-        gl.uniform4fv( uni.location, value );
+        gl.uniform4fv( uni.location,
+          new dom.Float32Array.fromList(value.toList()) );
+        break;
+      case dom.WebGLRenderingContext.FLOAT_MAT4:
+        gl.uniformMatrix4fv( uni.location, false,
+          new dom.Float32Array.fromList(value.toList()) );
+        break;
       case dom.WebGLRenderingContext.SAMPLER_2D:
         gl.uniform1i( uni.location, texId );
         gl.activeTexture( texId );
         gl.bindTexture( dom.WebGLRenderingContext.TEXTURE_2D, value );
-        ++texId;
+        ++texId; break;
       case dom.WebGLRenderingContext.SAMPLER_CUBE:
         gl.uniform1i( uni.location, texId );
         gl.activeTexture( texId );
         gl.bindTexture( dom.WebGLRenderingContext.TEXTURE_CUBE_MAP, value );
-        ++texId;
+        ++texId; break;
+      default: return false;
       }
     }
     return true;
@@ -153,12 +163,8 @@ class Instance  {
   bool activate(dom.WebGLRenderingContext gl) {
     if (!effect.isReady())
       return false;
+    gatherData();
     effect.bind( gl );
-    // update parameters
-    if (!gatherData())
-      return false;
-    // set parameters
     return _pushData(gl);
   }
 }
-

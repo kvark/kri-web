@@ -6,10 +6,15 @@ class Loader {
   final String home;
   Loader( this.home );
   
-  var getNow(String path) {
+  dom.XMLHttpRequest makeRequest(String path, bool async)  {
     final req = new dom.XMLHttpRequest();
-    req.open( 'GET', home+path, false );
+    req.open( 'GET', home+path, async );
     req.overrideMimeType('text/plain; charset=x-user-defined');
+    return req;
+  }
+  
+  var getNow(String path) {
+    final req = makeRequest( path, false );
     req.send();
     if (req.status == 200)
       return null;
@@ -17,12 +22,11 @@ class Loader {
   }
   
   void getLater(String path, var callback)  {
-    final req = new dom.XMLHttpRequest();
-    req.open( 'GET', home+path, false );
-    req.overrideMimeType('text/plain; charset=x-user-defined');
+    final req = makeRequest( path, true );
+    req.onreadystatechange = () {
+      //if (req.readyState==4)
+      callback( req.responseText );
+    };
     req.send();
-    if (req.status == 200)
-      return null;
-    return req.responseText;
   }
 }

@@ -1,9 +1,13 @@
 #library('math');
 
-final double epselon = 1.0e-5; 
+final double epsilon = 1.0e-5; 
+
+interface IDoubleList  {
+  List<double> toList();
+}
 
 
-class Vector {
+class Vector implements IDoubleList {
   final double x,y,z,w;
   
   List<double> toList() => [x,y,z,w];
@@ -25,7 +29,9 @@ class Vector {
   double dot(final Vector v)  => x*v.x + y*v.y + z*v.z + w*v.w;
   double lengthSquare() => dot( this );
   
-  bool isZero() => lengthSquare() < epselon;
+  Vector perspective() => scale( 1.0/w );
+  
+  bool isZero() => lengthSquare() < epsilon;
   
   Vector inverse() => new Vector( 1.0/x, 1.0/y, 1.0/z, 1.0/w );
   
@@ -42,18 +48,24 @@ class Vector {
 
 
 
-class Matrix  {
+class Matrix implements IDoubleList  {
   final Vector x,y,z,w;
   
   Matrix( this.x, this.y, this.z, this.w );
   Matrix.affine( this.x, this.y, this.z ): w=new Vector.unitW();
   Matrix.identity(): this( new Vector.unitX(), new Vector.unitY(), new Vector.unitZ(), new Vector.unitW() );
+
+  Matrix.translation(final Vector v): this(
+      new Vector(1.0,0.0,0.0,v.x),
+      new Vector(0.0,1.0,0.0,v.y),
+      new Vector(0.0,0.0,1.0,v.z),
+      new Vector(0.0,0.0,0.0,1.0));
   
   Matrix.diagonal(final Vector v): this(
       new Vector(v.x,0.0,0.0,0.0),
       new Vector(0.0,v.y,0.0,0.0),
       new Vector(0.0,0.0,v.z,0.0),
-      new Vector(0.0,0.0,0.0,v.z));
+      new Vector(0.0,0.0,0.0,v.w));
   
   factory Matrix.zero() {
     final Vector v = new Vector.zero();
@@ -65,6 +77,8 @@ class Matrix  {
       y = new Vector( 2.0*q.x*q.y + 2.0*q.z*q.w, 2.0*s*(0.5 - q.x*q.x - q.z*q.z), 2.0*q.y*q.y - 2.0*q.x*q.w, p.y ),
       z = new Vector( 2.0*q.x*q.z - 2.0*q.y*q.w, 2.0*q.y*q.z + 2.0*q.x*q.w, 2.0*s*(0.5 - q.x*q.x - q.y*q.y), p.z ),
       w = new Vector.unitW();
+  
+  List<double> toList() => [x.x,y.x,z.x,w.x, x.y,y.y,z.y,w.y, x.z,y.z,z.z,w.z, x.w,y.w,z.w,w.w];
   
   Matrix operator+(final Matrix m) => new Matrix( x + m.x, y + m.y, z + m.z, w + m.w );
   Matrix operator-(final Matrix m) => new Matrix( x - m.x, y - m.y, z - m.z, w - m.w );
@@ -91,7 +105,7 @@ class Matrix  {
   bool isAffine() {
     final Vector p0 = new Vector.unitW();
     final double dist = (w-p0).lengthSquare();
-    return dist < epselon;
+    return dist < epsilon;
   }
   
   bool isOrthogonal() {
@@ -99,18 +113,18 @@ class Matrix  {
     final Matrix m1 = this * transpose();
     final Matrix m2 = new Matrix.diagonal( m1.diagonal() );
     final double dist = (m1-m2).lengthSquare();
-    return dist < epselon;
+    return dist < epsilon;
   }
   
   bool isOrthonormal()  {
     final Matrix result = this * transpose();
     final Matrix mid = new Matrix.identity();
     final double dist = (result-mid).lengthSquare();
-    return dist < epselon;
+    return dist < epsilon;
   }
   
   Matrix scale(double val) => new Matrix( x.scale(val), y.scale(val), z.scale(val), w.scale(val) );
-  Vector mul(final Vector v) => new Vector( v.dot(x), v.dot(y), v.dot(z), v.dot(w) );
+  Vector transform(final Vector v) => new Vector( v.dot(x), v.dot(y), v.dot(z), v.dot(w) );
   //double det3()
   //double det4()
   
@@ -132,7 +146,7 @@ class Matrix  {
 
 
 
-class Quaternion  {
+class Quaternion implements IDoubleList  {
   final double x,y,z,w;
   
   List<double> toList() => [x,y,z,w];
@@ -141,10 +155,10 @@ class Quaternion  {
   Quaternion.identity(): this(0.0,0.0,0.0,1.0);
   Quaternion.fromBase( final Vector v, this.w ): x=v.x, y=v.y, z=v.z;
   
-  Quaternion.fromAxis( double ax, double ay, double az, double angle )  {
+  factory Quaternion.fromAxis( final Vector axis, double angle )  {
     final double sin = Math.sin( 0.5*angle );
-    w = Math.cos( 0.5*angle );
-    x = ax*sin; y = ay*sin; z = az*sin;
+    final w = Math.cos( 0.5*angle );
+    return new Quaternion.fromBase( axis.scale(sin), w );
   }
   
   Vector rotate(final Vector v) {
@@ -166,7 +180,7 @@ class Quaternion  {
   
   Quaternion normalize()  {
     final double len2 = lengthSquare();
-    if (len2<=1e-6)
+    if (len2<epsilon)
       return this;
     final double k = 1.0 / Math.sqrt(len2);
     return new Quaternion( x*k, y*k, z*k, w*k );
