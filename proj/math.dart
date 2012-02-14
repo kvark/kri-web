@@ -74,7 +74,7 @@ class Matrix implements IDoubleList  {
 
   Matrix.fromQuat( final Quaternion q, final double s, final Vector p ):
       x = new Vector( 2.0*s*(0.5 - q.y*q.y - q.z*q.z), 2.0*q.x*q.y - 2.0*q.z*q.w, 2.0*q.x*q.z + 2.0*q.y*q.w, p.x ),
-      y = new Vector( 2.0*q.x*q.y + 2.0*q.z*q.w, 2.0*s*(0.5 - q.x*q.x - q.z*q.z), 2.0*q.y*q.y - 2.0*q.x*q.w, p.y ),
+      y = new Vector( 2.0*q.x*q.y + 2.0*q.z*q.w, 2.0*s*(0.5 - q.x*q.x - q.z*q.z), 2.0*q.y*q.z - 2.0*q.x*q.w, p.y ),
       z = new Vector( 2.0*q.x*q.z - 2.0*q.y*q.w, 2.0*q.y*q.z + 2.0*q.x*q.w, 2.0*s*(0.5 - q.x*q.x - q.y*q.y), p.z ),
       w = new Vector.unitW();
   
@@ -157,8 +157,8 @@ class Quaternion implements IDoubleList  {
   
   factory Quaternion.fromAxis( final Vector axis, double angle )  {
     final double sin = Math.sin( 0.5*angle );
-    final w = Math.cos( 0.5*angle );
-    return new Quaternion.fromBase( axis.scale(sin), w );
+    final double cos = Math.cos( 0.5*angle );
+    return new Quaternion.fromBase( axis.scale(sin), cos );
   }
   
   Vector rotate(final Vector v) {

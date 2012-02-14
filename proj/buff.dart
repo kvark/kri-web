@@ -30,6 +30,10 @@ class Binding {
     gl.bufferData( target, data_OR_size, dom.WebGLRenderingContext.STATIC_DRAW );
   }
   
+  static dom.Float32Array toFloat32(final List<double> li)	=> new dom.Float32Array.fromList(li);
+  static dom.Int16Array toInt16(final List<int> li)			=> new dom.Int16Array.fromList(li);
+  static dom.Int8Array toInt8(final List<int> li)			=> new dom.Int8Array.fromList(li);
+  
   Unit spawn() => new Unit( gl.createBuffer() );
   
   Unit spawnLoad(var data_OR_size) {

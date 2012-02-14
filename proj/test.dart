@@ -7,6 +7,7 @@
 #import('frame.dart', prefix:'frame');
 #import('view.dart',  prefix:'view');
 #import('load.dart',  prefix:'load');
+#import('gen.dart',	  prefix:'gen');
 
 
 class App {
@@ -34,21 +35,7 @@ class App {
     log.debug( 'frag: ' + shFrag.getLog() );
     log.debug( 'prog: ' + (effect.isReady() ? 'Ok' : effect.getLog()) );
     
-    List<double> vertices = [ 0.0,1.0,0.0, -1.0,-1.0,0.0, 1.0,-1.0,0.0 ];
-    final vData = new dom.Float32Array.fromList(vertices);
-    List<int> indices = [0,1,2];
-    final iData = new dom.Int16Array.fromList(indices);
-    
-    buff.Unit vBuffer = new buff.Binding.array(gl).spawnLoad( vData );
-    buff.Unit vIndex  = new buff.Binding.index(gl).spawnLoad( iData );
-
-    final vElem = new mesh.Elem.float32( 3, vBuffer,0,0 );
-    final iElem = new mesh.Elem.index16( vIndex,0 );
-    me = new mesh.Mesh();
-    me.nVert = 3;
-    me.nInd = 3;
-    me.elements['a_position'] = vElem;
-    me.indices = iElem;
+    me = new gen.Generator(gl).cubeUnit();
 
     // draw  scene
     final con = new frame.Control(gl);
@@ -57,9 +44,9 @@ class App {
     con.viewport( rect );
     
     final camera = new view.Camera();
-    camera.projector = new view.Projector.perspective( 60.0, 60.0 / rect.aspect(), 1.0, 10.0 );
+    camera.projector = new view.Projector.perspective( 60.0, rect.aspect(), 1.0, 10.0 );
     final node = new space.Node( 'camNode' );
-    node.space = new space.Space.fromMoveScale( 0.0,0.5,3.0, 1.0 );
+    node.space = new space.Space.fromMoveScale( 0.0,0.0,5.0, 1.0 );
     final data = new view.DataSource( node, camera );
     
     shader = new shade.Instance( effect );
@@ -84,6 +71,7 @@ class App {
     final data = shader.dataSources[0];
     data.modelNode.space = new space.Space( data.modelNode.space.position,
       new math.Quaternion.fromAxis(new math.Vector.unitY(),time), 1.0 );
+    //data.modelNode.space = new space.Space.fromMoveScale( Math.sin(2.0*time), Math.cos(2.0*time), 5.0, 1.0 );
     me.draw( gl, shader );
     dom.window.setTimeout(() { drawTime(time+0.02); }, 20);
   }

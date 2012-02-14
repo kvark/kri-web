@@ -14,9 +14,9 @@ class Projector implements space.IMatrix  {
   Projector( this.perspective, this.c0, this.c1 );
   Projector.identity(): this( false, new Vector.one().scale(-1.0), new Vector.one() );
   
-  factory Projector.perspective( double fovDegreesX, double fovDegreesY, double near, double far )  {
-    double fx = near * Math.tan( fovDegreesX * degreesToHalfRadians );
+  factory Projector.perspective( double fovDegreesY, double aspect, double near, double far )  {
     double fy = near * Math.tan( fovDegreesY * degreesToHalfRadians );
+    double fx = aspect * fy;
     final c0 = new Vector(-fx,-fy, -near, 0.0 );
     final c1 = new Vector( fx, fy, -far, 1.0 );
     return new Projector( true, c0, c1 );

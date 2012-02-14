@@ -2,6 +2,7 @@
 #import('dart:dom',   prefix:'dom');
 #import('buff.dart',  prefix:'buff');
 #import('shade.dart', prefix:'shade');
+#import('help.dart',  prefix:'help');
 
 
 class Elem  {
@@ -18,6 +19,8 @@ class Elem  {
     type = dom.WebGLRenderingContext.FLOAT, normalized=false;
   Elem.index16( this.buffer, this.offset ):
     type = dom.WebGLRenderingContext.UNSIGNED_SHORT, stride=0, count=0, normalized=false;
+  Elem.index8 ( this.buffer, this.offset ):
+    type = dom.WebGLRenderingContext.UNSIGNED_BYTE,  stride=0, count=0, normalized=false;
   
   void bind(dom.WebGLRenderingContext gl, int loc)  {
     gl.vertexAttribPointer( loc, count, type, normalized, offset, stride );
@@ -29,9 +32,11 @@ class Mesh {
   final Map<String,Elem> elements;
   Elem indices = null;
   int nVert = 0, nInd = 0;
-  int polyType = dom.WebGLRenderingContext.TRIANGLES;
+  final int polyType;
   
-  Mesh(): elements = new Map<String,Elem>();
+  Mesh(final String type):
+    elements = new Map<String,Elem>(),
+  	polyType = new help.Enum().polyTypes[type];
   
   bool contains(final dom.WebGLActiveInfo info)  {
     final Elem el = elements[info.name];

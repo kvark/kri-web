@@ -1,5 +1,7 @@
 #library('frame');
-#import('dart:dom', prefix:'dom');
+#import('dart:dom',  prefix:'dom');
+#import('help.dart', prefix:'help');
+
 
 class Color {
   final double r,g,b,a;
@@ -75,25 +77,17 @@ class Buffer {
   final Map<int,ITarget> _attachments;
   final List<int> _slotsChanged;
   final ITarget nullRender;
-  
-  static final Map<String,int> translation = {
-    'd'   : dom.WebGLRenderingContext.DEPTH_ATTACHMENT,
-    's'   : dom.WebGLRenderingContext.STENCIL_ATTACHMENT,
-    'ds'  : dom.WebGLRenderingContext.DEPTH_STENCIL_ATTACHMENT,
-    'c0'  : dom.WebGLRenderingContext.COLOR_ATTACHMENT0,
-    'c1'  : dom.WebGLRenderingContext.COLOR_ATTACHMENT1,
-    'c2'  : dom.WebGLRenderingContext.COLOR_ATTACHMENT2,
-    'c3'  : dom.WebGLRenderingContext.COLOR_ATTACHMENT3,
-  };
+  final help.Enum helpEnum;
   
   Buffer( this.handle ):
     _attachments = new Map<int,ITarget>(),
     _slotsChanged = new List<int>(),
-    nullRender = new RenderSurface.zero();
+    nullRender = new RenderSurface.zero(),
+    helpEnum = new help.Enum();
   Buffer.main(): handle = null;
   
   bool attach(String name, ITarget target)  {
-    final int point = translation[name];
+    final int point = helpEnum.frameAttachments[name];
     if (handle==null || point==null)
       return false;
     _slotsChanged.add( point );
@@ -101,7 +95,7 @@ class Buffer {
     return true;
   }
   
-  ITarget query(String name) => _attachments[translation[name]];
+  ITarget query(String name) => _attachments[helpEnum.frameAttachments[name]];
   
   void updateSlots(dom.WebGLRenderingContext gl)  {
     for (int point in _slotsChanged) {
