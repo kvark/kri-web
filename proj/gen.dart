@@ -22,7 +22,7 @@ class Generator	{
   	 -size.x, size.y, size.z,
   	  size.x, size.y, size.z
   	]);
-  	final indices = bInd.toInt8([
+  	final indices = bInd.toUint8([
   	  0,1,4,5,7,1,3,0,2,4,6,7,2,3	//tri-strip
   	  //0,4,5,1, 4,6,7,5, 6,2,3,7, 2,0,1,3, 2,6,4,0, 1,5,7,3
   	]);

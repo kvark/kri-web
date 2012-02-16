@@ -3,3 +3,6 @@ ENTRY_PATH	=test.dart
 
 all:
 	cd proj && ${DART_PATH} ${ENTRY_PATH}
+
+deploy:
+	cd stage && ./upload.sh commands.txt

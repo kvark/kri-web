@@ -16,7 +16,7 @@ class Loader {
   var getNow(String path) {
     final req = makeRequest( path, false );
     req.send();
-    if (req.status == 200)
+    if (req.status != 200)
       return null;
     return req.responseText;
   }
@@ -24,7 +24,7 @@ class Loader {
   void getLater(String path, var callback)  {
     final req = makeRequest( path, true );
     req.onreadystatechange = () {
-      //if (req.readyState==4)
+      //if (req.readyState==req.DONE)
       callback( req.responseText );
     };
     req.send();

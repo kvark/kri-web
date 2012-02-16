@@ -31,8 +31,8 @@ class Binding {
   }
   
   static dom.Float32Array toFloat32(final List<double> li)	=> new dom.Float32Array.fromList(li);
-  static dom.Int16Array toInt16(final List<int> li)			=> new dom.Int16Array.fromList(li);
-  static dom.Int8Array toInt8(final List<int> li)			=> new dom.Int8Array.fromList(li);
+  static dom.Uint16Array toUint16(final List<int> li)		=> new dom.Uint16Array.fromList(li);
+  static dom.Uint8Array toUint8(final List<int> li)			=> new dom.Uint8Array.fromList(li);
   
   Unit spawn() => new Unit( gl.createBuffer() );
   
