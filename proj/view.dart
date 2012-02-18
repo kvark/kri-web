@@ -14,7 +14,7 @@ class Projector implements space.IMatrix  {
   Projector( this.perspective, this.c0, this.c1 );
   Projector.identity(): this( false, new Vector.one().scale(-1.0), new Vector.one() );
   
-  factory Projector.perspective( double fovDegreesY, double aspect, double near, double far )  {
+  factory Projector.perspective (double fovDegreesY, double aspect, double near, double far)  {
     double fy = near * Math.tan( fovDegreesY * degreesToHalfRadians );
     double fx = aspect * fy;
     final c0 = new Vector(-fx,-fy, -near, 0.0 );
@@ -22,7 +22,7 @@ class Projector implements space.IMatrix  {
     return new Projector( true, c0, c1 );
   }
   
-  factory Projector.ortho( double width, double height, double near, double far ) {
+  factory Projector.ortho (double width, double height, double near, double far) {
     final c0 = new Vector(-0.5*width,-0.5*height, -near, 0.0 );
     final c1 = new Vector( 0.5*width, 0.5*height, -far, 1.0 );
     return new Projector( false, c0, c1 );
@@ -81,7 +81,7 @@ class DataSource implements shade.IDataSource {
   Matrix getModelMatrix() => (modelNode==null ?
     new Matrix.identity() : modelNode.getWorld().getMatrix() );
   
-  Object askData(String name) {
+  Object askData (String name) {
     switch(name) {
     case 'mx_model':
       return getModelMatrix();

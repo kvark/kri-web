@@ -1,6 +1,8 @@
 #library('frame');
 #import('dart:dom',  prefix:'dom');
+#import('core.dart', prefix:'core');
 #import('help.dart', prefix:'help');
+#import('tex.dart',  prefix:'tex');
 
 
 class Color {
@@ -16,27 +18,14 @@ class Rect  {
 
 
 
-class Plane {
-  int width, height, depth;
-  int samples;
+class Surface extends core.Handle<dom.WebGLRenderbuffer> implements tex.IPlane  {
+  Surface(dom.WebGLRenderingContext gl): super( gl.createRenderbuffer(), null );
+  Surface.zero(): super(null,null);
   
-  Plane(): width=0, height=0, depth=0, samples=0;
-}
-
-
-class Surface extends Plane  {
-  final dom.WebGLRenderbuffer handle;
-  
-  Surface(dom.WebGLRenderingContext gl): handle = gl.CreateRenderbuffer();
-  Surface.zero(): handle = null;
-}
-
-
-class Texture extends Plane  {
-  final dom.WebGLTexture handle;
-  
-  Texture(dom.WebGLRenderingContext gl): handle = gl.CreateTexture();
-  Texture.zero(): handle = null;
+  //todo: use queries
+  int getWidth() => 0;
+  int getHeight() => 0;
+  int getDepth() => 0;
 }
 
 
@@ -53,13 +42,13 @@ class RenderSurface implements ITarget {
   
   void bind(dom.WebGLRenderingContext gl, int point)  {
     gl.framebufferRenderbuffer( dom.WebGLRenderingContext.FRAMEBUFFER,
-      point, dom.WebGLRenderingContext.RENDERBUFFER, surface.handle );
+      point, dom.WebGLRenderingContext.RENDERBUFFER, surface.getInitHandle() );
   }
 }
 
 
 class RenderTexture implements ITarget {
-  final Texture texture;
+  final tex.Texture texture;
   final int level;
   final int side;
   
@@ -67,7 +56,8 @@ class RenderTexture implements ITarget {
   RenderTexture.fromCube( this.texture, this.level, this.side );
   
   void bind(dom.WebGLRenderingContext gl, int point)  {
-    gl.framebufferTexture2D( dom.WebGLRenderingContext.FRAMEBUFFER, point, side, texture.handle, level );
+    gl.framebufferTexture2D( dom.WebGLRenderingContext.FRAMEBUFFER,
+      point, side, texture.getInitHandle(), level );
   }
 }
 
@@ -79,11 +69,13 @@ class Buffer {
   final ITarget nullRender;
   final help.Enum helpEnum;
   
-  Buffer( this.handle ):
+  Buffer( final dom.WebGLRenderingContext gl ):
+  	handle = gl.createFramebuffer(),
     _attachments = new Map<int,ITarget>(),
     _slotsChanged = new List<int>(),
     nullRender = new RenderSurface.zero(),
     helpEnum = new help.Enum();
+
   Buffer.main(): handle = null;
   
   bool attach(String name, ITarget target)  {
@@ -97,7 +89,7 @@ class Buffer {
   
   ITarget query(String name) => _attachments[helpEnum.frameAttachments[name]];
   
-  void updateSlots(dom.WebGLRenderingContext gl)  {
+  void updateSlots(final dom.WebGLRenderingContext gl)  {
     for (int point in _slotsChanged) {
       final ITarget target = _attachments[point];
       (target!=null ? target : nullRender).bind( gl, point );
@@ -112,7 +104,7 @@ class Control  {
   
   Control( this.gl );
   
-  Buffer spawn()  => new Buffer( gl.createFramebuffer() );
+  Buffer spawn()  => new Buffer(gl);
   
   void bind(final Buffer buf)  {
     gl.bindFramebuffer( dom.WebGLRenderingContext.FRAMEBUFFER, buf.handle );

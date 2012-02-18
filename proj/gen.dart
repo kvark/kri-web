@@ -1,4 +1,5 @@
 #library('gen');
+#import('core.dart', prefix:'core');
 #import('math.dart', prefix:'math');
 #import('mesh.dart', prefix:'mesh');
 #import('buff.dart', prefix:'buff');
@@ -27,8 +28,8 @@ class Generator	{
   	  //0,4,5,1, 4,6,7,5, 6,2,3,7, 2,0,1,3, 2,6,4,0, 1,5,7,3
   	]);
 
-	buff.Unit vBuffer = bArr.spawnLoad( vertices );
-    buff.Unit vIndex  = bInd.spawnLoad( indices );
+	buff.Unit vBuffer = bArr.spawn( vertices );
+    buff.Unit vIndex  = bInd.spawn( indices );
     final vElem = new mesh.Elem.float32( 3, vBuffer,0,0 );
     final iElem = new mesh.Elem.index8( vIndex,0 );
  

@@ -31,14 +31,11 @@ class App {
     
     /*final String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
  	   'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
-    final String fragText = 'uniform lowp vec4 color; void main() {gl_FragColor=color;}';
-    */
+    final String fragText = 'uniform lowp vec4 color; void main() {gl_FragColor=color;}';*/
+    
     shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
     shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
     shade.Effect effect = new shade.Effect( gl, [shVert,shFrag] );
-    log.debug( 'vert: ' + shVert.getLog() );
-    log.debug( 'frag: ' + shFrag.getLog() );
-    log.debug( 'prog: ' + (effect.isReady() ? 'Ok' : effect.getLog()) );
     
     me = new gen.Generator(gl).cubeUnit();
 

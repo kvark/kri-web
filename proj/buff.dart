@@ -1,46 +1,58 @@
 #library('buff');
-#import('dart:dom', prefix:'dom');
+#import('dart:dom',  prefix:'dom');
+#import('core.dart', prefix:'core');
 
 
-class Unit  {
-  final dom.WebGLBuffer handle;
-  
-  Unit(this.handle);
+class Unit extends core.Handle<dom.WebGLBuffer>  {
+  Unit( final dom.WebGLRenderingContext gl, final Unit fallback ): super( gl.createBuffer(), fallback );
 }
 
 
 class Binding {
-  dom.WebGLRenderingContext gl;
+  final dom.WebGLRenderingContext gl;
   final int target;
- 
+
   Binding( this.gl, this.target );
   
-  Binding.array(dom.WebGLRenderingContext context):
+  Binding.array( dom.WebGLRenderingContext context ):
     this( context, dom.WebGLRenderingContext.ARRAY_BUFFER );
-  Binding.index(dom.WebGLRenderingContext context):
+  Binding.index( dom.WebGLRenderingContext context ):
     this( context, dom.WebGLRenderingContext.ELEMENT_ARRAY_BUFFER );
 
-  void bind(final Unit unit) {
-    gl.bindBuffer( target, unit.handle );
+  void _bind (dom.WebGLBuffer handle) {
+    gl.bindBuffer( target, handle );
   }
-  void unbind() {
-    gl.bindBuffer( target, null );
+  void _initRaw (int size)	{
+	gl.bufferData( target, size, dom.WebGLRenderingContext.STATIC_DRAW );
   }
-  void load(var data_OR_size) {
-    gl.bufferData( target, data_OR_size, dom.WebGLRenderingContext.STATIC_DRAW );
+  void _loadRaw (final dom.ArrayBufferView data) {
+    gl.bufferData( target, data, dom.WebGLRenderingContext.STATIC_DRAW );
   }
   
-  static dom.Float32Array toFloat32(final List<double> li)	=> new dom.Float32Array.fromList(li);
-  static dom.Uint16Array toUint16(final List<int> li)		=> new dom.Uint16Array.fromList(li);
-  static dom.Uint8Array toUint8(final List<int> li)			=> new dom.Uint8Array.fromList(li);
+  void bindRead (final Unit unit)	=> _bind( unit.getLiveHandle() );
+  void unbind()	=> _bind( null );
   
-  Unit spawn() => new Unit( gl.createBuffer() );
+  void init (final Unit unit, int size)	{
+  	_bind( unit.getInitHandle() );
+  	_initRaw( size );
+  	unit.setAllocated();
+  	_bind( null );
+  }
   
-  Unit spawnLoad(var data_OR_size) {
-    final Unit unit = spawn();
-    bind( unit );
-    load( data_OR_size );
-    unbind();
+  void load (final Unit unit, final dom.ArrayBufferView data)	{
+   	_bind( unit.getInitHandle() );
+  	_loadRaw( data );
+  	unit.setFull();
+  	_bind( null );
+  }
+  
+  static dom.Float32Array toFloat32 (final List<double> li)	=> new dom.Float32Array.fromList(li);
+  static dom.Uint16Array toUint16 (final List<int> li)		=> new dom.Uint16Array.fromList(li);
+  static dom.Uint8Array toUint8 (final List<int> li)		=> new dom.Uint8Array.fromList(li);
+  
+  Unit spawn (final dom.ArrayBufferView data) {
+    final Unit unit = new Unit(gl,null);
+    load( unit, data );
     return unit;
   }
 }

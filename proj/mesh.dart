@@ -3,6 +3,7 @@
 #import('buff.dart',  prefix:'buff');
 #import('shade.dart', prefix:'shade');
 #import('help.dart',  prefix:'help');
+#import('load.dart',  prefix:'load');
 
 
 class Elem  {
@@ -43,7 +44,7 @@ class Mesh {
     return el!=null;  //todo: check all fields
   }
   
-  bool draw(dom.WebGLRenderingContext gl, final shade.Instance shader)  {
+  bool draw(final dom.WebGLRenderingContext gl, final shade.Instance shader)  {
     // check consistency
     for (final dom.WebGLActiveInfo info in shader.effect.attributes.getValues()) {
       if(!contains(info))
@@ -55,7 +56,7 @@ class Mesh {
     buff.Binding bindArray = new buff.Binding.array(gl);
     shader.effect.attributes.forEach((int loc, final dom.WebGLActiveInfo info) {
       final Elem el = elements[info.name];
-      bindArray.bind( el.buffer );
+      bindArray.bindRead( el.buffer );
       el.bind( gl, loc );
       gl.enableVertexAttribArray( loc );
     });
@@ -63,7 +64,7 @@ class Mesh {
     // draw
     if (indices != null)  {
       buff.Binding bindIndex = new buff.Binding.index(gl);
-      bindIndex.bind( indices.buffer );
+      bindIndex.bindRead( indices.buffer );
       gl.drawElements( polyType, nInd, indices.type, 0 );
       bindIndex.unbind();
     }else {
@@ -76,4 +77,18 @@ class Mesh {
     new shade.Program.invalid().bind( gl );
     return true;
   }
+}
+
+
+
+class Manager extends load.Manager<Mesh>	{
+	final dom.WebGLRenderingContext gl;
+	
+	Manager( this.gl, String path ): super(path);
+	
+	Mesh spawn(Mesh fallback) => new Mesh('3');
+	
+	void fill(Mesh m, String data)	{
+		//do something!
+	}
 }
