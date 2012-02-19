@@ -6,6 +6,8 @@ interface IDoubleList  {
   List<double> toList();
 }
 
+final double degreesToHalfRadians = Math.PI / 360.0 ;
+
 
 class Vector implements IDoubleList {
   final double x,y,z,w;
@@ -28,6 +30,7 @@ class Vector implements IDoubleList {
   Vector scale(double val)    => new Vector( x*val, y*val, z*val, w*val );
   double dot(final Vector v)  => x*v.x + y*v.y + z*v.z + w*v.w;
   double lengthSquare() => dot( this );
+  double length() => Math.sqrt( dot(this) );
   
   Vector perspective() => scale( 1.0/w );
   
@@ -37,7 +40,7 @@ class Vector implements IDoubleList {
   
   Vector cross(final Vector v)  {
     assert( w==0.0 && v.w==0.0 );
-    return new Vector( y*v.z - z*v.y, z*v.x - x*v.z, x*v.y - y*v.z, 0.0 );
+    return new Vector( y*v.z - z*v.y, z*v.x - x*v.z, x*v.y - y*v.x, 0.0 );
   }
   
   Vector normalize()  {
@@ -155,9 +158,10 @@ class Quaternion implements IDoubleList  {
   Quaternion.identity(): this(0.0,0.0,0.0,1.0);
   Quaternion.fromBase( final Vector v, this.w ): x=v.x, y=v.y, z=v.z;
   
-  factory Quaternion.fromAxis( final Vector axis, double angle )  {
-    final double sin = Math.sin( 0.5*angle );
-    final double cos = Math.cos( 0.5*angle );
+  factory Quaternion.fromAxis( final Vector axis, double angleDegrees )  {
+  	final double halfRadians = degreesToHalfRadians * angleDegrees;
+    final double sin = Math.sin( halfRadians );
+    final double cos = Math.cos( halfRadians );
     return new Quaternion.fromBase( axis.scale(sin), cos );
   }
   

@@ -4,9 +4,6 @@
 #import('shade.dart', prefix:'shade');
 
 
-final double degreesToHalfRadians = Math.PI / 360.0 ;
-
-
 class Projector implements space.IMatrix  {
   final bool perspective;
   final Vector c0,c1;

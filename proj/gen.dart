@@ -35,9 +35,9 @@ class Mesh	{
   	];
   	final texCoords = [
   	  0.0, 0.0,
-  	  1.0, 0.0,
   	  0.0, 1.0,
-  	  1.0, 1.0
+  	  1.0, 1.0,
+  	  1.0, 0.0
   	];
   	final order = [
   	  //0,1,4,5,7,1,3,0,2,4,6,7,2,3	// tri-strip indices
@@ -82,7 +82,7 @@ class Texture	{
 	final tex.LevelInfo infoColor;
 
 	Texture(gl): bind = new tex.Binding.tex2d(gl),
-		infoColor = new tex.LevelInfo.color(1,1);
+		infoColor = new tex.LevelInfo.color(1,1,true);
 	
 	tex.Texture white()	{
 		final t = bind.spawn();

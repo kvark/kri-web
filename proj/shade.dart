@@ -148,8 +148,10 @@ class Instance  {
     int texId = 0;
     for (final Uniform uni in effect.uniforms)  {
       var value = parameters[uni.info.name];
-      if (!value)
-        return false;
+      if (!value)	{
+      	dom.window.console.debug('Parameter not found: ' + uni.info.name);
+      	return false;	
+      }
       switch (uni.info.type)  {
       case dom.WebGLRenderingContext.FLOAT_VEC4:
         gl.uniform4fv( uni.location,

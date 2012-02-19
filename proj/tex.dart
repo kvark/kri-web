@@ -42,7 +42,8 @@ class LevelInfo	{
 	
 	LevelInfo( this.level, this.width, this.height, this.internalFormat );
 	
-	LevelInfo.color( int w, int h ): this(0,w,h, dom.WebGLRenderingContext.RGBA);
+	LevelInfo.color( int w, int h, bool alpha ): this(0,w,h,
+		alpha ? dom.WebGLRenderingContext.RGBA : dom.WebGLRenderingContext.RGB);
 }
 
 
@@ -118,33 +119,27 @@ class Manager extends load.Manager<Texture>	{
 		final load.BinaryReader br = new load.BinaryReader(buffer);
 		final log = dom.window.console;
 		// read header
-		final idSize = br.getByte();
-		final cmType = br.getByte();
-		final imType = br.getByte();
+		final int idSize = br.getByte();
+		final int cmType = br.getByte();
+		final int imType = br.getByte();
 		br.getLarge(5);	//color map info
 		br.getLarge(4);	//xrig,yrig
-		final width	= br.getLarge(2);
-		final height= br.getLarge(2);
-		final bits	= br.getByte();
-		final descr	= br.getByte();
+		final int width  = br.getLarge(2);
+		final int height = br.getLarge(2);
+		final int bits	= br.getByte();
+		final int descr	= br.getByte();
 		// check header
 		if (imType!=0 && imType!=2)	{
 			log.debug('unknow image type');
 			log.debug(imType);
 			return;
 		}
-		log.debug(width);
-		log.debug(height);
-		log.debug(bits);
-		log.debug( width*height*(bits>>3) );
 		// load data
 		br.getLarge( idSize );	//skip id
-		final levInfo = new LevelInfo.color( width, height );
-		final texData = new Data(
-			br.getSubArray( width*height*(bits>>3) ), bits>24 ?
-			dom.WebGLRenderingContext.RGBA : dom.WebGLRenderingContext.RGB,
-			dom.WebGLRenderingContext.UNSIGNED_BYTE );
-		assert (texData.buffer.length == (bits>>3)*width*height);
+		final levInfo = new LevelInfo.color( width, height, bits>24 );
+		// warning: WebGL doesn't like internal format RGBA while the input format is RGB
+		final texData = new Data.color( br.getSubArray( width*height*(bits>>3) ), bits>24 );
+		//assert (texData.buffer.length == (bits>>3)*width*height);
 		bid.load( tex, levInfo, texData );
 	}
 }

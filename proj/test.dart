@@ -15,12 +15,13 @@ class App {
   mesh.Mesh me = null;
   shade.Instance shader = null;
   dom.WebGLRenderingContext gl = null;
+  dom.HTMLCanvasElement canvas = null;
  
   App();
   
   void run() {
     final dom.Console log = dom.window.console;
-    final dom.HTMLCanvasElement canvas = dom.document.getElementById('canvas');
+    canvas = dom.document.getElementById('canvas');
     gl = canvas.getContext('experimental-webgl');
     
     gl.enable( dom.WebGLRenderingContext.DEPTH_TEST );
@@ -63,6 +64,7 @@ class App {
     shader = new shade.Instance( effect );
     shader.dataSources.add( data );
     shader.parameters['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
+    shader.parameters['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
     shader.parameters['t_main'] = carTexture;
     me.draw( gl, shader );
     log.debug( shader );
@@ -72,16 +74,56 @@ class App {
       log.debug("Error: $err");
     
     dom.window.setInterval(frame, 20);
+    dom.window.addEventListener('mousemove',mouseMove);
+    dom.window.addEventListener('mousedown',mouseDown);
+    dom.window.addEventListener('mouseup',mouseUp);
+  }
+  
+  int gripX, gripY;
+  math.Quaternion gripBase = null;
+  
+  void mouseMove( final dom.MouseEvent e ){
+  	// move light
+    final view.DataSource data = shader.dataSources[0];
+    final double dist = data.modelNode.getWorld().position.z;
+  	final double hx = canvas.width.toDouble() * 0.5;
+  	final double hy = canvas.height.toDouble()* 0.5;
+  	final math.Vector v = new math.Vector(
+  		((e.clientX-canvas.offsetLeft).toDouble() - hx) / (hx/dist),
+  		(hy - (e.clientY-canvas.offsetTop).toDouble())  / (hy/dist),
+  		0.0, 1.0 );
+  	shader.parameters['pos_light'] = v;
+  	// move object
+  	if (gripBase != null && (e.clientX!=gripX || e.clientY!=gripY))	{
+  		final math.Vector voff = new math.Vector(
+  			(gripX-e.clientX).toDouble(),
+  			(e.clientY-gripY).toDouble(),
+  			0.0, 0.0 );
+  		final math.Vector axis = voff.normalize().cross(new math.Vector.unitZ());
+		final double angle = voff.length();
+		data.modelNode.space = new space.Space( data.modelNode.space.position,
+	    	  gripBase * new math.Quaternion.fromAxis(axis,angle), 1.0 );
+  	}
+  }
+  
+  void mouseDown( final dom.MouseEvent e ){
+  	gripX = e.clientX; gripY = e.clientY;
+    final view.DataSource data = shader.dataSources[0];
+  	gripBase = data.modelNode.space.orientation;
+  }
+  
+  void mouseUp( final dom.MouseEvent e ){
+  	gripBase = null;
   }
   
   void frame()	{
-  	final Date date = new Date.now();
-  	double time = date.value.toDouble() / 1000.0;
+  	final Date dateNow = new Date.now();
+  	double time = dateNow.value.toDouble() / 10.0;
 	final frame.Control con = new frame.Control(gl);
     con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
-    final view.DataSource data = shader.dataSources[0];
-    data.modelNode.space = new space.Space( data.modelNode.space.position,
-      new math.Quaternion.fromAxis(new math.Vector.unitY(),time), 1.0 );
+    //final view.DataSource data = shader.dataSources[0];
+    //data.modelNode.space = new space.Space( data.modelNode.space.position,
+    //  new math.Quaternion.fromAxis(new math.Vector.unitY(),time), 1.0 );
     me.draw( gl, shader );
   }
 }
