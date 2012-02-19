@@ -13,18 +13,18 @@ class Elem  {
   final int count;
   // location
   final buff.Unit buffer;
-  final int offset, stride;
+  final int stride, offset;
   
-  Elem( this.type, this.normalized, this.count, this.buffer, this.offset, this.stride );
-  Elem.float32( this.count, this.buffer, this.offset, this.stride ):
+  Elem( this.type, this.normalized, this.count, this.buffer, this.stride, this.offset );
+  Elem.float32( this.count, this.buffer, this.stride, this.offset ):
     type = dom.WebGLRenderingContext.FLOAT, normalized=false;
   Elem.index16( this.buffer, this.offset ):
     type = dom.WebGLRenderingContext.UNSIGNED_SHORT, stride=0, count=0, normalized=false;
   Elem.index8 ( this.buffer, this.offset ):
     type = dom.WebGLRenderingContext.UNSIGNED_BYTE,  stride=0, count=0, normalized=false;
   
-  void bind(dom.WebGLRenderingContext gl, int loc)  {
-    gl.vertexAttribPointer( loc, count, type, normalized, offset, stride );
+  void bind( final dom.WebGLRenderingContext gl, int loc ){
+    gl.vertexAttribPointer( loc, count, type, normalized, stride, offset );
   }
 }
 
@@ -34,24 +34,34 @@ class Mesh {
   Elem indices = null;
   int nVert = 0, nInd = 0;
   final int polyType;
+  final List<shade.Effect> blackList;
   
   Mesh(final String type):
     elements = new Map<String,Elem>(),
-  	polyType = new help.Enum().polyTypes[type];
+  	polyType = new help.Enum().polyTypes[type],
+  	blackList = new List<shade.Effect>();
   
   bool contains(final dom.WebGLActiveInfo info)  {
     final Elem el = elements[info.name];
     return el!=null;  //todo: check all fields
   }
   
-  bool draw(final dom.WebGLRenderingContext gl, final shade.Instance shader)  {
+  bool draw( final dom.WebGLRenderingContext gl, final shade.Instance shader ){
+	if (blackList.indexOf( shader.effect )>=0)
+		return false;
     // check consistency
     for (final dom.WebGLActiveInfo info in shader.effect.attributes.getValues()) {
-      if(!contains(info))
-        return false;
+    	if(!contains(info))	{
+    		dom.window.console.debug('Mesh does not contain required attribute: ' + info.name);
+    		blackList.add( shader.effect );
+    		return false;
+    	}
     }
-    if (!shader.activate(gl))
-      return false;
+    if (!shader.activate(gl))	{
+	    dom.window.console.debug('Mesh failed to activate the shader');
+    	blackList.add( shader.effect );
+    	return false;
+    }
     // prepare
     buff.Binding bindArray = new buff.Binding.array(gl);
     shader.effect.attributes.forEach((int loc, final dom.WebGLActiveInfo info) {
@@ -84,7 +94,7 @@ class Mesh {
 class Manager extends load.Manager<Mesh>	{
 	final dom.WebGLRenderingContext gl;
 	
-	Manager( this.gl, String path ): super(path);
+	Manager( this.gl, String path ): super.buffer(path);
 	
 	Mesh spawn(Mesh fallback) => new Mesh('3');
 	

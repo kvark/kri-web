@@ -7,7 +7,10 @@
 
 class Color {
   final double r,g,b,a;
+  
   Color( this.r, this.g, this.b, this.a );
+  Color.black(): this(0.0,0.0,0.0,0.0);
+  Color.white(): this(1.0,1.0,1.0,1.0);
 }
 
 class Rect  {
@@ -121,7 +124,7 @@ class Control  {
   
   void viewport(final Rect r) => gl.viewport( r.x, r.y, r.w, r.h ); 
   
-  void clear(Color color, double depth, int stencil) {
+  void clear(final Color color, double depth, int stencil) {
     int mask = 0;
     if (color != null) {
       mask += dom.WebGLRenderingContext.COLOR_BUFFER_BIT;

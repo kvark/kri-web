@@ -2,6 +2,7 @@
 #import('dart:dom',   prefix:'dom');
 #import('core.dart',  prefix:'core');
 #import('frame.dart', prefix:'frame');
+#import('tex.dart',	  prefix:'tex');
 
 
 class Unit extends core.Handle<dom.WebGLShader> {
@@ -143,7 +144,8 @@ class Instance  {
   }
   
   bool _pushData( dom.WebGLRenderingContext gl ){
-    int texId = dom.WebGLRenderingContext.TEXTURE0;
+	final tex.Binding texBind = new tex.Binding.tex2d(gl);
+    int texId = 0;
     for (final Uniform uni in effect.uniforms)  {
       var value = parameters[uni.info.name];
       if (!value)
@@ -159,17 +161,19 @@ class Instance  {
         break;
       case dom.WebGLRenderingContext.SAMPLER_2D:
         gl.uniform1i( uni.location, texId );
-        gl.activeTexture( texId );
-        gl.bindTexture( dom.WebGLRenderingContext.TEXTURE_2D, value );
+        gl.activeTexture( dom.WebGLRenderingContext.TEXTURE0 + texId );
+        texBind.bindRead( value );	// todo: unbind where?
         ++texId; break;
       case dom.WebGLRenderingContext.SAMPLER_CUBE:
         gl.uniform1i( uni.location, texId );
-        gl.activeTexture( texId );
+        gl.activeTexture( dom.WebGLRenderingContext.TEXTURE0 + texId );
         gl.bindTexture( dom.WebGLRenderingContext.TEXTURE_CUBE_MAP, value );
         ++texId; break;
       default: return false;
       }
     }
+    if (texId>0)
+	    gl.activeTexture( dom.WebGLRenderingContext.TEXTURE0 );
     return true;
   }
   

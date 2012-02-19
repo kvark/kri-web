@@ -5,4 +5,4 @@ all:
 	cd proj && ${DART_PATH} ${ENTRY_PATH}
 
 deploy:
-	cd stage && ./upload.sh commands.txt
+	cd stage && ./upload.sh code.txt

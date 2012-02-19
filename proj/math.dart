@@ -73,9 +73,9 @@ class Matrix implements IDoubleList  {
   }
 
   Matrix.fromQuat( final Quaternion q, final double s, final Vector p ):
-      x = new Vector( 2.0*s*(0.5 - q.y*q.y - q.z*q.z), 2.0*q.x*q.y - 2.0*q.z*q.w, 2.0*q.x*q.z + 2.0*q.y*q.w, p.x ),
-      y = new Vector( 2.0*q.x*q.y + 2.0*q.z*q.w, 2.0*s*(0.5 - q.x*q.x - q.z*q.z), 2.0*q.y*q.z - 2.0*q.x*q.w, p.y ),
-      z = new Vector( 2.0*q.x*q.z - 2.0*q.y*q.w, 2.0*q.y*q.z + 2.0*q.x*q.w, 2.0*s*(0.5 - q.x*q.x - q.y*q.y), p.z ),
+      x = new Vector( 2.0*s*(0.5 - q.y*q.y - q.z*q.z), 2.0*q.x*q.y + 2.0*q.z*q.w, 2.0*q.x*q.z - 2.0*q.y*q.w, p.x ),
+      y = new Vector( 2.0*q.x*q.y - 2.0*q.z*q.w, 2.0*s*(0.5 - q.x*q.x - q.z*q.z), 2.0*q.y*q.z + 2.0*q.x*q.w, p.y ),
+      z = new Vector( 2.0*q.x*q.z + 2.0*q.y*q.w, 2.0*q.y*q.z - 2.0*q.x*q.w, 2.0*s*(0.5 - q.x*q.x - q.y*q.y), p.z ),
       w = new Vector.unitW();
   
   List<double> toList() => [x.x,y.x,z.x,w.x, x.y,y.y,z.y,w.y, x.z,y.z,z.z,w.z, x.w,y.w,z.w,w.w];

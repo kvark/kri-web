@@ -46,10 +46,6 @@ class Binding {
   	_bind( null );
   }
   
-  static dom.Float32Array toFloat32 (final List<double> li)	=> new dom.Float32Array.fromList(li);
-  static dom.Uint16Array toUint16 (final List<int> li)		=> new dom.Uint16Array.fromList(li);
-  static dom.Uint8Array toUint8 (final List<int> li)		=> new dom.Uint8Array.fromList(li);
-  
   Unit spawn (final dom.ArrayBufferView data) {
     final Unit unit = new Unit(gl,null);
     load( unit, data );

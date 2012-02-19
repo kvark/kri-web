@@ -8,6 +8,7 @@
 #import('view.dart',  prefix:'view');
 #import('load.dart',  prefix:'load');
 #import('gen.dart',	  prefix:'gen');
+#import('tex.dart',   prefix:'tex');
 
 
 class App {
@@ -18,16 +19,17 @@ class App {
   App();
   
   void run() {
-    dom.Console log = dom.window.console;
-    dom.HTMLCanvasElement canvas = dom.document.getElementById('canvas');
+    final dom.Console log = dom.window.console;
+    final dom.HTMLCanvasElement canvas = dom.document.getElementById('canvas');
     gl = canvas.getContext('experimental-webgl');
     
-    gl.disable( dom.WebGLRenderingContext.DEPTH_TEST );
-    gl.disable( dom.WebGLRenderingContext.CULL_FACE );
+    gl.enable( dom.WebGLRenderingContext.DEPTH_TEST );
+    gl.enable( dom.WebGLRenderingContext.CULL_FACE );
+    gl.depthMask(true);
     
-    final loader = new load.Loader('http://demo.kvatom.com/'); 
-    final vertText = loader.getNow('shade/simple.glslv');
-    final fragText = loader.getNow('shade/simple.glslf');
+    final load.Loader loader = new load.Loader('http://demo.kvatom.com/');
+    final String vertText = loader.getNow('shade/simple.glslv');
+    final String fragText = loader.getNow('shade/simple.glslf');
     
     /*final String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
  	   'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
@@ -37,24 +39,33 @@ class App {
     shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
     shade.Effect effect = new shade.Effect( gl, [shVert,shFrag] );
     
-    me = new gen.Generator(gl).cubeUnit();
+    me = new gen.Mesh(gl).cubeUnit();
 
     // draw  scene
-    final con = new frame.Control(gl);
+    final frame.Control con = new frame.Control(gl);
     con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
-    final rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
+    final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
     con.viewport( rect );
     
-    final camera = new view.Camera();
+    final view.Camera camera = new view.Camera();
     camera.projector = new view.Projector.perspective( 60.0, rect.aspect(), 1.0, 10.0 );
-    final node = new space.Node( 'model-node' );
+    final space.Node node = new space.Node( 'model-node' );
     node.space = new space.Space.fromMoveScale( 0.0,0.0,5.0, 1.0 );
-    final data = new view.DataSource( node, camera );
+    final view.DataSource data = new view.DataSource( node, camera );
+
+    final tex.Manager texLoader = new tex.Manager( gl, 'http://demo.kvatom.com/image/' );
+    final tex.Texture texWhite = new gen.Texture(gl).white();
+    final tex.Texture carTexture = texLoader.load( 'CAR.TGA', texWhite );
+    final tex.Binding texBind = new tex.Binding.tex2d(gl);
+    texBind.state( carTexture, false, false, 0 );
+    log.debug( carTexture );
     
     shader = new shade.Instance( effect );
     shader.dataSources.add( data );
-    shader.parameters['color'] = new math.Vector(1.0,0.0,0.0,1.0);
+    shader.parameters['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
+    shader.parameters['t_main'] = carTexture;
     me.draw( gl, shader );
+    log.debug( shader );
     
     int err = gl.getError();
     if(err!=0)
@@ -64,11 +75,11 @@ class App {
   }
   
   void frame()	{
-  	final date = new Date.now();
+  	final Date date = new Date.now();
   	double time = date.value.toDouble() / 1000.0;
-	final con = new frame.Control(gl);
+	final frame.Control con = new frame.Control(gl);
     con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
-    final data = shader.dataSources[0];
+    final view.DataSource data = shader.dataSources[0];
     data.modelNode.space = new space.Space( data.modelNode.space.position,
       new math.Quaternion.fromAxis(new math.Vector.unitY(),time), 1.0 );
     me.draw( gl, shader );

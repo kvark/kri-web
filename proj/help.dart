@@ -22,3 +22,8 @@ class Enum	{
     'c3'  : dom.WebGLRenderingContext.COLOR_ATTACHMENT0+3,
   };
 }
+
+
+dom.Float32Array toFloat32 (final List<double> li)	=> new dom.Float32Array.fromList(li);
+dom.Uint16Array toUint16 (final List<int> li)		=> new dom.Uint16Array.fromList(li);
+dom.Uint8Array toUint8 (final List<int> li)			=> new dom.Uint8Array.fromList(li);

@@ -95,6 +95,8 @@ class DataSource implements shade.IDataSource {
       return camera.projector.getMatrix();
     case 'mx_mvp':
       return camera.getInverseWorld() * getModelMatrix();
+    case 'pos_camera':
+      return camera.node==null ? new Vector.zero() : camera.node.getWorld().position;
     }
     return null;
   }
