@@ -1,5 +1,5 @@
 #library('help');
-#import('dart:dom', prefix:'dom');
+#import('dart:html', prefix:'dom');
 
 class Enum	{
  final Map<String,int> polyTypes, frameAttachments;
@@ -24,6 +24,6 @@ class Enum	{
 }
 
 
-dom.Float32Array toFloat32 (final List<double> li)	=> new dom.Float32Array.fromList(li);
-dom.Uint16Array toUint16 (final List<int> li)		=> new dom.Uint16Array.fromList(li);
-dom.Uint8Array toUint8 (final List<int> li)			=> new dom.Uint8Array.fromList(li);
+dom.Float32Array toFloat32 (final List<double> li)	=> new dom.Float32Array.from(li);
+dom.Uint16Array toUint16 (final List<int> li)		=> new dom.Uint16Array.from(li);
+dom.Uint8Array toUint8 (final List<int> li)			=> new dom.Uint8Array.from(li);

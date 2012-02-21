@@ -1,5 +1,5 @@
 #library('shade');
-#import('dart:dom',   prefix:'dom');
+#import('dart:html',  prefix:'dom');
 #import('core.dart',  prefix:'core');
 #import('frame.dart', prefix:'frame');
 #import('tex.dart',	  prefix:'tex');
@@ -8,15 +8,15 @@
 class Unit extends core.Handle<dom.WebGLShader> {
   String _infoLog = null;
 
-  Unit( dom.WebGLRenderingContext gl, int type, String text ):
+  Unit( final dom.WebGLRenderingContext gl, int type, String text ):
   super( gl.createShader(type), null ) {
     gl.shaderSource( _handle, text );
     gl.compileShader( _handle );
-    _infoLog =gl.getShaderInfoLog( _handle );
-    if( gl.getShaderParameter( _handle, dom.WebGLRenderingContext.COMPILE_STATUS ))
+    _infoLog = gl.getShaderInfoLog( _handle );
+//    if( gl.getShaderParameter( _handle, dom.WebGLRenderingContext.COMPILE_STATUS ))
     	setFull();
-    else
-	    dom.window.console.debug(_infoLog);
+//    else
+//	    dom.window.console.debug(_infoLog);
   }
   
   String getLog() => _infoLog;
@@ -33,20 +33,20 @@ class Unit extends core.Handle<dom.WebGLShader> {
 class Program extends core.Handle<dom.WebGLProgram> {
   String _infoLog = null;
 
-  Program(dom.WebGLRenderingContext gl): super( gl.createProgram(), null );
+  Program( final dom.WebGLRenderingContext gl ): super( gl.createProgram(), null );
   
-  bool link(dom.WebGLRenderingContext gl, List<Unit> units)	{
+  bool link( final dom.WebGLRenderingContext gl, List<Unit> units ){
   	final h = getInitHandle();
     for (final unit in units) {
       assert( unit.isReady() );
       gl.attachShader( h, unit.getLiveHandle() );
     }
     gl.linkProgram( h );
-    _infoLog =gl.getProgramInfoLog( h );
-	if (gl.getProgramParameter( h, dom.WebGLRenderingContext.LINK_STATUS ))	{
+    _infoLog = gl.getProgramInfoLog( h );
+	//if (gl.getProgramParameter( h, dom.WebGLRenderingContext.LINK_STATUS ))	{
 		setFull();
 		return true;
-	}
+//	}
 	setNone();
 	dom.window.console.debug(_infoLog);
 	return false;
@@ -155,11 +155,11 @@ class Instance  {
       switch (uni.info.type)  {
       case dom.WebGLRenderingContext.FLOAT_VEC4:
         gl.uniform4fv( uni.location,
-          new dom.Float32Array.fromList(value.toList()) );
+          new dom.Float32Array.from(value.toList()) );
         break;
       case dom.WebGLRenderingContext.FLOAT_MAT4:
         gl.uniformMatrix4fv( uni.location, false,
-          new dom.Float32Array.fromList(value.toList()) );
+          new dom.Float32Array.from(value.toList()) );
         break;
       case dom.WebGLRenderingContext.SAMPLER_2D:
         gl.uniform1i( uni.location, texId );

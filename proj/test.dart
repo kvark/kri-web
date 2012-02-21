@@ -1,4 +1,4 @@
-#import('dart:dom',   prefix:'dom');
+#import('dart:html',  prefix:'dom');
 #import('shade.dart', prefix:'shade');
 #import('buff.dart',  prefix:'buff');
 #import('mesh.dart',  prefix:'mesh');
@@ -15,14 +15,22 @@ class App {
   mesh.Mesh me = null;
   shade.Instance shader = null;
   dom.WebGLRenderingContext gl = null;
-  dom.HTMLCanvasElement canvas = null;
+  dom.CanvasElement canvas = null;
+  int timerHandle = -1;
+  int canvasOffX = 0, canvasOffY = 0;
  
   App();
   
   void run() {
     final dom.Console log = dom.window.console;
-    canvas = dom.document.getElementById('canvas');
+    canvas = dom.document.query('#canvas');
     gl = canvas.getContext('experimental-webgl');
+    canvas.rect.then((final dom.ElementRect rect)	{
+    	canvasOffX = rect.offset.left;
+    	canvasOffY = rect.offset.top;
+    });
+    
+    log.debug(gl);
     
     gl.enable( dom.WebGLRenderingContext.DEPTH_TEST );
     gl.enable( dom.WebGLRenderingContext.CULL_FACE );
@@ -32,9 +40,9 @@ class App {
     final String vertText = loader.getNow('shade/simple.glslv');
     final String fragText = loader.getNow('shade/simple.glslf');
     
-    /*final String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
- 	   'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
-    final String fragText = 'uniform lowp vec4 color; void main() {gl_FragColor=color;}';*/
+//	final String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
+//		'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
+//	final String fragText = 'uniform lowp vec4 color; void main() {gl_FragColor=color;}';
     
     shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
     shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
@@ -56,27 +64,27 @@ class App {
 
     final tex.Manager texLoader = new tex.Manager( gl, 'http://demo.kvatom.com/image/' );
     final tex.Texture texWhite = new gen.Texture(gl).white();
-    final tex.Texture carTexture = texLoader.load( 'CAR.TGA', texWhite );
+    //final tex.Texture carTexture = texLoader.load( 'CAR.TGA', texWhite );
     final tex.Binding texBind = new tex.Binding.tex2d(gl);
-    texBind.state( carTexture, false, false, 0 );
-    log.debug( carTexture );
+    //texBind.state( carTexture, false, false, 0 );
+    //log.debug( carTexture );
     
     shader = new shade.Instance( effect );
     shader.dataSources.add( data );
     shader.parameters['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
     shader.parameters['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
-    shader.parameters['t_main'] = carTexture;
+    shader.parameters['t_main'] = texWhite;
     me.draw( gl, shader );
-    log.debug( shader );
+    //log.debug( shader );
     
     int err = gl.getError();
     if(err!=0)
       log.debug("Error: $err");
     
-    dom.window.setInterval(frame, 20);
-    dom.window.addEventListener('mousemove',mouseMove);
-    dom.window.addEventListener('mousedown',mouseDown);
-    dom.window.addEventListener('mouseup',mouseUp);
+    timerHandle = dom.window.setInterval(frame, 20);
+    dom.window.on.mouseMove.add( mouseMove );
+    dom.window.on.mouseDown.add( mouseDown );
+    dom.window.on.mouseUp.add( mouseUp );
   }
   
   int gripX, gripY;
@@ -89,8 +97,8 @@ class App {
   	final double hx = canvas.width.toDouble() * 0.5;
   	final double hy = canvas.height.toDouble()* 0.5;
   	final math.Vector v = new math.Vector(
-  		((e.clientX-canvas.offsetLeft).toDouble() - hx) / (hx/dist),
-  		(hy - (e.clientY-canvas.offsetTop).toDouble())  / (hy/dist),
+  		((e.clientX-canvasOffX).toDouble() - hx) / (hx/dist),
+  		(hy - (e.clientY-canvasOffY).toDouble())  / (hy/dist),
   		0.0, 1.0 );
   	shader.parameters['pos_light'] = v;
   	// move object

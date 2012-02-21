@@ -1,5 +1,5 @@
 #library('load');
-#import('dart:dom', prefix:'dom');
+#import('dart:html', prefix:'dom');
 
 
 class Manager<Type>	{
@@ -25,7 +25,7 @@ class Manager<Type>	{
 			req.open( 'GET', home+name, callAsync );
 			req.overrideMimeType('text/plain; charset=x-user-defined');
 			req.responseType = dataType;
-			req.addEventListener('load', (event) {
+			req.on.load.add((e) {
 				fill( result, req.response );
 			});
 			req.send();

@@ -1,5 +1,5 @@
 #library('mesh');
-#import('dart:dom',   prefix:'dom');
+#import('dart:html',  prefix:'dom');
 #import('buff.dart',  prefix:'buff');
 #import('shade.dart', prefix:'shade');
 #import('help.dart',  prefix:'help');

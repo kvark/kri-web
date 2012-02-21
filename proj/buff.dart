@@ -1,5 +1,5 @@
 #library('buff');
-#import('dart:dom',  prefix:'dom');
+#import('dart:html', prefix:'dom');
 #import('core.dart', prefix:'core');
 
 

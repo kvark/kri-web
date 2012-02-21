@@ -2,3 +2,5 @@ syntax: glob
 
 *.js
 stage
+__pycache__
+export/data
