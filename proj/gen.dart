@@ -64,10 +64,10 @@ class Mesh	{
     final me = new mesh.Mesh('3');
     me.nVert = v2.length;
     me.nInd = i2.length;
-    me.elements['a_position']	= new mesh.Elem.float32( 3, vBuffer, 32,0 );
-    me.elements['a_tex']		= new mesh.Elem.float32( 2, vBuffer, 32,12 );
-    me.elements['a_normal']		= new mesh.Elem.float32( 3, vBuffer, 32,20 );
-    me.indices					= new mesh.Elem.index8( vIndex,0 );;
+    me.elements['a_position']	= new mesh.Element.float32( 3, vBuffer, 32,0 );
+    me.elements['a_tex']		= new mesh.Element.float32( 2, vBuffer, 32,12 );
+    me.elements['a_normal']		= new mesh.Element.float32( 3, vBuffer, 32,20 );
+    me.indices					= new mesh.Element.index8( vIndex,0 );;
     return me;
   }
 

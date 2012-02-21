@@ -58,6 +58,14 @@ class BinaryReader	{
 			result += getByte() << (i<<3);
 		return result;
 	}
+	
+	String getString()	{
+		StringBuffer result = new StringBuffer();
+		final int num = getByte();
+		for(int i=0; i<num; ++i)
+			result.add( getByte().toString() );
+		return result.toString();
+	}
 }
 
 

@@ -108,6 +108,7 @@ class Binding	{
 }
 
 
+// image TGA loader
 class Manager extends load.Manager<Texture>	{
 	final Binding bid;
 	
