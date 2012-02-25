@@ -58,16 +58,17 @@ class Mesh	{
   		i2.add( id6*4 + offsets[i%6] );
   	}
 
-	buff.Unit vBuffer = bArr.spawn( help.toFloat32(v2) );
-    buff.Unit vIndex  = bInd.spawn( help.toUint8(i2) );
+	final buff.Unit vBuffer = bArr.spawn( help.toFloat32(v2) );
+    final buff.Unit vIndex  = bInd.spawn( help.toUint8(i2) );
  
-    final me = new mesh.Mesh('3');
+    final mesh.Mesh me = new mesh.Mesh();
+    me.setPolygons('3');
     me.nVert = v2.length;
     me.nInd = i2.length;
     me.elements['a_position']	= new mesh.Element.float32( 3, vBuffer, 32,0 );
     me.elements['a_tex']		= new mesh.Element.float32( 2, vBuffer, 32,12 );
     me.elements['a_normal']		= new mesh.Element.float32( 3, vBuffer, 32,20 );
-    me.indices					= new mesh.Element.index8( vIndex,0 );;
+    me.indices = new mesh.Element.index8( vIndex,0 );
     return me;
   }
 
@@ -85,11 +86,11 @@ class Texture	{
 		infoColor = new tex.LevelInfo.color(1,1,true);
 	
 	tex.Texture white()	{
-		final t = bind.spawn();
+		final tex.Texture t = bind.spawn();
 		final color = help.toUint8([
 			0xFF,0xFF,0xFF,0xFF
 		]);
-		final texData = new tex.Data.color( color, true );
+		final tex.Data texData = new tex.Data.color( color, true );
 		bind.load( t, infoColor, texData );	
 		bind.state( t, false, false, 0 );
 		return t;

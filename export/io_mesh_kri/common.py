@@ -22,11 +22,16 @@ class Writer:
 		self.pos = 0
 		self.counter = {'':0,'i':0,'w':0,'e':0}
 		self.stop = False
+	def sizeOf(self,tip):
+		import struct
+		return struct.calcsize(tip)
 	def pack(self,tip,*args):
 		import struct
+		#assert self.pos
 		self.fx.write( struct.pack('<'+tip,*args) )
 	def array(self,tip,ar):
 		import array
+		#assert self.pos
 		array.array(tip,ar).tofile(self.fx)
 	def text(self,*args):
 		for s in args:

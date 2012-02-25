@@ -18,6 +18,7 @@ class App {
   dom.CanvasElement canvas = null;
   int timerHandle = -1;
   int canvasOffX = 0, canvasOffY = 0;
+  static final localOnly = true;
  
   App();
   
@@ -36,13 +37,17 @@ class App {
     gl.enable( dom.WebGLRenderingContext.CULL_FACE );
     gl.depthMask(true);
     
-    final load.Loader loader = new load.Loader('http://demo.kvatom.com/');
-    final String vertText = loader.getNow('shade/simple.glslv');
-    final String fragText = loader.getNow('shade/simple.glslf');
+    String vertText, fragText;
     
-//	final String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
-//		'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
-//	final String fragText = 'uniform lowp vec4 color; void main() {gl_FragColor=color;}';
+    if (localOnly)	{
+    	vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
+			'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
+		fragText = 'void main() {gl_FragColor=vec4(1.0);}';
+    }else	{
+	    final load.Loader loader = new load.Loader('http://demo.kvatom.com/');
+    	vertText = loader.getNow('shade/simple.glslv');
+	    fragText = loader.getNow('shade/simple.glslf');
+    }
     
     shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
     shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
@@ -64,16 +69,20 @@ class App {
 
     final tex.Manager texLoader = new tex.Manager( gl, 'http://demo.kvatom.com/image/' );
     final tex.Texture texWhite = new gen.Texture(gl).white();
-    //final tex.Texture carTexture = texLoader.load( 'CAR.TGA', texWhite );
-    final tex.Binding texBind = new tex.Binding.tex2d(gl);
-    //texBind.state( carTexture, false, false, 0 );
-    //log.debug( carTexture );
+    tex.Texture cubeTex = texWhite;
+    if (!localOnly)	{
+    	final tex.Texture carTexture = texLoader.load( 'CAR.TGA', texWhite );
+    	final tex.Binding texBind = new tex.Binding.tex2d(gl);
+    	texBind.state( carTexture, false, false, 0 );
+    	log.debug( carTexture );
+    	cubeTex = carTexture;
+    }
     
     shader = new shade.Instance( effect );
     shader.dataSources.add( data );
     shader.parameters['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
     shader.parameters['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
-    shader.parameters['t_main'] = texWhite;
+    shader.parameters['t_main'] = cubeTex;
     me.draw( gl, shader );
     //log.debug( shader );
     

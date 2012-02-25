@@ -87,18 +87,26 @@ def save_mesh(filename,context):
 	if ob.parent and ob.parent.type == 'ARMATURE':
 		arm = ob.parent.data
 	# steady...
+	print('Exporting Mesh...')
 	out = Writer.inst = Writer(filename)
-	attribs = collect_attributes(ob.data, arm, ob.vertex_groups)
+	attribs,indices,nv,ni = collect_attributes(ob.data, arm, ob.vertex_groups)
 	# go!
+	totalFm = ''.join(a.type for a in attribs)
+	assert len(totalFm) == 2*len(attribs)
+	stride = out.sizeOf(totalFm)
+	out.pack('LL', nv,ni)
+	out.text('3s')	# topology
+	out.pack('BB', 1, stride)
+	out.text(totalFm)
 	for a in attribs:
 		out.text(a.name)
-		out.pack('2sB', bytes(a.type,'ascii'), a.fixed)
-	out.text('')
+		out.pack('B', a.fixed)
 	for vats in zip(*(a.data for a in attribs)):
 		for a,d in zip(attribs,vats):
 			out.array( a.type[1], d )
-	out.conclude()
 	# done
+	out.conclude()
+	print('Done.')
 
 
 def collect_attributes(mesh,armature,groups):
@@ -107,7 +115,7 @@ def collect_attributes(mesh,armature,groups):
 	for layer in mesh.uv_textures:
 		if not len(layer.data):
 			out.log(1,'e','UV layer is locked by the user')
-			return
+			return None,None,0,0
 	hasQuat = len(mesh.uv_textures)>0 and Settings.putQuat
 	ar_face = []
 	for i,face in enumerate(mesh.faces):
@@ -131,7 +139,7 @@ def collect_attributes(mesh,armature,groups):
 			out.log(1,'w','%d pure faces detected' % (n_bad_face))
 	if not len(ar_face):
 		out.log(1,'e','object has no faces')
-		return
+		return None,None,0,0
 
 	# 2: fill sparsed vertex array
 	avg,set_vert = 0.0,{}
@@ -268,9 +276,6 @@ def collect_attributes(mesh,armature,groups):
 	out.logu(1, 'total: %d vertices, %d faces' % (len(ar_vert),len(ar_face)))
 	avg_vu = 3.0 * len(ar_face) / len(ar_vert)
 	out.log(1,'i', '%.2f avg vertex usage' % (avg_vu))
-	out.begin('mesh')
-	out.pack('H', len(ar_vert) )
-	out.end()
 	
 	attribs = []
 	
@@ -376,4 +381,4 @@ def collect_attributes(mesh,armature,groups):
 		out.logu(1, 'bone weights: %d empty, %.1f avg' % (nempty,avg))
 	
 	# 9: the end!
-	return attribs
+	return attribs, None, len(ar_vert), 0

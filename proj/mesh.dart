@@ -33,13 +33,16 @@ class Mesh {
   final Map<String,Element> elements;
   Element indices = null;
   int nVert = 0, nInd = 0;
-  final int polyType;
   final List<shade.Effect> blackList;
+  int polyType = 0;
   
-  Mesh(final String type):
-    elements = new Map<String,Element>(),
-  	polyType = new help.Enum().polyTypes[type],
+  Mesh():
+  	elements = new Map<String,Element>(),
   	blackList = new List<shade.Effect>();
+
+  void setPolygons(final String type)	{
+  	polyType = new help.Enum().polyTypes[type];
+  }
   
   bool contains(final dom.WebGLActiveInfo info)  {
     final Element el = elements[info.name];
@@ -72,6 +75,7 @@ class Mesh {
     });
     bindArray.unbind();
     // draw
+    assert (polyType != 0 && polyType != null);
     if (indices != null)  {
       buff.Binding bindIndex = new buff.Binding.index(gl);
       bindIndex.bindRead( indices.buffer );
@@ -96,51 +100,58 @@ class Manager extends load.Manager<Mesh>	{
 	
 	Manager( this.gl, String path ): super.buffer(path);
 	
-	Mesh spawn(Mesh fallback) => new Mesh('3');
+	Mesh spawn(Mesh fallback) => new Mesh();
 	
 	void fill( Mesh m, final dom.ArrayBuffer buffer ){
 		final buff.Binding arrayBinding = new buff.Binding.array(gl);
 		final load.BinaryReader br = new load.BinaryReader(buffer);
 		final log = dom.window.console;
-		final buff.Unit unit = new buff.Unit( gl, null );
-		final int stride = br.getByte();
-		String name;
-		int offset = 0;
-		while (!(name = br.getString()).isEmpty())	{
-			final int count = br.getByte() - '0'.charCodeAt(0);
-			final String stype = new String.fromCharCodes([ br.getByte() ]);
-			final bool fixedPoint = br.getByte() > 0;
-			int type = 0, eSize = 0;
-			switch(stype)	{
-			case 'b':	type = dom.WebGLRenderingContext.BYTE;
-				eSize = 1; break;
-			case 'B':	type = dom.WebGLRenderingContext.UNSIGNED_BYTE;
-				eSize = 1; break;
-			case 'h':	type = dom.WebGLRenderingContext.SHORT;
-				eSize = 2; break;
-			case 'H':	type = dom.WebGLRenderingContext.UNSIGNED_SHORT;
-				eSize = 2; break;
-			case 'l': case 'i':	type = dom.WebGLRenderingContext.INT;
-				eSize = 4; break;
-			case 'L': case 'I':	type = dom.WebGLRenderingContext.UNSIGNED_INT;
-				eSize = 4; break;
-			case 'f':	type = dom.WebGLRenderingContext.FLOAT;
-				eSize = 4; break;
-			}
-			m.elements[name] = new Element( type, fixedPoint, count, unit, stride, offset );
-			offset += eSize * count;
-		}
-		assert (offset == stride);
 		m.nVert = br.getLarge(4);
-		m.nInd = br.getLarge(2);
-		final int totalSize = stride * m.nVert;
-		final int indexOffset = br.getOffset() + totalSize;
-		arrayBinding.load( unit, br.getSubArray(totalSize) );
-		if (m.nInd>0)	{
-			final buff.Binding indexBinding = new buff.Binding.index(gl);
-			final buff.Unit indexUnit = indexBinding.spawn(
-				new dom.Uint8Array.fromBuffer( buffer.slice(indexOffset) ));
-			m.indices = new Element.index16( indexUnit );
+		m.nInd = br.getLarge(4);
+		m.setPolygons( br.getString() );
+		final int numBuffers = br.getByte();
+		for (int iBuf=0; iBuf<numBuffers; ++iBuf)	{
+			final buff.Unit unit = new buff.Unit( gl, null );
+			final int stride = br.getByte();
+			final String format = br.getString();
+			int offset = 0;
+			for (int i=0; i<format.length; i+=2)	{
+				final int count = Math.parseInt( format[i+0] );
+				int type = 0, eSize = 0;
+				switch( format[i+1] ){
+				case 'b':	type = dom.WebGLRenderingContext.BYTE;
+					eSize = 1; break;
+				case 'B':	type = dom.WebGLRenderingContext.UNSIGNED_BYTE;
+					eSize = 1; break;
+				case 'h':	type = dom.WebGLRenderingContext.SHORT;
+					eSize = 2; break;
+				case 'H':	type = dom.WebGLRenderingContext.UNSIGNED_SHORT;
+					eSize = 2; break;
+				case 'l': case 'i':	type = dom.WebGLRenderingContext.INT;
+					eSize = 4; break;
+				case 'L': case 'I':	type = dom.WebGLRenderingContext.UNSIGNED_INT;
+					eSize = 4; break;
+				case 'f':	type = dom.WebGLRenderingContext.FLOAT;
+					eSize = 4; break;
+				}
+				final String name = br.getString();
+				final int bufType = br.getByte();
+				final Element elem = new Element( type, bufType>0, count, unit, stride, offset );
+				if (stride==0)	{
+					assert (count==1 && bufType==2);
+					m.indices = elem;
+				}else	{
+					m.elements[name] = elem;
+				}
+				offset += eSize * count;
+			}
+			assert (stride==0 || offset == stride);
+			if (stride==0)	{
+				final buff.Binding indexBinding = new buff.Binding.index(gl);
+				indexBinding.load( unit, br.getSubArray(offset * m.nInd) );
+			}else	{
+				arrayBinding.load( unit, br.getSubArray(stride * m.nVert) );
+			}
 		}
 	}
 }

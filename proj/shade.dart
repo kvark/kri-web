@@ -35,10 +35,10 @@ class Program extends core.Handle<dom.WebGLProgram> {
 
   Program( final dom.WebGLRenderingContext gl ): super( gl.createProgram(), null );
   
-  bool link( final dom.WebGLRenderingContext gl, List<Unit> units ){
-  	final h = getInitHandle();
-    for (final unit in units) {
-      assert( unit.isReady() );
+  bool link( final dom.WebGLRenderingContext gl, final List<Unit> units ){
+  	final dom.WebGLProgram h = getInitHandle();
+    for (final Unit unit in units) {
+      assert( unit.isFull() );
       gl.attachShader( h, unit.getLiveHandle() );
     }
     gl.linkProgram( h );
@@ -148,7 +148,7 @@ class Instance  {
     int texId = 0;
     for (final Uniform uni in effect.uniforms)  {
       var value = parameters[uni.info.name];
-      if (!value)	{
+      if (value==null)	{
       	dom.window.console.debug('Parameter not found: ' + uni.info.name);
       	return false;	
       }
