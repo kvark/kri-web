@@ -53,6 +53,8 @@ class Writer:
 		self.fx.write( struct.pack('<L',off) )
 		self.fx.seek(+off+0,1)
 		self.pos = 0
+	def tell(self):
+		return self.fx.tell()
 	def log(self,indent,level,message):
 		self.counter[level] += 1
 		if level=='i' and not Settings.showInfo:

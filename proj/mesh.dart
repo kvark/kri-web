@@ -9,19 +9,19 @@
 class Element  {
   // semantics
   final int type;
-  final bool normalized;
+  final bool normalized, canInterpolate;
   final int count;
   // location
   final buff.Unit buffer;
   final int stride, offset;
   
-  Element( this.type, this.normalized, this.count, this.buffer, this.stride, this.offset );
+  Element( this.type, this.normalized, this.canInterpolate, this.count, this.buffer, this.stride, this.offset );
   Element.float32( this.count, this.buffer, this.stride, this.offset ):
-    type = dom.WebGLRenderingContext.FLOAT, normalized=false;
-  Element.index16( this.buffer, this.offset ):
-    type = dom.WebGLRenderingContext.UNSIGNED_SHORT, stride=0, count=0, normalized=false;
-  Element.index8 ( this.buffer, this.offset ):
-    type = dom.WebGLRenderingContext.UNSIGNED_BYTE,  stride=0, count=0, normalized=false;
+    type = dom.WebGLRenderingContext.FLOAT, normalized=false, canInterpolate=true;
+  Element.index16( buff.Unit buf, int off ):
+  	this( dom.WebGLRenderingContext.UNSIGNED_SHORT,	false, false, 0, buf, 0, off );
+  Element.index8 ( buff.Unit buf, int off ):
+  	this( dom.WebGLRenderingContext.UNSIGNED_BYTE,	false, false, 0, buf, 0, off );
   
   void bind( final dom.WebGLRenderingContext gl, int loc ){
     gl.vertexAttribPointer( loc, count, type, normalized, stride, offset );
@@ -30,13 +30,15 @@ class Element  {
 
 
 class Mesh {
+  bool visited = false;
   final Map<String,Element> elements;
+  final Mesh fallback;
   Element indices = null;
   int nVert = 0, nInd = 0;
   final List<shade.Effect> blackList;
   int polyType = 0;
   
-  Mesh():
+  Mesh( this.fallback ):
   	elements = new Map<String,Element>(),
   	blackList = new List<shade.Effect>();
 
@@ -50,6 +52,12 @@ class Mesh {
   }
   
   bool draw( final dom.WebGLRenderingContext gl, final shade.Instance shader ){
+  	// try fallback
+  	if (nVert==0)	{
+  		if (fallback!=null)
+  			return fallback.draw(gl,shader);
+  		return false;
+  	}
 	if (blackList.indexOf( shader.effect )>=0)
 		return false;
     // check consistency
@@ -75,8 +83,15 @@ class Mesh {
     });
     bindArray.unbind();
     // draw
-    assert (polyType != 0 && polyType != null);
+    assert (polyType > 0);
     if (indices != null)  {
+      if (!visited)	{
+      	dom.window.console.debug('draw');
+      	//dom.window.console.debug(indices);
+      	dom.window.console.debug(polyType);
+      	dom.window.console.debug(nInd);
+      	visited = true;
+      }
       buff.Binding bindIndex = new buff.Binding.index(gl);
       bindIndex.bindRead( indices.buffer );
       gl.drawElements( polyType, nInd, indices.type, 0 );
@@ -100,20 +115,22 @@ class Manager extends load.Manager<Mesh>	{
 	
 	Manager( this.gl, String path ): super.buffer(path);
 	
-	Mesh spawn(Mesh fallback) => new Mesh();
+	Mesh spawn(Mesh fallback) => new Mesh(fallback);
 	
-	void fill( Mesh m, final dom.ArrayBuffer buffer ){
+	void fill( final Mesh m, final load.IntReader br ){
 		final buff.Binding arrayBinding = new buff.Binding.array(gl);
-		final load.BinaryReader br = new load.BinaryReader(buffer);
 		final log = dom.window.console;
 		m.nVert = br.getLarge(4);
 		m.nInd = br.getLarge(4);
+		log.debug(m.nVert);
+		log.debug(m.nInd);
 		m.setPolygons( br.getString() );
 		final int numBuffers = br.getByte();
 		for (int iBuf=0; iBuf<numBuffers; ++iBuf)	{
 			final buff.Unit unit = new buff.Unit( gl, null );
 			final int stride = br.getByte();
 			final String format = br.getString();
+			log.debug(':'+format);
 			int offset = 0;
 			for (int i=0; i<format.length; i+=2)	{
 				final int count = Math.parseInt( format[i+0] );
@@ -134,11 +151,13 @@ class Manager extends load.Manager<Mesh>	{
 				case 'f':	type = dom.WebGLRenderingContext.FLOAT;
 					eSize = 4; break;
 				}
-				final String name = br.getString();
-				final int bufType = br.getByte();
-				final Element elem = new Element( type, bufType>0, count, unit, stride, offset );
+				final String name = 'a_' + br.getString();
+				final bool fixedPoint	= br.getByte() > 0;
+				final bool interpolate	= br.getByte() > 0;
+				log.debug(' ' + name);
+				final Element elem = new Element( type, fixedPoint, interpolate, count, unit, stride, offset );
 				if (stride==0)	{
-					assert (count==1 && bufType==2);
+					assert (count==1);
 					m.indices = elem;
 				}else	{
 					m.elements[name] = elem;
@@ -146,12 +165,16 @@ class Manager extends load.Manager<Mesh>	{
 				offset += eSize * count;
 			}
 			assert (stride==0 || offset == stride);
+			log.debug('Offset before block: ' + br.tell().toString());
 			if (stride==0)	{
 				final buff.Binding indexBinding = new buff.Binding.index(gl);
-				indexBinding.load( unit, br.getSubArray(offset * m.nInd) );
+				indexBinding.load( unit, br.getArray(offset * m.nInd) );
 			}else	{
-				arrayBinding.load( unit, br.getSubArray(stride * m.nVert) );
+				arrayBinding.load( unit, br.getArray(stride * m.nVert) );
 			}
+			log.debug('Offset after block: ' + br.tell().toString());
 		}
+		log.debug('nVert: ' + m.nVert.toString());
+		assert (br.empty());
 	}
 }

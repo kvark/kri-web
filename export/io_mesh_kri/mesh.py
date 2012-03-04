@@ -66,12 +66,20 @@ class Face:
 ###  MESH   ###
 
 class Attribute:
-	__slots__ = 'name', 'type', 'fixed', 'data'
+	__slots__ = 'name', 'type', 'fixed', 'data', 'interpolate'
 	def __init__(self, name, type, fixed = False):
 		self.name = name
 		self.type = type
 		self.fixed = fixed
 		self.data = []
+		self.interpolate = True
+
+class Mesh:
+	__slots__ = 'nv','ni','attribs','index'
+	def __init__(self):
+		self.nv = self.ni = 0
+		self.attribs = []
+		self.index = None
 
 
 def save_mesh(filename,context):
@@ -89,21 +97,34 @@ def save_mesh(filename,context):
 	# steady...
 	print('Exporting Mesh...')
 	out = Writer.inst = Writer(filename)
-	attribs,indices,nv,ni = collect_attributes(ob.data, arm, ob.vertex_groups)
+	km = collect_attributes(ob.data, arm, ob.vertex_groups)
 	# go!
-	totalFm = ''.join(a.type for a in attribs)
-	assert len(totalFm) == 2*len(attribs)
+	totalFm = ''.join(a.type for a in km.attribs)
+	assert len(totalFm) == 2*len(km.attribs)
 	stride = out.sizeOf(totalFm)
-	out.pack('LL', nv,ni)
-	out.text('3s')	# topology
-	out.pack('BB', 1, stride)
+	out.pack('LL', km.nv, km.ni)
+	out.text('3')	# topology
+	out.pack('BB', 2, stride)
 	out.text(totalFm)
-	for a in attribs:
+	for a in km.attribs:
 		out.text(a.name)
-		out.pack('B', a.fixed)
-	for vats in zip(*(a.data for a in attribs)):
-		for a,d in zip(attribs,vats):
-			out.array( a.type[1], d )
+		out.pack('BB', a.fixed, a.interpolate)
+	seqStart = out.tell()
+	for vats in zip(*(a.data for a in km.attribs)):
+		for a,d in zip( km.attribs, vats ):
+			out.array(a.type[1], d)
+	assert out.tell() == seqStart + km.nv*stride
+	# indices
+	if km.index:
+		totalFm = km.index.type
+		stride = out.sizeOf(totalFm)
+		out.pack('B',0)
+		out.text(totalFm, km.index.name)
+		out.pack('BB',0,0)
+		seqStart = out.tell()
+		for d in km.index.data:
+			out.array(km.index.type[1], d)
+		assert out.tell() == seqStart + km.ni*stride
 	# done
 	out.conclude()
 	print('Done.')
@@ -268,6 +289,17 @@ def collect_attributes(mesh,armature,groups):
 		for f in ar_face: qi_check(f)
 	del ex_face
 
+	# 6: materials
+#	out.begin('entity')
+#	for fn,m in zip(face_num,mesh.materials):
+#		if not fn: break
+#		out.pack('H', fn)
+#		s = (m.name	if m else '')
+#		out.text(s)
+#		out.logu(1, '+entity: %d faces, [%s]' % (fn,s))
+#	out.pack('H',0)
+#	out.end()
+
 	# 5: face indices
 	ar_face.sort(key = lambda x: x.mat)
 	face_num = (len(mesh.materials)+1) * [0]
@@ -277,24 +309,25 @@ def collect_attributes(mesh,armature,groups):
 	avg_vu = 3.0 * len(ar_face) / len(ar_vert)
 	out.log(1,'i', '%.2f avg vertex usage' % (avg_vu))
 	
-	attribs = []
+	km = Mesh()
 	
 	if 'putVertex':
 		vat = Attribute('position', '3f')
-		attribs.append(vat)
+		km.attribs.append(vat)
 		for v in ar_vert:
 			vat.data.append([ v.coord.x, v.coord.y, v.coord.z ])
 			
 	if Settings.putNormal:
 		vat = Attribute('normal', '3f')	#todo: use 'sint16f'
-		attribs.append(vat)
+		km.attribs.append(vat)
 		for v in ar_vert:
 			vat.data.append([ v.normal.x, v.normal.y, v.normal.z ])
 
 	if hasQuat:
 		vat1 = Attribute('quaternion', '4f')	#todo: use 'sint16f'
 		vat2 = Attribute('handedness', '1f')	#todo: use 'sint8f'
-		attribs.extend([ vat1,vat2 ])
+		vat1.interpolate = vat2.interpolate = Settings.doQuatInt
+		km.attribs.extend([ vat1,vat2 ])
 		for v in ar_vert:
 			vat1.data.append([ v.quat.x, v.quat.y, v.quat.z, v.quat.w ])
 			vat2.data.append([ v.face.hand ])
@@ -303,8 +336,8 @@ def collect_attributes(mesh,armature,groups):
 		all = mesh.uv_textures
 		out.log(1,'i', 'UV layers: %d' % (len(all)))
 		for i,layer in enumerate(all):
-			vat = Attribute('tex'+i, '2f')	#todo: use 'sint16f'
-			attribs.append(vat)
+			vat = Attribute('tex%d' % i, '2f')	#todo: use 'sint16f'
+			km.attribs.append(vat)
 			for v in ar_vert:
 				assert i<len(v.tex)
 				tc = v.tex[i]
@@ -314,8 +347,8 @@ def collect_attributes(mesh,armature,groups):
 		all = mesh.vertex_colors
 		out.log(1,'i', 'Color layers: %d' % (len(all)))
 		for i,layer in enumerate(all):
-			vat = Attribute('color'+i, '4f')	#todo: use 'uint8f'
-			attribs.append(vat)
+			vat = Attribute('color%d' % i, '4f')	#todo: use 'uint8f'
+			km.attribs.append(vat)
 			for v in ar_vert:
 				assert i<len(v.color)
 				tc = v.color[i];
@@ -328,28 +361,18 @@ def collect_attributes(mesh,armature,groups):
 			for v in ar_vert:
 				pass
 
-#	out.begin('v_ind')
-#	out.pack('H', len(ar_face))
-#	for face in ar_face:
-#		out.array('H', face.vi)
-#	out.end()
+	if 'index':
+		# todo: choose the smallest type
+		km.ni = len(ar_face) * 3
+		km.index = vat = Attribute('', '1H')
+		for face in ar_face:
+			vat.data.append( face.vi )
 
-	# 6: materials
-#	out.begin('entity')
-#	for fn,m in zip(face_num,mesh.materials):
-#		if not fn: break
-#		out.pack('H', fn)
-#		s = (m.name	if m else '')
-#		out.text(s)
-#		out.logu(1, '+entity: %d faces, [%s]' % (fn,s))
-#	out.pack('H',0)
-#	out.end()
-	
 	# 8: bone weights
 	if armature:
 		vat1 = Attribute('bone_ids', '4B', False)
 		vat2 = Attribute('bone_weights', '4B', True)
-		attribs.extend([ vat1,vat2 ])
+		km.attribs.extend([ vat1,vat2 ])
 		nempty, avg = 0, 0.0
 		for v in ar_vert:
 			nw = len(v.vert.groups)
@@ -381,4 +404,5 @@ def collect_attributes(mesh,armature,groups):
 		out.logu(1, 'bone weights: %d empty, %.1f avg' % (nempty,avg))
 	
 	# 9: the end!
-	return attribs, None, len(ar_vert), 0
+	km.nv = len(ar_vert)
+	return km

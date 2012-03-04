@@ -61,12 +61,12 @@ class Mesh	{
 	final buff.Unit vBuffer = bArr.spawn( help.toFloat32(v2) );
     final buff.Unit vIndex  = bInd.spawn( help.toUint8(i2) );
  
-    final mesh.Mesh me = new mesh.Mesh();
+    final mesh.Mesh me = new mesh.Mesh(null);
     me.setPolygons('3');
-    me.nVert = v2.length;
-    me.nInd = i2.length;
+    me.nVert = 24;
+    me.nInd = 36;
     me.elements['a_position']	= new mesh.Element.float32( 3, vBuffer, 32,0 );
-    me.elements['a_tex']		= new mesh.Element.float32( 2, vBuffer, 32,12 );
+    me.elements['a_tex0']		= new mesh.Element.float32( 2, vBuffer, 32,12 );
     me.elements['a_normal']		= new mesh.Element.float32( 3, vBuffer, 32,20 );
     me.indices = new mesh.Element.index8( vIndex,0 );
     return me;

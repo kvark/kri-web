@@ -116,8 +116,7 @@ class Manager extends load.Manager<Texture>	{
 	
 	Texture spawn( Texture fallback )=> new Texture( bid.gl, fallback );
 	
-	void fill( Texture tex, final dom.ArrayBuffer buffer ){
-		final load.BinaryReader br = new load.BinaryReader(buffer);
+	void fill( final Texture tex, final load.IntReader br ){
 		final log = dom.window.console;
 		// read header
 		final int idSize = br.getByte();
@@ -139,7 +138,7 @@ class Manager extends load.Manager<Texture>	{
 		br.getLarge( idSize );	//skip id
 		final levInfo = new LevelInfo.color( width, height, bits>24 );
 		// warning: WebGL doesn't like internal format RGBA while the input format is RGB
-		final texData = new Data.color( br.getSubArray( width*height*(bits>>3) ), bits>24 );
+		final texData = new Data.color( br.getArray( width*height*(bits>>3) ), bits>24 );
 		//assert (texData.buffer.length == (bits>>3)*width*height);
 		bid.load( tex, levInfo, texData );
 	}

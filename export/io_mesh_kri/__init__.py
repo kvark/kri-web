@@ -1,12 +1,14 @@
 # <pep8 compliant>
 
+extension = '.k3mesh'
+
 bl_info = {
-    'name': 'KRI Mesh format (.k3m)',
+    'name': 'KRI Mesh format ',
     'author': 'Dzmitry Malyshau',
     'version': (0, 1, 0),
     'blender': (2, 6, 2),
     'api': 36079,
-    'location': 'File > Export > Kri Mesh (.k3m)',
+    'location': 'File > Export > Kri Mesh (%s)' % extension,
     'description': 'Export selected mesh into KRI.',
     'warning': '',
     'wiki_url': 'http://code.google.com/p/kri/wiki/Exporter',
@@ -30,8 +32,8 @@ from io_mesh_kri.mesh	import save_mesh
 class ExportMesh( bpy.types.Operator, ExportHelper ):
 	'''Export mesh to KRI format'''
 	bl_idname	= 'export_mesh.kri_mesh'
-	bl_label	= '-= KRI Mesh=- (.k3m)'
-	filename_ext	= '.k3m'
+	bl_label	= '-= KRI Mesh=- (%s)' % extension
+	filename_ext	= extension
 
 	filepath	= StringProperty( name='File Path',
 		description='Filepath used for exporting the KRI mesh',

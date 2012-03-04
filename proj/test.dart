@@ -18,7 +18,7 @@ class App {
   dom.CanvasElement canvas = null;
   int timerHandle = -1;
   int canvasOffX = 0, canvasOffY = 0;
-  static final localOnly = true;
+  static final localOnly = false;
  
   App();
   
@@ -35,6 +35,7 @@ class App {
     
     gl.enable( dom.WebGLRenderingContext.DEPTH_TEST );
     gl.enable( dom.WebGLRenderingContext.CULL_FACE );
+    gl.frontFace( dom.WebGLRenderingContext.CW );
     gl.depthMask(true);
     
     String vertText, fragText;
@@ -54,6 +55,7 @@ class App {
     shade.Effect effect = new shade.Effect( gl, [shVert,shFrag] );
     
     me = new gen.Mesh(gl).cubeUnit();
+    tex.Texture texture = new gen.Texture(gl).white();
 
     // draw  scene
     final frame.Control con = new frame.Control(gl);
@@ -66,23 +68,22 @@ class App {
     final space.Node node = new space.Node( 'model-node' );
     node.space = new space.Space.fromMoveScale( 0.0,0.0,5.0, 1.0 );
     final view.DataSource data = new view.DataSource( node, camera );
-
-    final tex.Manager texLoader = new tex.Manager( gl, 'http://demo.kvatom.com/image/' );
-    final tex.Texture texWhite = new gen.Texture(gl).white();
-    tex.Texture cubeTex = texWhite;
+	
     if (!localOnly)	{
-    	final tex.Texture carTexture = texLoader.load( 'CAR.TGA', texWhite );
+    	final tex.Manager texLoader = new tex.Manager( gl, 'http://demo.kvatom.com/image/' );
+    	texture = texLoader.load( 'CAR.TGA', texture );
     	final tex.Binding texBind = new tex.Binding.tex2d(gl);
-    	texBind.state( carTexture, false, false, 0 );
-    	log.debug( carTexture );
-    	cubeTex = carTexture;
+    	texBind.state( texture, false, false, 0 );
+    	//log.debug( texture );
+    	final mesh.Manager meLoader = new mesh.Manager( gl, 'http://demo.kvatom.com/mesh/' );
+    	me = meLoader.load( 'cube.k3mesh', me );
     }
     
     shader = new shade.Instance( effect );
     shader.dataSources.add( data );
     shader.parameters['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
     shader.parameters['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
-    shader.parameters['t_main'] = cubeTex;
+    shader.parameters['t_main'] = texture;
     me.draw( gl, shader );
     //log.debug( shader );
     
