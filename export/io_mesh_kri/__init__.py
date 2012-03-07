@@ -1,19 +1,19 @@
 # <pep8 compliant>
 
-extension = '.k3mesh'
-
 bl_info = {
     'name': 'KRI Mesh format ',
     'author': 'Dzmitry Malyshau',
     'version': (0, 1, 0),
     'blender': (2, 6, 2),
     'api': 36079,
-    'location': 'File > Export > Kri Mesh (%s)' % extension,
+    'location': 'File > Export > Kri Mesh (.k3mesh)',
     'description': 'Export selected mesh into KRI.',
     'warning': '',
     'wiki_url': 'http://code.google.com/p/kri/wiki/Exporter',
     'tracker_url': '',
     'category': 'Import-Export'}
+
+extension = '.k3mesh'
 
 # To support reload properly, try to access a package var, if it's there, reload everything
 if 'bpy' in locals():

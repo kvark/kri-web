@@ -13,6 +13,24 @@ class Mesh	{
   Mesh(gl):
   	bArr = new buff.Binding.array(gl),
   	bInd = new buff.Binding.index(gl);
+  
+  mesh.Mesh axis()	{
+  	final vertices = [
+  		new math.Vector.zero(),
+  		new math.Vector.unitX(),
+  		new math.Vector.zero(),
+  		new math.Vector.unitY(),
+  		new math.Vector.zero(),
+  		new math.Vector.unitZ(),
+  	];
+  	final buff.Unit vBuffer = bArr.spawn( help.toFloat32(vertices) );
+ 
+    final mesh.Mesh me = new mesh.Mesh(null);
+    me.setPolygons('2');
+    me.nVert = 6;
+    me.elements['a_position']	= new mesh.Element.float32( 3, vBuffer, 12,0 );
+    return me;
+  }
 
   mesh.Mesh cube(final math.Vector size) {
   	final vertices = [
@@ -51,7 +69,7 @@ class Mesh	{
   		v2.addAll( texCoords.getRange((i&3)*2,2) );
   		v2.addAll( normals	.getRange(id4*3,3) );
   	}
-  	final offsets = [0,2,3,0,1,2];
+  	final offsets = [0,3,2,0,2,1];
   	final List<int> i2 = [];
   	for(int i=0; i<36; ++i)	{
   		final int id6 = (i/6).truncate();

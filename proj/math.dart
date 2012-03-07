@@ -13,6 +13,7 @@ class Vector implements IDoubleList {
   final double x,y,z,w;
   
   List<double> toList() => [x,y,z,w];
+  String toString() => "(${x},${y},${z},${w})";
   
   Vector( this.x, this.y, this.z, this.w );
   Vector.mono(double d): this(d,d,d,d);
@@ -27,7 +28,7 @@ class Vector implements IDoubleList {
   Vector operator-(final Vector v) => new Vector( x-v.x, y-v.y, z-v.z, w-v.w );
   Vector operator*(final Vector v) => new Vector( x*v.x, y*v.y, z*v.z, w*v.w );
   
-  Vector scale(double val)    => new Vector( x*val, y*val, z*val, w*val );
+  Vector scale(double val)    => new Vector( x*val, y*val, z*val, w );
   double dot(final Vector v)  => x*v.x + y*v.y + z*v.z + w*v.w;
   double lengthSquare() => dot( this );
   double length() => Math.sqrt( dot(this) );
@@ -36,7 +37,7 @@ class Vector implements IDoubleList {
   
   bool isZero() => lengthSquare() < epsilon;
   
-  Vector inverse() => new Vector( 1.0/x, 1.0/y, 1.0/z, 1.0/w );
+  Vector inverse() => new Vector( 1.0/x, 1.0/y, 1.0/z, w );
   
   Vector cross(final Vector v)  {
     assert( w==0.0 && v.w==0.0 );
@@ -75,13 +76,17 @@ class Matrix implements IDoubleList  {
     return new Matrix(v,v,v,v);
   }
 
-  Matrix.fromQuat( final Quaternion q, final double s, final Vector p ):
-      x = new Vector( 2.0*s*(0.5 - q.y*q.y - q.z*q.z), 2.0*q.x*q.y + 2.0*q.z*q.w, 2.0*q.x*q.z - 2.0*q.y*q.w, p.x ),
-      y = new Vector( 2.0*q.x*q.y - 2.0*q.z*q.w, 2.0*s*(0.5 - q.x*q.x - q.z*q.z), 2.0*q.y*q.z + 2.0*q.x*q.w, p.y ),
-      z = new Vector( 2.0*q.x*q.z + 2.0*q.y*q.w, 2.0*q.y*q.z - 2.0*q.x*q.w, 2.0*s*(0.5 - q.x*q.x - q.y*q.y), p.z ),
-      w = new Vector.unitW();
+  Matrix.fromQuat( final Quaternion q, final double s, final Vector p ): this(
+      new Vector( 2.0*s*(0.5 - q.y*q.y - q.z*q.z), 2.0*s*(q.x*q.y - q.z*q.w), 2.0*s*(q.x*q.z + q.y*q.w), p.x ),
+      new Vector( 2.0*s*(q.x*q.y + q.z*q.w), 2.0*s*(0.5 - q.z*q.z - q.x*q.x), 2.0*s*(q.y*q.z - q.x*q.w), p.y ),
+      new Vector( 2.0*s*(q.x*q.z - q.y*q.w), 2.0*s*(q.y*q.z + q.x*q.w), 2.0*s*(0.5 - q.x*q.x - q.y*q.y), p.z ),
+      new Vector.unitW() );
   
   List<double> toList() => [x.x,y.x,z.x,w.x, x.y,y.y,z.y,w.y, x.z,y.z,z.z,w.z, x.w,y.w,z.w,w.w];
+  String toString()	{
+  	final Matrix t = transpose();
+  	return "(x=${t.x},y=${t.y},z=${t.z},w=${t.w}";
+  }
   
   Matrix operator+(final Matrix m) => new Matrix( x + m.x, y + m.y, z + m.z, w + m.w );
   Matrix operator-(final Matrix m) => new Matrix( x - m.x, y - m.y, z - m.z, w - m.w );
@@ -153,6 +158,7 @@ class Quaternion implements IDoubleList  {
   final double x,y,z,w;
   
   List<double> toList() => [x,y,z,w];
+  String toString() => "(${x},${y},${z},${w})";
   
   Quaternion( this.x, this.y, this.z, this.w );
   Quaternion.identity(): this(0.0,0.0,0.0,1.0);

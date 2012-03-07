@@ -49,7 +49,7 @@ class IntReader	{
 
 	int getByte()	{
 		++_offset;
-		return _iter.next();
+		return _iter.next() & 0xFF;
 	}
 	
 	int getLarge(int num)	{

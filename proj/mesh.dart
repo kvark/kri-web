@@ -30,7 +30,6 @@ class Element  {
 
 
 class Mesh {
-  bool visited = false;
   final Map<String,Element> elements;
   final Mesh fallback;
   Element indices = null;
@@ -85,13 +84,6 @@ class Mesh {
     // draw
     assert (polyType > 0);
     if (indices != null)  {
-      if (!visited)	{
-      	dom.window.console.debug('draw');
-      	//dom.window.console.debug(indices);
-      	dom.window.console.debug(polyType);
-      	dom.window.console.debug(nInd);
-      	visited = true;
-      }
       buff.Binding bindIndex = new buff.Binding.index(gl);
       bindIndex.bindRead( indices.buffer );
       gl.drawElements( polyType, nInd, indices.type, 0 );
@@ -120,8 +112,12 @@ class Manager extends load.Manager<Mesh>	{
 	void fill( final Mesh m, final load.IntReader br ){
 		final buff.Binding arrayBinding = new buff.Binding.array(gl);
 		final log = dom.window.console;
-		m.nVert = br.getLarge(4);
-		m.nInd = br.getLarge(4);
+		if (br.getString() != 'k3m')	{
+			log.debug('Mesh signature is bad, skipping');
+			return;
+		}
+		m.nVert	= br.getLarge(4);
+		m.nInd	= br.getLarge(4);
 		log.debug(m.nVert);
 		log.debug(m.nInd);
 		m.setPolygons( br.getString() );
@@ -165,14 +161,14 @@ class Manager extends load.Manager<Mesh>	{
 				offset += eSize * count;
 			}
 			assert (stride==0 || offset == stride);
-			log.debug('Offset before block: ' + br.tell().toString());
+			//log.debug('Offset before block: ' + br.tell().toString());
 			if (stride==0)	{
 				final buff.Binding indexBinding = new buff.Binding.index(gl);
 				indexBinding.load( unit, br.getArray(offset * m.nInd) );
 			}else	{
 				arrayBinding.load( unit, br.getArray(stride * m.nVert) );
 			}
-			log.debug('Offset after block: ' + br.tell().toString());
+			//log.debug('Offset after block: ' + br.tell().toString());
 		}
 		log.debug('nVert: ' + m.nVert.toString());
 		assert (br.empty());

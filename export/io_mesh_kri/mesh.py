@@ -97,6 +97,7 @@ def save_mesh(filename,context):
 	# steady...
 	print('Exporting Mesh...')
 	out = Writer.inst = Writer(filename)
+	out.text('k3m');
 	km = collect_attributes(ob.data, arm, ob.vertex_groups)
 	# go!
 	totalFm = ''.join(a.type for a in km.attribs)
@@ -397,7 +398,7 @@ def collect_attributes(mesh,armature,groups):
 				left -= weight
 				assert weight>=0 and weight<256
 				r_ids.append(bid)
-				r_weights.append(weigth)
+				r_weights.append(weight)
 			vat1.data.append(r_ids)
 			vat2.data.append(r_weights)
 		avg /= len(ar_vert)

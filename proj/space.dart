@@ -8,24 +8,27 @@ interface IMatrix  {
 
 
 class Space implements IMatrix {
-  final Vector position;
-  final Quaternion orientation;
+  final Vector movement;
+  final Quaternion rotation;
   final double scale;
   
-  Space( this.position, this.orientation, this.scale );
+  Space( this.movement, this.rotation, this.scale );
   Space.identity(): this( new Vector.zero(), new Quaternion.identity(), 1.0 );
-  Space.fromMoveScale(double x, double y, double z, double s): this( new Vector(x,y,z,1.0), new Quaternion.identity(), s );
+  Space.fromMoveScale(double x, double y, double z, double s):
+    this( new Vector(x,y,z,0.0), new Quaternion.identity(), s );
   
-  Space operator*(final Space c) => new Space( c.transform(position), c.orientation * orientation, c.scale * scale);
+  Space operator*(final Space c) => new Space( transform(c.movement), rotation * c.rotation, scale * c.scale);
   
-  Matrix getMatrix() => new Matrix.fromQuat( orientation, scale, position );
-  Vector transform(final Vector v) => position + orientation.rotate(v).scale(scale);
+  Matrix getMatrix() => new Matrix.fromQuat( rotation, scale, movement );
+  Vector transform(final Vector v) => movement + rotation.rotate(v).scale(scale);
   
   Space inverse() {
-    final Quaternion q = orientation.inverse();
+    final Quaternion q = rotation.inverse();
     final double s = 1.0 / scale;
-    return new Space( q.rotate(position).scale(s), q, s );
+    return new Space( q.rotate(movement).scale(s), q, s );
   }
+  
+  String toString() => "(m=${movement},r=${rotation},s=${scale}";
 }
 
 
