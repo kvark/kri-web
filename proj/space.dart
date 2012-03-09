@@ -44,3 +44,16 @@ class Node {
     return parent==null ? local : parent.getWorld() * local; 
   }
 }
+
+
+class Bone extends Node  {
+    final Space bindPose;
+    Bone( final String str, this.bindPose ): super(str);
+}
+
+class Armature extends Node  {
+    final int nBones;
+    final List<Bone> bones;
+    
+    Armature(this.nBones): bones = new List<Bone>();
+}

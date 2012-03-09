@@ -2,7 +2,7 @@ __author__ = ['Dzmitry Malyshau']
 __bpydoc__ = 'Mesh module of KRI exporter.'
 
 import mathutils
-from io_mesh_kri.common	import *
+from io_kri.common	import *
 
 
 def calc_TBN(verts, uvs):
