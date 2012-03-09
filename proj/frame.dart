@@ -67,37 +67,28 @@ class RenderTexture implements ITarget {
 
 class Buffer {
   final dom.WebGLFramebuffer handle;
-  final Map<int,ITarget> _attachments;
-  final List<int> _slotsChanged;
+  ITarget color = null, depth = null, stencil = null;
+  ITarget _color = null, _depth = null, _stencil = null;
   final ITarget nullRender;
-  final help.Enum helpEnum;
   
   Buffer( final dom.WebGLRenderingContext gl ):
   	handle = gl.createFramebuffer(),
-    _attachments = new Map<int,ITarget>(),
-    _slotsChanged = new List<int>(),
-    nullRender = new RenderSurface.zero(),
-    helpEnum = new help.Enum();
+    nullRender = new RenderSurface.zero();
 
   Buffer.main(): handle = null;
   
-  bool attach(String name, ITarget target)  {
-    final int point = helpEnum.frameAttachments[name];
-    if (handle==null || point==null)
-      return false;
-    _slotsChanged.add( point );
-    _attachments[point] = target;
-    return true;
+  void _update(final dom.WebGLRenderingContext gl, ITarget tNew, ITarget tOld, int slot)	{
+  	if (tNew==tOld)
+  		return;
+  	(tNew==null ? tNew : nullRender).bind(gl,slot);
+  	tOld = tNew;
   }
   
-  ITarget query(String name) => _attachments[helpEnum.frameAttachments[name]];
-  
-  void updateSlots(final dom.WebGLRenderingContext gl)  {
-    for (int point in _slotsChanged) {
-      final ITarget target = _attachments[point];
-      (target!=null ? target : nullRender).bind( gl, point );
-    }
-    _slotsChanged.clear();
+  void bind(final dom.WebGLRenderingContext gl)  {
+  	gl.bindFramebuffer( dom.WebGLRenderingContext.FRAMEBUFFER, handle );
+    _update( gl,color,_color,		dom.WebGLRenderingContext.COLOR_ATTACHMENT0 );
+    _update( gl,depth,_depth,		dom.WebGLRenderingContext.DEPTH_ATTACHMENT );
+    _update( gl,stencil,_stencil,	dom.WebGLRenderingContext.STENCIL_ATTACHMENT );
   }
 }
 
@@ -108,15 +99,6 @@ class Control  {
   Control( this.gl );
   
   Buffer spawn()  => new Buffer(gl);
-  
-  void bind(final Buffer buf)  {
-    gl.bindFramebuffer( dom.WebGLRenderingContext.FRAMEBUFFER, buf.handle );
-    buf.updateSlots( gl );
-  }
-  
-  void unbind()  {
-    gl.bindFramebuffer( dom.WebGLRenderingContext.FRAMEBUFFER, null );
-  }
   
   // helper functions
   

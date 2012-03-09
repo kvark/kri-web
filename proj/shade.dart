@@ -155,11 +155,11 @@ class Instance  {
       switch (uni.info.type)  {
       case dom.WebGLRenderingContext.FLOAT_VEC4:
         gl.uniform4fv( uni.location,
-          new dom.Float32Array.from(value.toList()) );
+          new dom.Float32Array.fromList(value.toList()) );
         break;
       case dom.WebGLRenderingContext.FLOAT_MAT4:
         gl.uniformMatrix4fv( uni.location, false,
-          new dom.Float32Array.from(value.toList()) );
+          new dom.Float32Array.fromList(value.toList()) );
         break;
       case dom.WebGLRenderingContext.SAMPLER_2D:
         gl.uniform1i( uni.location, texId );

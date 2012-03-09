@@ -103,7 +103,7 @@ class TextReader extends IntReader	{
 	dom.Uint8Array getArray(int size)	{
 		final String sub = text.substring( _offset, _offset+size );
 		skip(size);
-		return new dom.Uint8Array.from( sub.charCodes() );
+		return new dom.Uint8Array.fromList( sub.charCodes() );
 	}
 }
 
