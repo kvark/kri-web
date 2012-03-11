@@ -74,7 +74,7 @@ class Effect extends Program  {
   final Map<int,dom.WebGLActiveInfo> attributes;
   final List<Uniform> uniforms;
   
-  void fillAttributes( dom.WebGLRenderingContext gl ){
+  void fillAttributes( final dom.WebGLRenderingContext gl ){
     attributes.clear();
     final h = getInitHandle();
     final int num = gl.getProgramParameter( h, dom.WebGLRenderingContext.ACTIVE_ATTRIBUTES );
@@ -85,7 +85,7 @@ class Effect extends Program  {
     }
   }
   
-  void fillUniforms( dom.WebGLRenderingContext gl ){
+  void fillUniforms( final dom.WebGLRenderingContext gl ){
     uniforms.clear();
     final h = getInitHandle();
     final int num = gl.getProgramParameter( h, dom.WebGLRenderingContext.ACTIVE_UNIFORMS );
@@ -96,7 +96,7 @@ class Effect extends Program  {
     }
   }
   
-  Effect( dom.WebGLRenderingContext gl, List<Unit> units ): super(gl),
+  Effect( final dom.WebGLRenderingContext gl, final List<Unit> units ): super(gl),
   attributes = new Map<int,dom.WebGLActiveInfo>(), uniforms = new List<Uniform>()  {
   	if (!link( gl, units ))
   		return;
@@ -189,6 +189,35 @@ class Instance  {
 }
 
 
-//class Manager extends load.Loader	{
-//	Manager(String home): loader = new load.Loader(home);
-//}
+class Manager	{
+	final load.Loader loader;
+	final Map<String,Unit>		_cacheUnit;
+	final Map<String,Effect>	_cacheEffect;
+
+	Manager(String home): loader = new load.Loader(home),
+		_cacheUnit = new Map<String,Unit>(),
+		_cacheEffect = new Map<String,Effect>();
+	
+	Instance assemble( final dom.WebGLRenderingContext gl, final List<String> paths)	{
+		final String mix = Strings.join(paths,'|');
+		Effect ef = _cacheEffect[mix];
+		if (ef==null)	{
+			final List<Unit> units = new List<Unit>();
+			for (final String sp in paths)	{
+				Unit un = _cacheUnit[sp];
+				if (un == null)	{
+					final String text = loader.getNow(sp);
+					int type = 0;
+					if (sp.endsWith('.glslv'))
+						type = dom.WebGLRenderingContext.VERTEX_SHADER;
+					if (sp.endsWith('.glslf'))
+						type = dom.WebGLRenderingContext.FRAGMENT_SHADER;
+					_cacheUnit[sp] = un = new Unit( gl, type, text );
+				}
+				units.add(un);
+			}
+			_cacheEffect[mix] = ef = new Effect( gl, units );
+		}
+		return new Instance(ef);
+	}
+}

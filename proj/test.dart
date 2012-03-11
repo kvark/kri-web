@@ -43,21 +43,18 @@ class App {
     gl.frontFace( dom.WebGLRenderingContext.CW );
     gl.depthMask(true);
     
-    String vertText, fragText;
-    
     if (localOnly)	{
-    	vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
+    	String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
 			'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
-		fragText = 'void main() {gl_FragColor=vec4(1.0);}';
+		String fragText = 'void main() {gl_FragColor=vec4(1.0);}';
+		shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
+	    shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
+    	shade.Effect effect = new shade.Effect( gl, [shVert,shFrag] );
+   	    shader = new shade.Instance( effect );
     }else	{
-	    final load.Loader loader = new load.Loader('http://demo.kvatom.com/');
-    	vertText = loader.getNow('shade/simple.glslv');
-	    fragText = loader.getNow('shade/simple.glslf');
+	    final shade.Manager shMan = new shade.Manager('http://demo.kvatom.com/shade/');
+	    shader = shMan.assemble( gl, ['simple.glslv','simple.glslf'] );
     }
-    
-    shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
-    shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
-    shade.Effect effect = new shade.Effect( gl, [shVert,shFrag] );
     
     me = new gen.Mesh(gl).cubeUnit();
     tex.Texture texture = new gen.Texture(gl).white();
@@ -98,7 +95,6 @@ class App {
     	final arm.Armature ar = arLoader.load( 'cube.k3arm', null );
     }
     
-    shader = new shade.Instance( effect );
     shader.dataSources.add( data );
     shader.parameters['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
     shader.parameters['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
