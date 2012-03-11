@@ -101,7 +101,7 @@ class Mesh {
 }
 
 
-// Mesh K3M loader
+// Mesh (k3mesh) loader
 class Manager extends load.Manager<Mesh>	{
 	final dom.WebGLRenderingContext gl;
 	

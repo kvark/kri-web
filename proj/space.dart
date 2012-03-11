@@ -20,6 +20,7 @@ class Space implements IMatrix {
   Space operator*(final Space c) => new Space( transform(c.movement), rotation * c.rotation, scale * c.scale);
   
   Matrix getMatrix() => new Matrix.fromQuat( rotation, scale, movement );
+  Vector getMoveScale() => new Vector( movement.x, movement.y, movement.z, scale );
   Vector transform(final Vector v) => movement + rotation.rotate(v).scale(scale);
   
   Space inverse() {
@@ -43,17 +44,4 @@ class Node {
     final Space local = space==null ? new Space.identity() : space;
     return parent==null ? local : parent.getWorld() * local; 
   }
-}
-
-
-class Bone extends Node  {
-    final Space bindPose;
-    Bone( final String str, this.bindPose ): super(str);
-}
-
-class Armature extends Node  {
-    final int nBones;
-    final List<Bone> bones;
-    
-    Armature(this.nBones): bones = new List<Bone>();
 }

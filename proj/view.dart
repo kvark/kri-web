@@ -78,7 +78,7 @@ class DataSource implements shade.IDataSource {
   Matrix getModelMatrix() => (modelNode==null ?
     new Matrix.identity() : modelNode.getWorld().getMatrix() );
   
-  Object askData (String name) {
+  Object askData( final String name ){
     switch(name) {
     case 'mx_model':
       return getModelMatrix();

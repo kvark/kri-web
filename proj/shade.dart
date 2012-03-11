@@ -3,6 +3,7 @@
 #import('core.dart',  prefix:'core');
 #import('frame.dart', prefix:'frame');
 #import('tex.dart',	  prefix:'tex');
+#import('load.dart',  prefix:'load');
 
 
 class Unit extends core.Handle<dom.WebGLShader> {
@@ -106,7 +107,7 @@ class Effect extends Program  {
 
 
 interface IDataSource  {
-  Object askData(String name);
+  Object askData(final String name);
 }
 
 
@@ -186,3 +187,8 @@ class Instance  {
     return !effect.isFull() || _pushData(gl);
   }
 }
+
+
+//class Manager extends load.Loader	{
+//	Manager(String home): loader = new load.Loader(home);
+//}

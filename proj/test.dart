@@ -1,14 +1,15 @@
-#import('dart:html',  prefix:'dom');
-#import('shade.dart', prefix:'shade');
-#import('buff.dart',  prefix:'buff');
-#import('mesh.dart',  prefix:'mesh');
-#import('math.dart',  prefix:'math');
-#import('space.dart', prefix:'space');
-#import('frame.dart', prefix:'frame');
-#import('view.dart',  prefix:'view');
-#import('load.dart',  prefix:'load');
-#import('gen.dart',	  prefix:'gen');
-#import('tex.dart',   prefix:'tex');
+#import('dart:html',	prefix:'dom');
+#import('shade.dart',	prefix:'shade');
+#import('buff.dart',	prefix:'buff');
+#import('mesh.dart',	prefix:'mesh');
+#import('math.dart',	prefix:'math');
+#import('space.dart',	prefix:'space');
+#import('frame.dart',	prefix:'frame');
+#import('view.dart',	prefix:'view');
+#import('load.dart',	prefix:'load');
+#import('gen.dart',		prefix:'gen');
+#import('tex.dart',		prefix:'tex');
+#import('arm.dart',		prefix:'arm');
 
 
 class App {
@@ -93,6 +94,8 @@ class App {
     	final mesh.Manager meLoader = new mesh.Manager( gl, home+'mesh/' );
     	//me = meLoader.load( 'cube.k3mesh', me );
     	me = meLoader.load( 'jazz_dancing.k3mesh', me );
+    	final arm.Manager arLoader = new arm.Manager( home+'arm/' );
+    	final arm.Armature ar = arLoader.load( 'cube.k3arm', null );
     }
     
     shader = new shade.Instance( effect );

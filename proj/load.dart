@@ -1,5 +1,7 @@
 #library('load');
-#import('dart:html', prefix:'dom');
+#import('dart:html',	prefix:'dom');
+#import('math.dart',	prefix:'math');
+#import('space.dart',	prefix:'space');
 
 
 class Manager<Type>	{
@@ -38,6 +40,7 @@ class Manager<Type>	{
 	}
 }
 
+
 class IntReader	{
 	final dom.Iterator<int> _iter;
 	int _offset = 0;
@@ -69,7 +72,7 @@ class IntReader	{
 	List<int> getMultiple(int num)	{
 		final List<int> rez = [];
 		for(int i=0; i<num; ++i)
-			rez.add( getByte() );
+			rez.addLast( getByte() );
 		return rez;
 	}
 	
@@ -78,8 +81,28 @@ class IntReader	{
 		return new String.fromCharCodes( getMultiple(num) );
 	}
 	
+	double getReal()	{
+		//todo: use Float32Array to extract doubles
+		final List<int> bytes = getMultiple(4);
+		final int power = ((bytes[3]&0x7F)<<1) + (bytes[2]>>7) - 127;
+		final double sign = bytes[3]<0x80 ? 1.0 : -1.0;
+		final int mant = bytes[0] + (bytes[1]<<8) + ((bytes[2]|0x80)<<16);
+		return sign * mant * Math.pow( 0.5, 23-power );
+	}
+	
+	space.Space getSpace()	{
+		final List<double> l = new List<double>(8);
+		for(int i=0; i<l.length; ++i)
+			l[i] = getReal();
+		return new space.Space(
+			new math.Vector(l[0],l[1],l[2],0.0),
+			new math.Quaternion(l[4],l[5],l[6],l[7]),
+			l[3] );
+	}
+	
 	bool empty() => !_iter.hasNext();
 }
+
 
 class BinaryReader extends IntReader	{
 	final dom.Uint8Array array;
@@ -128,7 +151,7 @@ class Loader {
     return req.responseText;
   }
   
-  dom.XMLHttpRequest getLater( String path, var callback ){
+  dom.XMLHttpRequest getLater( String path, void callback(String text) ){
     final req = makeRequest( path, true );
     req.onreadystatechange = () {
       //if (req.readyState==req.DONE)
