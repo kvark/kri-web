@@ -164,11 +164,21 @@ class Quaternion implements IDoubleList  {
   Quaternion.identity(): this(0.0,0.0,0.0,1.0);
   Quaternion.fromBase( final Vector v, this.w ): x=v.x, y=v.y, z=v.z;
   
-  factory Quaternion.fromAxis( final Vector axis, double angleDegrees )  {
+  factory Quaternion.fromAxis( final Vector axis, double angleDegrees ){
   	final double halfRadians = degreesToHalfRadians * angleDegrees;
     final double sin = Math.sin( halfRadians );
     final double cos = Math.cos( halfRadians );
     return new Quaternion.fromBase( axis.scale(sin), cos );
+  }
+  
+  factory Quaternion.fromNormal( final Vector normal ){
+    if (normal.z > 0.0) {
+      final double d = Math.sqrt(2.0 + 2.0*normal.z);
+      return new Quaternion( -normal.y/d, normal.x/d, 0.0, 0.5*d );
+    }else {
+      final double d = Math.sqrt(2.0 - 2.0*normal.z);
+      return new Quaternion( 0.0, 0.5*d, normal.y/d, normal.x/d );
+    }
   }
   
   Vector rotate(final Vector v) {

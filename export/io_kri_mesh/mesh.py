@@ -9,17 +9,28 @@ def calc_TBN(verts, uvs):
 	va = verts[1].co - verts[0].co
 	vb = verts[2].co - verts[0].co
 	n0 = n1 = va.cross(vb)
-	tan,bit,hand = None,None,0.0
-	if len(uvs) and n1.dot(n1) > 0.0:
-		ta = uvs[0][1] - uvs[0][0]
-		tb = uvs[0][2] - uvs[0][0]
+	tan,bit,hand = None,None,1.0
+	if uvs!=None and n1.length_squared>0.0:
+		ta = uvs[1] - uvs[0]
+		tb = uvs[2] - uvs[0]
 		tan = va*tb.y - vb*ta.y
-		if tan.dot(tan)>0.0:
+		if tan.length_squared>0.0:
 			bit = vb*ta.x - va*tb.x
 			n0 = tan.cross(bit)
-			hand = (-1.0 if n0.dot(n1) < 0.0 else 1.0)
+			tan.normalize()
+			hand = (-1.0,1.0)[n0.dot(n1) > 0.0]
 		else:	tan = None
 	return (tan, bit, n0, hand, n1)
+
+def calc_quat(normal):
+	import math
+	#note: constructor is Quaternion(w,x,y,z)
+	if normal.z > 0.0:
+		d = math.sqrt(2.0 + 2.0*normal.z)
+		return mathutils.Quaternion(( 0.5*d, -normal.y/d, normal.x/d, 0.0 ))
+	else:
+		d = math.sqrt(2.0 - 2.0*normal.z)
+		return mathutils.Quaternion(( normal.x/d, 0.0, 0.5*d, normal.y/d ))
 
 
 class Vertex:
@@ -49,17 +60,18 @@ class Face:
 		self.mat = face.material_index
 		self.vi = [ face.vertices[i]	for i in ind   ]
 		self.v  = tuple( m.vertices[x]	for x in self.vi )
-		self.no = tuple( x.normal	for x in self.v  )
+		self.no = tuple( x.normal		for x in self.v  )
 		self.normal = ( face.normal, mathutils.Vector((0,0,0)) )[face.use_smooth]
 		xuv		= tuple(tuple( layer[i]	for i in ind ) for layer in uves)
 		color	= tuple(tuple( layer[i]	for i in ind ) for layer in colors)
-		t,b,n,hand,nv = calc_TBN(self.v, xuv)
-		self.wes = tuple( 3 * [0.1+nv.dot(nv)] )
-		if Settings.putQuat and t != None:
-			self.ta = t.normalized()
-		else:	self.ta = None
+		uv_base = None
+		if Settings.fakeQuat != 'Force' and len(xuv)>0:
+			uv_base = xuv[0]
+		t,b,n,hand,nv = calc_TBN(self.v, uv_base)
+		self.wes = tuple( 3 * [0.1+nv.length_squared] )
+		self.ta = (None,t)			[Settings.putQuat]
 		self.hand = hand
-		self.uv		= ([],xuv)		[Settings.putUv]
+		self.uv	= ([],xuv)			[Settings.putUv]
 		self.color	= ([],color)	[Settings.putColor]
 
 
@@ -138,7 +150,8 @@ def collect_attributes(mesh,armature,groups):
 		if not len(layer.data):
 			out.log(1,'e','UV layer is locked by the user')
 			return None,None,0,0
-	hasQuat = len(mesh.uv_textures)>0 and Settings.putQuat
+	hasQuatUV	= Settings.putQuat and len(mesh.uv_textures)>0
+	hasQuat		= Settings.putQuat and (Settings.fakeQuat != 'Never' or len(mesh.uv_textures)>0)
 	ar_face = []
 	for i,face in enumerate(mesh.faces):
 		uves,colors,nvert = [],[],len(face.vertices)
@@ -170,7 +183,7 @@ def collect_attributes(mesh,armature,groups):
 		nor = face.normal
 		for i in range(3):
 			v = Vertex( face.v[i] ) 
-			v.normal = (nor if nor.dot(nor)>0.1 else face.no[i])
+			v.normal = (face.no[i],nor)[nor.length_squared>0.1]
 			v.tex	= [layer[i] for layer in face.uv]
 			v.color	= [layer[i] for layer in face.color]
 			v.face = face
@@ -193,22 +206,25 @@ def collect_attributes(mesh,armature,groups):
 			if f.ta:
 				lensum += wes * f.ta.length
 				tan += wes * f.ta
-		no = v.normal.copy()
-		no.normalize()
-		if hasQuat and lensum>0.0:
+		no = v.normal.normalized()
+		if Settings.fakeQuat=='Force':
+			v.quat = calc_quat(no)
+		elif hasQuatUV and lensum>0.0:
 			avg += tan.length / lensum
 			tan.normalize()		# mean tangent
 			bit = no.cross(tan) * v.face.hand	# using handness
 			tan = bit.cross(no)	# handness will be applied in shader
 			tbn = mathutils.Matrix((tan,bit,no))	# tbn is orthonormal, right-handed
 			v.quat = tbn.to_quaternion().normalized()
-		elif hasQuat:
+		elif Settings.fakeQuat=='Auto':
+			v.quat = calc_quat(no)
+		elif hasQuatUV:
 			bad_vert += 1
 			v.quat = mathutils.Quaternion((0,0,0,1))
 		ar_vert.append(v)
 	if bad_vert:
 		out.log(1,'w','%d pure vertices detected' % (bad_vert))
-	if hasQuat:
+	if hasQuatUV and avg!=0.0:
 		out.log(1,'i','%.2f avg tangent accuracy' % (avg / len(ar_vert)))
 	del set_vert
 
@@ -220,7 +236,7 @@ def collect_attributes(mesh,armature,groups):
 		v = ar_vert[ind]
 		if v.dual < 0: v.dual = ind
 	n_dup,ex_face = 0,[]
-	for f in ([],ar_face)[hasQuat]:
+	for f in ([],ar_face)[hasQuat and Settings.doQuatInt]:
 		vx,cs,pos,n_neg = (1,2,0),[0,0,0],0,0
 		def isGood(j):
 			ind = f.vi[j]
@@ -270,9 +286,9 @@ def collect_attributes(mesh,armature,groups):
 			n_dup += 1
 			v.face = f
 			v.coord = 0.5 * (va.coord + vb.coord)
-			v.quat = va.quat + vb.quat
-			v.quat.normalize()
-			v.tex = tuple( 0.5*(a[0]+a[1]) for a in zip(va.tex,vb.tex) )
+			v.quat = (va.quat + vb.quat).normalized()
+			if va.tex and vb.tex:
+				v.tex = tuple( 0.5*(a[0]+a[1]) for a in zip(va.tex,vb.tex) )
 			# create additional face
 			f2 = Face( f, mesh )
 			mark_used( f.vi[ia] )	# caution: easy to miss case

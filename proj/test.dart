@@ -53,7 +53,8 @@ class App {
    	    shader = new shade.Instance( effect );
     }else	{
 	    final shade.Manager shMan = new shade.Manager('http://demo.kvatom.com/shade/');
-	    shader = shMan.assemble( gl, ['simple.glslv','simple.glslf'] );
+	    shader = shMan.assemble( gl, ['simple-arm.glslv','simple.glslf'] );
+	    //shader = shMan.assemble( gl, ['simple.glslv','simple.glslf'] );
     }
     
     me = new gen.Mesh(gl).cubeUnit();

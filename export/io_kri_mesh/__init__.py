@@ -59,6 +59,13 @@ class ExportMesh( bpy.types.Operator, ExportHelper ):
 	put_color	= BoolProperty( name='Put color layers',
 		description='Export vertex colors',
 		default=Settings.putColor )
+	quat_fake	= EnumProperty( name='Fake quaternions',
+		description='Derive quaternions from normals only',
+		items=(
+			('Never','Never','Dont fake anything'),
+			('Auto','Auto','Fake if no UV is given'),
+			('Force','Force','Always fake')
+			), default='Auto' )
 	quat_int	= BoolProperty( name='Process quaternions',
 		description='Prepare mesh quaternions for interpolation',
 		default=Settings.doQuatInt )
@@ -72,6 +79,7 @@ class ExportMesh( bpy.types.Operator, ExportHelper ):
 		Settings.putUv		= self.properties.put_uv
 		Settings.putColor	= self.properties.put_color
 		Settings.doQuatInt	= self.properties.quat_int
+		Settings.fakeQuat	= self.properties.quat_fake
 		save_mesh(self.properties.filepath, context)
 		return {'FINISHED'}
 

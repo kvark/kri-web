@@ -14,10 +14,10 @@ class Unit extends core.Handle<dom.WebGLShader> {
     gl.shaderSource( _handle, text );
     gl.compileShader( _handle );
     _infoLog = gl.getShaderInfoLog( _handle );
-//    if( gl.getShaderParameter( _handle, dom.WebGLRenderingContext.COMPILE_STATUS ))
+    if( gl.getShaderParameter( _handle, dom.WebGLRenderingContext.COMPILE_STATUS ))
     	setFull();
-//    else
-//	    dom.window.console.debug(_infoLog);
+    else
+	    print(_infoLog);
   }
   
   String getLog() => _infoLog;
@@ -44,12 +44,12 @@ class Program extends core.Handle<dom.WebGLProgram> {
     }
     gl.linkProgram( h );
     _infoLog = gl.getProgramInfoLog( h );
-	//if (gl.getProgramParameter( h, dom.WebGLRenderingContext.LINK_STATUS ))	{
+	if (gl.getProgramParameter( h, dom.WebGLRenderingContext.LINK_STATUS ))	{
 		setFull();
 		return true;
-//	}
+	}
 	setNone();
-	dom.window.console.debug(_infoLog);
+	print(_infoLog);
 	return false;
   }
   
