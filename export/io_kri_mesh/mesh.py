@@ -332,13 +332,13 @@ def collect_attributes(mesh,armature,groups):
 		vat = Attribute('position', '3f')
 		km.attribs.append(vat)
 		for v in ar_vert:
-			vat.data.append([ v.coord.x, v.coord.y, v.coord.z ])
+			vat.data.append( v.coord.to_3d() )
 			
 	if Settings.putNormal:
 		vat = Attribute('normal', '3f')	#todo: use 'sint16f'
 		km.attribs.append(vat)
 		for v in ar_vert:
-			vat.data.append([ v.normal.x, v.normal.y, v.normal.z ])
+			vat.data.append( v.normal.to_3d() )
 
 	if hasQuat:
 		vat1 = Attribute('quaternion', '4f')	#todo: use 'sint16f'
@@ -358,7 +358,7 @@ def collect_attributes(mesh,armature,groups):
 			for v in ar_vert:
 				assert i<len(v.tex)
 				tc = v.tex[i]
-				vat.data.append([ tc.x, tc.y ])
+				vat.data.append( tc.to_2d() )
 
 	if Settings.putColor:
 		all = mesh.vertex_colors
@@ -379,9 +379,12 @@ def collect_attributes(mesh,armature,groups):
 				pass
 
 	if 'index':
-		# todo: choose the smallest type
 		km.ni = len(ar_face) * 3
-		km.index = vat = Attribute('', '1H')
+		nv = len(ar_vert)
+		stype = '1U'
+		if nv<0x100:		stype = '1B'
+		elif nv<0x10000:	stype = '1H'
+		km.index = vat = Attribute('', stype)
 		for face in ar_face:
 			vat.data.append( face.vi )
 
