@@ -1,7 +1,6 @@
 #library('frame');
 #import('dart:html', prefix:'dom');
 #import('core.dart', prefix:'core');
-#import('help.dart', prefix:'help');
 #import('tex.dart',  prefix:'tex');
 
 

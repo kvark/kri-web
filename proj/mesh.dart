@@ -2,7 +2,6 @@
 #import('dart:html',  prefix:'dom');
 #import('buff.dart',  prefix:'buff');
 #import('shade.dart', prefix:'shade');
-#import('help.dart',  prefix:'help');
 #import('load.dart',  prefix:'load');
 
 
@@ -45,7 +44,16 @@ class Mesh {
   	blackList = new List<shade.Effect>();
 
   void setPolygons(final String type)	{
-  	polyType = new help.Enum().polyTypes[type];
+ 	final Map<String,int> polyTypes = const	{
+  	  '1':  dom.WebGLRenderingContext.POINTS,
+	  '2':  dom.WebGLRenderingContext.LINES,
+  	  '2l': dom.WebGLRenderingContext.LINE_LOOP,
+	  '2s': dom.WebGLRenderingContext.LINE_STRIP,
+  	  '3':  dom.WebGLRenderingContext.TRIANGLES,
+	  '3f': dom.WebGLRenderingContext.TRIANGLE_FAN,
+  	  '3s': dom.WebGLRenderingContext.TRIANGLE_STRIP
+	};
+  	polyType = polyTypes[type];
   }
   
   bool contains(final dom.WebGLActiveInfo info)  {

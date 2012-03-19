@@ -3,7 +3,6 @@
 #import('math.dart', prefix:'math');
 #import('mesh.dart', prefix:'mesh');
 #import('buff.dart', prefix:'buff');
-#import('help.dart', prefix:'help');
 #import('tex.dart',  prefix:'tex');
 
 
@@ -23,7 +22,7 @@ class Mesh	{
   		new math.Vector.zero(),
   		new math.Vector.unitZ(),
   	];
-  	final buff.Unit vBuffer = bArr.spawn( help.toFloat32(vertices) );
+  	final buff.Unit vBuffer = bArr.spawn( buff.toFloat32(vertices) );
  
     final mesh.Mesh me = new mesh.Mesh(null);
     me.setPolygons('2');
@@ -76,8 +75,8 @@ class Mesh	{
   		i2.add( id6*4 + offsets[i%6] );
   	}
 
-	final buff.Unit vBuffer = bArr.spawn( help.toFloat32(v2) );
-    final buff.Unit vIndex  = bInd.spawn( help.toUint8(i2) );
+	final buff.Unit vBuffer = bArr.spawn( buff.toFloat32(v2) );
+    final buff.Unit vIndex  = bInd.spawn( buff.toUint8(i2) );
  
     final mesh.Mesh me = new mesh.Mesh(null);
     me.setPolygons('3');
@@ -105,7 +104,7 @@ class Texture	{
 	
 	tex.Texture white()	{
 		final tex.Texture t = bind.spawn();
-		final color = help.toUint8([
+		final color = buff.toUint8([
 			0xFF,0xFF,0xFF,0xFF
 		]);
 		final tex.Data texData = new tex.Data.color( color, true );
