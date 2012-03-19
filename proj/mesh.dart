@@ -53,32 +53,32 @@ class Mesh {
     return el!=null;  //todo: check all fields
   }
   
-  bool draw( final dom.WebGLRenderingContext gl, final shade.Instance shader ){
+  bool draw( final dom.WebGLRenderingContext gl, final shade.Effect shader, final shade.Map<String,Object> data ){
   	// try fallback
   	if (nVert==0)	{
   		if (fallback!=null)
-  			return fallback.draw(gl,shader);
+  			return fallback.draw(gl,shader,data);
   		return false;
   	}
-	if (blackList.indexOf( shader.effect )>=0)
+	if (blackList.indexOf( shader )>=0)
 		return false;
     // check consistency
-    for (final dom.WebGLActiveInfo info in shader.effect.attributes.getValues()) {
+    for (final dom.WebGLActiveInfo info in shader.attributes.getValues()) {
     	if(!contains(info))	{
     		print("Mesh does not contain required attribute: ${info.name}");
     		print(elements);
-    		blackList.add( shader.effect );
+    		blackList.add( shader );
     		return false;
     	}
     }
-    if (!shader.activate(gl))	{
-	    dom.window.console.debug('Mesh failed to activate the shader');
-    	blackList.add( shader.effect );
+    if (shader.activate(gl,data,true) == false)	{
+		print('Mesh failed to activate the shader');
+    	blackList.add( shader );
     	return false;
     }
     // prepare
     buff.Binding bindArray = new buff.Binding.array(gl);
-    shader.effect.attributes.forEach((int loc, final dom.WebGLActiveInfo info) {
+    shader.attributes.forEach((int loc, final dom.WebGLActiveInfo info) {
       final Element el = elements[info.name];
       bindArray.bindRead( el.buffer );
       el.bind( gl, loc );
@@ -100,7 +100,7 @@ class Mesh {
       gl.drawArrays( polyType, 0, nVert ); 
     }
     // cleanup
-    for(int loc in shader.effect.attributes.getKeys()) {
+    for(int loc in shader.attributes.getKeys()) {
       gl.disableVertexAttribArray( loc );
     }
     new shade.Program.invalid().bind( gl );

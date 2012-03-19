@@ -14,7 +14,9 @@
 
 class App {
   mesh.Mesh me = null;
-  shade.Instance shader = null;
+  shade.Effect shader = null;
+  final Map<String,Object> block;
+  view.DataSource viewData = null;
   dom.WebGLRenderingContext gl = null;
   dom.CanvasElement canvas = null;
   space.Node controlNode = null;
@@ -23,9 +25,9 @@ class App {
   static final localOnly = false;
   
   mesh.Mesh axisMesh = null;
-  shade.Instance axisShader = null;
+  shade.Effect axisShader = null;
  
-  App();
+  App(): block = new Map<String,Object>();
   
   void run() {
     final dom.Console log = dom.window.console;
@@ -49,8 +51,7 @@ class App {
 		String fragText = 'void main() {gl_FragColor=vec4(1.0);}';
 		shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
 	    shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
-    	shade.Effect effect = new shade.Effect( gl, [shVert,shFrag] );
-   	    shader = new shade.Instance( effect );
+    	shader = new shade.Effect( gl, [shVert,shFrag] );
     }else	{
 	    final shade.Manager shMan = new shade.Manager('http://demo.kvatom.com/shade/');
 	    shader = shMan.assemble( gl, ['simple-arm.glslv','simple.glslf'] );
@@ -78,7 +79,8 @@ class App {
     	new math.Quaternion.fromAxis(new math.Vector.unitX(),-90.0),
     	2.0 );
     //child.space = new space.Space.identity();
-    final view.DataSource data = new view.DataSource( child, camera );
+    viewData = new view.DataSource( child, camera );
+    viewData.fillData(block);
     controlNode = node;
 	
     if (!localOnly)	{
@@ -96,11 +98,10 @@ class App {
     	final arm.Armature ar = arLoader.load( 'cube.k3arm', null );
     }
     
-    shader.dataSources.add( data );
-    shader.parameters['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
-    shader.parameters['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
-    shader.parameters['t_main'] = texture;
-    me.draw( gl, shader );
+    block['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
+    block['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
+    block['t_main'] = texture;
+    me.draw( gl, shader, block );
     //log.debug( shader );
     
     int err = gl.getError();
@@ -125,7 +126,7 @@ class App {
   		((e.clientX-canvasOffX).toDouble() - hx) / (hx/dist),
   		(hy - (e.clientY-canvasOffY).toDouble())  / (hy/dist),
   		0.0, 1.0 );
-  	shader.parameters['pos_light'] = v;
+  	block['pos_light'] = v;
   	// move object
   	if (controlNode!=null && gripBase != null && (e.clientX!=gripX || e.clientY!=gripY))	{
   		final math.Vector voff = new math.Vector(
@@ -141,6 +142,7 @@ class App {
 		}			
 		controlNode.space = new space.Space( controlNode.space.movement,
 	    	  rot * gripBase, controlNode.space.scale );
+		viewData.fillData(block);
   	}
   }
   
@@ -163,7 +165,7 @@ class App {
     //  new math.Quaternion.fromAxis(new math.Vector.unitY(),time), 1.0 );
    	//controlNode.space.rotation = new math.Quaternion.fromAxis(new math.Vector(1.0,0.0,0.0,0.0),time);
    	//controlNode.space.movement = new math.Vector(0.0,Math.sin(time*0.01),5.0,0.0);
-    me.draw( gl, shader );
+    me.draw( gl, shader, block );
   }
 }
 

@@ -19,7 +19,8 @@ class Bone extends Node  {
 class Armature extends Node implements shade.IDataSource	{
     final List<Bone> bones;
 
-    Object askData(final String name)	{
+    void fillData( final Map<String,Object> data ){
+    	/* //TODO!
     	final List<String> elems = name.split("\[|\]");
     	if (elems.length != 3 || elems[0]!='bones')
 	    	return null;
@@ -31,6 +32,7 @@ class Armature extends Node implements shade.IDataSource	{
     		return space.rotation;
 		}else
 			return null;
+		*/
     }
     
     Armature(String name): super(name), bones = new List<Bone>();

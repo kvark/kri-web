@@ -75,26 +75,18 @@ class DataSource implements shade.IDataSource {
   
   DataSource( this.modelNode, this.camera );
   
-  Matrix getModelMatrix() => (modelNode==null ?
-    new Matrix.identity() : modelNode.getWorld().getMatrix() );
-  
-  Object askData( final String name ){
-    switch(name) {
-    case 'mx_model':
-      return getModelMatrix();
-    case 'mx_modelview':
-      return (camera.node==null ? modelNode.getWorld() :
+  void fillData( final shade.Map<String,Object> data ){
+  	final Matrix modelMatrix = (modelNode==null ?
+	    new Matrix.identity() : modelNode.getWorld().getMatrix() );
+	final Matrix invCamera = camera.getInverseWorld();
+	data['mx_model']		= modelMatrix;
+	data['mx_modelview']	= (camera.node==null ? modelNode.getWorld() :
         modelNode.getWorld() * camera.node.getWorld().inverse()).
         getMatrix();
-    case 'mx_viewproj':
-      return camera.getInverseWorld();
-    case 'mx_projection':
-      return camera.projector.getMatrix();
-    case 'mx_mvp':
-      return camera.getInverseWorld() * getModelMatrix();
-    case 'pos_camera':
-      return camera.node==null ? new Vector.zero() : camera.node.getWorld().movement;
-    }
-    return null;
+    data['mx_projection']	= camera.projector.getMatrix();
+    data['mx_viewproj']		= invCamera;
+    data['mx_mvp']			= invCamera * modelMatrix;
+    data['pos_camera']		= (camera.node==null ? new Vector.zero() :
+    	camera.node.getWorld().movement );
   }
 } 
