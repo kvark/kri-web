@@ -32,6 +32,22 @@ def calc_quat(normal):
 		d = math.sqrt(2.0 - 2.0*normal.z)
 		return mathutils.Quaternion(( normal.x/d, 0.0, 0.5*d, normal.y/d ))
 
+def fix_convert(type,valist):
+	typeScale = {
+		'B': 0xFF,
+		'H': 0xFFFF,
+		'I': 0xFFFFFFFF
+		}
+	fun = None
+	if type.islower():
+		scale = typeScale[type.upper()] + 1
+		fun = lambda x: int(min(1,max(-1,x))*0.5*scale-0.5)
+	else:
+		scale = typeScale[type]
+		fun = lambda x: int(min(1,max(0,x))*scale)
+	return [fun(x) for x in valist]
+	
+	
 
 class Vertex:
 	__slots__= 'face', 'vert','vert2', 'coord', 'tex', 'color', 'normal', 'quat', 'dual'
@@ -79,7 +95,7 @@ class Face:
 
 class Attribute:
 	__slots__ = 'name', 'type', 'fixed', 'data', 'interpolate'
-	def __init__(self, name, type, fixed = False):
+	def __init__(self, name, type, fixed=0):
 		self.name = name
 		self.type = type
 		self.fixed = fixed
@@ -114,7 +130,9 @@ def save_mesh(filename,context):
 	# go!
 	totalFm = ''.join(a.type for a in km.attribs)
 	assert len(totalFm) == 2*len(km.attribs)
-	stride = out.sizeOf(totalFm)
+	#stride = out.sizeOf(totalFm)
+	stride = sum(out.sizeOf(a.type) for a in km.attribs)
+	out.logu(1,'Format: %s, Stride: %d' % (totalFm,stride))
 	out.pack('LL', km.nv, km.ni)
 	out.text('3')	# topology
 	out.pack('BB', 2, stride)
@@ -125,7 +143,9 @@ def save_mesh(filename,context):
 	seqStart = out.tell()
 	for vats in zip(*(a.data for a in km.attribs)):
 		for a,d in zip( km.attribs, vats ):
-			out.array(a.type[1], d)
+			tip = a.type[1]
+			d2 = (d if a.fixed<=1 else fix_convert(tip,d))
+			out.array(tip,d2)
 	assert out.tell() == seqStart + km.nv*stride
 	# indices
 	if km.index:
@@ -329,31 +349,35 @@ def collect_attributes(mesh,armature,groups):
 	km = Mesh()
 	
 	if 'putVertex':
-		vat = Attribute('position', '3f')
+		vat = Attribute('position', '3f', 0)
 		km.attribs.append(vat)
 		for v in ar_vert:
 			vat.data.append( v.coord.to_3d() )
 			
 	if Settings.putNormal:
-		vat = Attribute('normal', '3f')	#todo: use 'sint16f'
+		#vat = Attribute('normal', '3f', 0)	#todo: use 'sint16f'
+		vat = Attribute('normal', '3h', 2)	#todo: use 'sint16f'
 		km.attribs.append(vat)
 		for v in ar_vert:
 			vat.data.append( v.normal.to_3d() )
 
 	if hasQuat:
-		vat1 = Attribute('quaternion', '4f')	#todo: use 'sint16f'
+		#vat1 = Attribute('quaternion', '4f')	#todo: use 'sint16f'
 		vat2 = Attribute('handedness', '1f')	#todo: use 'sint8f'
+		vat1 = Attribute('quaternion', '4h', 2)
+		#vat2 = Attribute('handedness', '1h', 2)
 		vat1.interpolate = vat2.interpolate = Settings.doQuatInt
 		km.attribs.extend([ vat1,vat2 ])
 		for v in ar_vert:
 			vat1.data.append([ v.quat.x, v.quat.y, v.quat.z, v.quat.w ])
-			vat2.data.append([ v.face.hand ])
+			vat2.data.append([ int(v.face.hand) ])
 	
 	if Settings.putUv:
 		all = mesh.uv_textures
 		out.log(1,'i', 'UV layers: %d' % (len(all)))
 		for i,layer in enumerate(all):
-			vat = Attribute('tex%d' % i, '2f')	#todo: use 'sint16f'
+			#vat = Attribute('tex%d' % i, '2f')	#todo: use 'sint16f'
+			vat = Attribute('tex%d' % i, '2h', 2)
 			km.attribs.append(vat)
 			for v in ar_vert:
 				assert i<len(v.tex)
@@ -364,7 +388,8 @@ def collect_attributes(mesh,armature,groups):
 		all = mesh.vertex_colors
 		out.log(1,'i', 'Color layers: %d' % (len(all)))
 		for i,layer in enumerate(all):
-			vat = Attribute('color%d' % i, '4f')	#todo: use 'uint8f'
+			#vat = Attribute('color%d' % i, '4f')	#todo: use 'uint8f'
+			vat = Attribute('color%d' % i, '4B', 2)
 			km.attribs.append(vat)
 			for v in ar_vert:
 				assert i<len(v.color)
@@ -381,17 +406,17 @@ def collect_attributes(mesh,armature,groups):
 	if 'index':
 		km.ni = len(ar_face) * 3
 		nv = len(ar_vert)
-		stype = '1U'
+		stype = '1I'
 		if nv<0x100:		stype = '1B'
 		elif nv<0x10000:	stype = '1H'
-		km.index = vat = Attribute('', stype)
+		km.index = vat = Attribute('', stype, 0)
 		for face in ar_face:
 			vat.data.append( face.vi )
 
 	# 8: bone weights
 	if armature:
-		vat1 = Attribute('bone_ids', '4B', False)
-		vat2 = Attribute('bone_weights', '4B', True)
+		vat1 = Attribute('bone_ids', '4B', 0)
+		vat2 = Attribute('bone_weights', '4B', 1)
 		km.attribs.extend([ vat1,vat2 ])
 		nempty, avg = 0, 0.0
 		for v in ar_vert:

@@ -99,11 +99,24 @@ class Control  {
   
   Buffer spawn()  => new Buffer(gl);
   
+  void bind( final Buffer buf ){
+  	buf.bind( gl );
+  }
+  
   // helper functions
   
-  void scissor(final Rect r)  => gl.scissor ( r.x, r.y, r.w, r.h );
+  void scissor(final Rect r)	{
+  	if (r != null)	{
+	  	gl.scissor ( r.x, r.y, r.w, r.h );
+		gl.enable(	dom.WebGLRenderingContext.SCISSOR_TEST );
+	}else	{
+		gl.disable(	dom.WebGLRenderingContext.SCISSOR_TEST );
+	}
+  }
   
-  void viewport(final Rect r) => gl.viewport( r.x, r.y, r.w, r.h ); 
+  void viewport(final Rect r)	{
+  	gl.viewport( r.x, r.y, r.w, r.h );
+  }
   
   void clear(final Color color, double depth, int stencil) {
     int mask = 0;
