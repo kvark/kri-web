@@ -156,10 +156,9 @@ class Manager extends load.Manager<Mesh>	{
 					eSize = 2; break;
 				case 'H':	type = dom.WebGLRenderingContext.UNSIGNED_SHORT;
 					eSize = 2; break;
-				case 'l': case 'i':	type = dom.WebGLRenderingContext.INT;
-					eSize = 4; break;
-				case 'L': case 'I':	type = dom.WebGLRenderingContext.UNSIGNED_INT;
-					eSize = 4; break;
+				// fixed point is not supported by WebGL yet
+				//case 'i':	type = dom.WebGLRenderingContext.FIXED;
+				//	eSize = 4; break;
 				case 'f':	type = dom.WebGLRenderingContext.FLOAT;
 					eSize = 4; break;
 				}

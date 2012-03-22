@@ -50,7 +50,7 @@ def fix_convert(type,valist):
 	
 
 class Vertex:
-	__slots__= 'face', 'vert','vert2', 'coord', 'tex', 'color', 'normal', 'quat', 'dual'
+	__slots__= 'face', 'vert','vert2', 'coord', 'tex', 'color', 'normal', 'tangent', 'quat', 'dual'
 	def __init__(self, v):
 		self.face = None
 		self.vert = v
@@ -59,6 +59,7 @@ class Vertex:
 		self.tex = None
 		self.color = None
 		self.normal = v.normal
+		self.tangent = None
 		self.quat = None
 		self.dual = -1
 
@@ -85,7 +86,7 @@ class Face:
 			uv_base = xuv[0]
 		t,b,n,hand,nv = calc_TBN(self.v, uv_base)
 		self.wes = tuple( 3 * [0.1+nv.length_squared] )
-		self.ta = (None,t)			[Settings.putQuat]
+		self.ta = t
 		self.hand = hand
 		self.uv	= ([],xuv)			[Settings.putUv]
 		self.color	= ([],color)	[Settings.putColor]
@@ -130,8 +131,7 @@ def save_mesh(filename,context):
 	# go!
 	totalFm = ''.join(a.type for a in km.attribs)
 	assert len(totalFm) == 2*len(km.attribs)
-	#stride = out.sizeOf(totalFm)
-	stride = sum(out.sizeOf(a.type) for a in km.attribs)
+	stride = out.sizeOf(totalFm)
 	out.logu(1,'Format: %s, Stride: %d' % (totalFm,stride))
 	out.pack('LL', km.nv, km.ni)
 	out.text('3')	# topology
@@ -144,6 +144,9 @@ def save_mesh(filename,context):
 	for vats in zip(*(a.data for a in km.attribs)):
 		for a,d in zip( km.attribs, vats ):
 			tip = a.type[1]
+			size = out.sizeOf(a.type)
+			if (size&3)!=0:
+				out.log(2,'w','Attrib %d has has non-aligned type: %d' % (a.name,tip))
 			d2 = (d if a.fixed<=1 else fix_convert(tip,d))
 			out.array(tip,d2)
 	assert out.tell() == seqStart + km.nv*stride
@@ -170,8 +173,10 @@ def collect_attributes(mesh,armature,groups):
 		if not len(layer.data):
 			out.log(1,'e','UV layer is locked by the user')
 			return None,None,0,0
-	hasQuatUV	= Settings.putQuat and len(mesh.uv_textures)>0
-	hasQuat		= Settings.putQuat and (Settings.fakeQuat != 'Never' or len(mesh.uv_textures)>0)
+	hasUv		= len(mesh.uv_textures)>0
+	hasTangent	= Settings.putTangent and hasUv
+	hasQuatUv	= Settings.putQuat and hasUv
+	hasQuat		= Settings.putQuat and (Settings.fakeQuat != 'Never' or hasUv)
 	ar_face = []
 	for i,face in enumerate(mesh.faces):
 		uves,colors,nvert = [],[],len(face.vertices)
@@ -217,6 +222,7 @@ def collect_attributes(mesh,armature,groups):
 	avg,ar_vert,bad_vert = 0.0,[],0
 	for i,vgrup in enumerate(set_vert.values()):
 		v = vgrup[0]
+		assert v.quat == None
 		tan,lensum = mathutils.Vector((0,0,0)),0.0
 		for v2 in vgrup:
 			f = v2.face
@@ -227,24 +233,25 @@ def collect_attributes(mesh,armature,groups):
 				lensum += wes * f.ta.length
 				tan += wes * f.ta
 		no = v.normal.normalized()
-		if Settings.fakeQuat=='Force':
+		if Settings.fakeQuat=='Force' or (Settings.fakeQuat=='Auto' and not hasQuatUv):
 			v.quat = calc_quat(no)
-		elif hasQuatUV and lensum>0.0:
+		if lensum>0.0:
 			avg += tan.length / lensum
 			tan.normalize()		# mean tangent
-			bit = no.cross(tan) * v.face.hand	# using handness
-			tan = bit.cross(no)	# handness will be applied in shader
-			tbn = mathutils.Matrix((tan,bit,no))	# tbn is orthonormal, right-handed
-			v.quat = tbn.to_quaternion().normalized()
-		elif Settings.fakeQuat=='Auto':
-			v.quat = calc_quat(no)
-		elif hasQuatUV:
+			v.tangent = tan
+			if hasQuatUv and v.quat==None:
+				bit = no.cross(tan) * v.face.hand	# using handness
+				tan = bit.cross(no)	# handness will be applied in shader
+				tbn = mathutils.Matrix((tan,bit,no))	# tbn is orthonormal, right-handed
+				v.quat = tbn.to_quaternion().normalized()
+		if None in (v.quat,v.tangent):
 			bad_vert += 1
 			v.quat = mathutils.Quaternion((0,0,0,1))
+			v.tangent = mathutils.Vector((1,0,0))
 		ar_vert.append(v)
 	if bad_vert:
 		out.log(1,'w','%d pure vertices detected' % (bad_vert))
-	if hasQuatUV and avg!=0.0:
+	if hasQuatUv and avg!=0.0:
 		out.log(1,'i','%.2f avg tangent accuracy' % (avg / len(ar_vert)))
 	del set_vert
 
@@ -355,19 +362,24 @@ def collect_attributes(mesh,armature,groups):
 			vat.data.append( v.coord.to_3d() )
 			
 	if Settings.putNormal:
-		#vat = Attribute('normal', '3f', 0)	#todo: use 'sint16f'
-		vat = Attribute('normal', '3h', 2)	#todo: use 'sint16f'
+		#vat = Attribute('normal', '3f', 0)
+		vat = Attribute('normal', '4h', 2)
+		# WebGL only accept multiples of 4 for the attribute size
 		km.attribs.append(vat)
 		for v in ar_vert:
-			vat.data.append( v.normal.to_3d() )
+			vat.data.append( v.normal.to_4d() )
+			
+	if hasTangent:
+		vat = Attribute('tangent', '4b', 2)
+		km.attribs.append(vat)
+		for v in ar_vert:
+			vat.data.append( [v.tangent.x, v.tangent.y, v.tangent.z, v.face.hand] )
 
 	if hasQuat:
-		#vat1 = Attribute('quaternion', '4f')	#todo: use 'sint16f'
-		vat2 = Attribute('handedness', '1f')	#todo: use 'sint8f'
+		vat2 = Attribute('handedness', '1f')	# has to be aligned
 		vat1 = Attribute('quaternion', '4h', 2)
-		#vat2 = Attribute('handedness', '1h', 2)
 		vat1.interpolate = vat2.interpolate = Settings.doQuatInt
-		km.attribs.extend([ vat1,vat2 ])
+		km.attribs.extend([ vat2,vat1 ])
 		for v in ar_vert:
 			vat1.data.append([ v.quat.x, v.quat.y, v.quat.z, v.quat.w ])
 			vat2.data.append([ int(v.face.hand) ])
@@ -376,8 +388,12 @@ def collect_attributes(mesh,armature,groups):
 		all = mesh.uv_textures
 		out.log(1,'i', 'UV layers: %d' % (len(all)))
 		for i,layer in enumerate(all):
-			#vat = Attribute('tex%d' % i, '2f')	#todo: use 'sint16f'
-			vat = Attribute('tex%d' % i, '2h', 2)
+			name = 'tex%d' % i
+			vat = None
+			if Settings.normUv:
+				vat = Attribute(name, '2H', 2)
+			else:
+				vat = Attribute(name, '2f', 0)
 			km.attribs.append(vat)
 			for v in ar_vert:
 				assert i<len(v.tex)
@@ -388,7 +404,6 @@ def collect_attributes(mesh,armature,groups):
 		all = mesh.vertex_colors
 		out.log(1,'i', 'Color layers: %d' % (len(all)))
 		for i,layer in enumerate(all):
-			#vat = Attribute('color%d' % i, '4f')	#todo: use 'uint8f'
 			vat = Attribute('color%d' % i, '4B', 2)
 			km.attribs.append(vat)
 			for v in ar_vert:

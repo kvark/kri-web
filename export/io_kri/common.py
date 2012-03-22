@@ -5,12 +5,14 @@ class Settings:
 	showInfo	= True
 	showWarning	= True
 	breakError	= False
-	putNormal	= False
-	putQuat		= True
+	putNormal	= True
+	putTangent	= False
+	putQuat		= False
 	putUv		= True
+	normUv		= True
 	putColor	= True
 	doQuatInt	= False
-	fakeQuat = 'Auto'
+	fakeQuat	= 'Auto'
 	logInfo		= True
 
 

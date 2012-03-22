@@ -50,12 +50,18 @@ class ExportMesh( bpy.types.Operator, ExportHelper ):
 	put_normal	= BoolProperty( name='Put normals',
 		description='Export vertex normals',
 		default=Settings.putNormal )
+	put_tangent	= BoolProperty( name='Put tangents',
+		description='Export vertex tangents',
+		default=Settings.putTangent )
 	put_quat	= BoolProperty( name='Put quaternions',
 		description='Export vertex quaternions',
 		default=Settings.putQuat )
 	put_uv		= BoolProperty( name='Put UV layers',
 		description='Export vertex UVs',
 		default=Settings.putUv )
+	norm_uv		= BoolProperty( name='Assume UV in range [0,1]',
+		description='Assume UV layers are normalized. That allows using fixed-point data representation',
+		default=Settings.normUv )
 	put_color	= BoolProperty( name='Put color layers',
 		description='Export vertex colors',
 		default=Settings.putColor )
@@ -75,8 +81,10 @@ class ExportMesh( bpy.types.Operator, ExportHelper ):
 		Settings.showWarning	= self.properties.show_warn
 		Settings.breakError	= self.properties.break_err
 		Settings.putNormal	= self.properties.put_normal
+		Settings.putTangent	= self.properties.put_tangent
 		Settings.putQuat	= self.properties.put_quat
 		Settings.putUv		= self.properties.put_uv
+		Settings.normUv		= self.properties.norm_uv
 		Settings.putColor	= self.properties.put_color
 		Settings.doQuatInt	= self.properties.quat_int
 		Settings.fakeQuat	= self.properties.quat_fake
