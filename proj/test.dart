@@ -20,6 +20,7 @@ class App {
   dom.WebGLRenderingContext gl = null;
   dom.CanvasElement canvas = null;
   space.Node controlNode = null;
+  arm.Armature skeleton = null;
   int timerHandle = -1;
   int canvasOffX = 0, canvasOffY = 0;
   static final localOnly = false;
@@ -95,7 +96,8 @@ class App {
     	//me = meLoader.load( 'cube.k3mesh', me );
     	me = meLoader.load( 'jazz_dancing.k3mesh', me );
     	final arm.Manager arLoader = new arm.Manager( home+'arm/' );
-    	final arm.Armature ar = arLoader.load( 'cube.k3arm', null );
+    	//skeleton = arLoader.load( 'cube.k3arm', null );
+    	skeleton = arLoader.load( 'jazz_dancing.k3arm', skeleton );
     }
     
     block['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
@@ -160,6 +162,11 @@ class App {
   	double time = dateNow.value.toDouble() / 10.0;
 	final frame.Control con = new frame.Control(gl);
     con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
+
+    if (skeleton!=null)	{
+    	skeleton.update();
+    	skeleton.fillData(block);
+    }
     //final view.DataSource data = shader.dataSources[0];
     //data.modelNode.space = new space.Space( data.modelNode.space.position,
     //  new math.Quaternion.fromAxis(new math.Vector.unitY(),time), 1.0 );

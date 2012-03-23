@@ -79,7 +79,8 @@ class Mesh {
     		return false;
     	}
     }
-    if (shader.activate(gl,data,true) == false)	{
+    final int ntex = shader.activate(gl,data,true);
+    if (ntex<0)	{
 		print('Mesh failed to activate the shader');
     	blackList.add( shader );
     	return false;

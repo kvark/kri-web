@@ -26,7 +26,7 @@ class Space implements IMatrix {
   Space inverse() {
     final Quaternion q = rotation.inverse();
     final double s = 1.0 / scale;
-    return new Space( q.rotate(movement).scale(s), q, s );
+    return new Space( q.rotate(movement).scale(-s), q, s );
   }
   
   String toString() => "(m=${movement},r=${rotation},s=${scale}";

@@ -124,7 +124,7 @@ class Effect extends Program implements IDataSource  {
       final value = data[uni.info.name];
       if (value==null && complete)	{
       	print("Parameter not found: ${uni.info.name}");
-      	return -1;
+      	return ~texId;
       }
       switch (uni.info.type)  {
       case dom.WebGLRenderingContext.FLOAT_VEC4:

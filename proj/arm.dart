@@ -4,36 +4,34 @@
 #import('load.dart',	prefix:'load');
 
 
-class Bone extends Node  {
+class Bone extends Node implements Hashable  {
     final Space bindPose;
     Space transform;
 
-    Bone( final String str, this.bindPose ): super(str) { reset(); }
-    void reset()    {
-    	space = bindPose;
-    	transform = null;
+    static int nextCreateId = 0;
+	final int createdId;
+	
+	int hashCode()	{ return createdId; }
+
+	Bone( final String str, this.bindPose ): super(str), createdId=++nextCreateId { reset(); }
+	void reset()    {
+		space = bindPose;
+		transform = new Space.identity();
     }
 }
 
 
 class Armature extends Node implements shade.IDataSource	{
     final List<Bone> bones;
+    static final int maxBones = 90;
 
     void fillData( final Map<String,Object> data ){
-    	/* //TODO!
-    	final List<String> elems = name.split("\[|\]");
-    	if (elems.length != 3 || elems[0]!='bones')
-	    	return null;
-    	final int id = Math.parseInt(elems[1]);
-    	final Space space = bones[id].transform;
-    	if (elems[2]=='.pos')	{
-    		return space.getMoveScale();
-    	}else if (elems[2]=='.rot')	{
-    		return space.rotation;
-		}else
-			return null;
-		*/
-    }
+    	for(int i=0; i<maxBones; ++i)	{
+	    	final Space space = i<bones.length ? bones[i].transform : new Space.identity();
+    		data["bones[${i}].pos"]	= space.getMoveScale();
+			data["bones[${i}].rot"]	= space.rotation;
+    	}
+   }
     
     Armature(String name): super(name), bones = new List<Bone>();
     
@@ -46,13 +44,15 @@ class Armature extends Node implements shade.IDataSource	{
 				mapPose[b] = b.space;
 				mapBind[b] = inv;
 				b.transform = b.space * inv;
+			}else	{
+				assert (b.parent != null);
+				final Space parPose = mapPose[b.parent];
+				final Space parBind = mapBind[b.parent];
+				assert (parPose!=null && parBind!=null);
+				final Space curPose = mapPose[b] = parPose * b.space;
+				final Space curBind = mapBind[b] = b.bindPose.inverse() * parBind;
+				b.transform = curPose * curBind;
 			}
-			final Space parPose = mapPose[b.parent];
-			final Space parBind = mapBind[b.parent];
-			assert (parPose!=null && parBind!=null);
-			final Space curPose = mapPose[b] = parPose * b.space;
-			final Space curBind = mapBind[b] = b.bindPose.inverse() * parBind;
-			b.transform = curPose * curBind;
 		}
     }
 }
@@ -74,12 +74,11 @@ class Manager extends load.Manager<Armature>	{
 		for (int i=0; i<num; ++i)	{
 			final String name = br.getString();
 			final int parent = br.getByte()-1;
-			print('Bone ' +name + ', parent: '+parent.toString());
+			//print('Bone ' +name + ', parent: '+parent.toString());
 			final Space space = br.getSpace();
 			print(space.toString());
 			final Bone b = new Bone(name,space);
-			if (parent>=0)
-				b.parent = a.bones[parent];
+			b.parent = parent>=0 ? a.bones[parent] : a;
 			a.bones.addLast(b);
 		}
 		assert (br.empty());

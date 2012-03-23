@@ -12,7 +12,7 @@ const lowp vec3 color_specular	= vec3(1.0,1.0,1.0);
 
 
 void main()	{
-	//gl_FragColor = vec4(vec3(v_normal),1.0); return;
+	//gl_FragColor = vec4(v_color.xyz,1.0); return;
 	highp vec3 normal = normalize(v_normal);
 	highp float kdiff = dot( normal, normalize(v_light) );
 	highp float kspec = dot( normal, normalize(v_light+v_camera) );
