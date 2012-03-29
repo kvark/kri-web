@@ -160,7 +160,7 @@ class App {
   
   void frame()	{
   	final Date dateNow = new Date.now();
-  	double time = dateNow.value.toDouble() / 10.0;
+  	double time = dateNow.value.toDouble() / 1000.0;
 	final frame.Control con = new frame.Control(gl);
     //con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
     con.clear( new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
@@ -169,9 +169,7 @@ class App {
     	final String aniName = 'DefaultAction.002';
     	if (aniName != null)	{
 	    	final ani.Record rec = skeleton.records[aniName];
-    		double t1 = time;
-    		while (t1>rec.length)
-	    		t1 -= rec.length;
+    		double t1 = time - (time/rec.length).floor() * rec.length;
     		skeleton.setMoment( aniName, t1 );
     	}
     	skeleton.update();

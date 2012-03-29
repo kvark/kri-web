@@ -43,13 +43,14 @@ def save_actions(ob):
 		if not len(rnas): continue
 		out.begin( 'action' )
 		out.text( act.name )
-		out.pack('f', nf * Settings.kFrameSec )
+		out.pack('f', nf / Settings.kFrameSec )
 		out.logu(1,'+anim: %s, %d frames, %d groups' % ( act.name,nf,len(act.groups) ))
 		if n_empty:
 			out.log(2,'w','%d empty curves detected' % (n_empty))
 		# write in packs
 		for attrib,sub in rnas.items():
-			curves.add( '%s[%d]' % (attrib,len(sub)) )
+			str = re.sub(r'\".+\"','*',attrib)
+			curves.add( '%s[%d]' % (str,len(sub)) )
 			out.begin('curve')
 			out.text( attrib )
 			out.pack('B', len(sub) )
@@ -81,7 +82,7 @@ def save_curve_pack(curves,offset):
 		def h2(k): return k.handle_right
 		kp = tuple(c.keyframe_points[i] for c in curves)
 		frame = kp[0].co[0]
-		out.pack('f', (frame-offset) * Settings.kFrameSec)
+		out.pack('f', (frame-offset) / Settings.kFrameSec)
 		#print ('Time', x, i, data)
 		for fun in (h0,h1,h2): # ignoring handlers time
 			out.array('f', (fun(k)[1] for k in kp) )

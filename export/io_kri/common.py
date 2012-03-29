@@ -14,7 +14,7 @@ class Settings:
 	doQuatInt	= False
 	fakeQuat	= 'Auto'
 	logInfo		= True
-	kFrameSec	= 30
+	kFrameSec	= 30.0
 
 
 class Writer:
