@@ -15,25 +15,34 @@ struct Spatial	{ vec4 pos,rot; };
 uniform Spatial bones[90];
 
 
-Spatial eval_skeleton()	{
-	Spatial rez = Spatial( vec4(0.0), vec4(0.0) );
+// Quaternion routines
+vec3 qrot(vec4 q, vec3 v)	{
+	return v + 2.0*cross(q.xyz, cross(q.xyz,v) + q.w*v);
+}
+vec3 trans_for(Spatial s, vec3 v)	{
+	return qrot(s.rot, v*s.pos.w) + s.pos.xyz;
+}
+
+
+vec4 eval_skeleton()	{
+	vec4 pos = vec4(0.0);
 	for(int i=0; i<4; ++i)	{
 		int bid = int(a_bone_ids[i]+0.5);
 		float w = a_bone_weights[i];
-		Spatial sp = bones[bid];
-		rez.pos += w * sp.pos;
-		rez.rot += w * sp.rot;
+		pos += w * vec4( trans_for(bones[bid],a_position), 1.0);
 	}
-	rez.rot = normalize(rez.rot);
-	return rez;
+	return pos;
 }
 
 
 void main()	{
-	Spatial pose = eval_skeleton();
-	vec4 pos = vec4(a_position + pose.pos.xyz,1.0);
+	//Spatial pose = eval_skeleton();
+	//vec4 pos = vec4(trans_for(pose,a_position),1.0);
+	vec4 pos = eval_skeleton();
 	//vec4 pos = vec4(a_position,1.0);
-	v_normal = mat3(mx_model) * a_normal;
+	//vec3 nor = qrot(pose.rot, a_normal);
+	vec3 nor = a_normal;
+	v_normal = mat3(mx_model) * nor;
 	v_tex = a_tex0;
 	vec4 vw = mx_model * pos;
 	v_light = (pos_light - vw).xyz;

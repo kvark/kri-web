@@ -126,7 +126,7 @@ def save_mesh(filename,context):
 	# steady...
 	print('Exporting Mesh...')
 	out = Writer.inst = Writer(filename)
-	out.text('k3m');
+	out.begin('k3mesh')
 	km = collect_attributes(ob.data, arm, ob.vertex_groups)
 	# go!
 	totalFm = ''.join(a.type for a in km.attribs)
@@ -162,6 +162,7 @@ def save_mesh(filename,context):
 			out.array(km.index.type[1], d)
 		assert out.tell() == seqStart + km.ni*stride
 	# done
+	out.end()	#k3mesh
 	out.conclude()
 	print('Done.')
 

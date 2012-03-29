@@ -1,4 +1,5 @@
 #library('space');
+#import('ani.dart', prefix:'ani');
 #import('math.dart');
 
 
@@ -33,7 +34,7 @@ class Space implements IMatrix {
 }
 
 
-class Node {
+class Node extends ani.Player {
   final String name;
   Space space;
   Node parent;
@@ -45,3 +46,6 @@ class Node {
     return parent==null ? local : parent.getWorld() * local; 
   }
 }
+
+
+

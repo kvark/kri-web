@@ -76,10 +76,10 @@ class IntReader	{
 		return rez;
 	}
 	
-	String getString()	{
-		final int num = getByte();
-		return new String.fromCharCodes( getMultiple(num) );
-	}
+	String getStringFixed(final int num) =>
+		new String.fromCharCodes( getMultiple(num) );
+	
+	String getString() => getStringFixed( getByte() );
 	
 	double getReal()	{
 		//todo: use Float32Array to extract doubles
@@ -90,10 +90,25 @@ class IntReader	{
 		return sign * mant * Math.pow( 0.5, 23-power );
 	}
 	
+	List<double> getMultiReal(int num)	{
+		final List<double> rez = [];
+		for(int i=0; i<num; ++i)
+			rez.addLast( getReal() );
+		return rez;
+	}
+	
+	math.Vector getVector3()	{
+		final List<double> l = getMultiReal(3);
+		return new math.Vector(l[0],l[1],l[2],0.0);
+	}
+	
+	math.Quaternion getQuaternion()	{
+		final List<double> l = getMultiReal(4);
+		return new math.Quaternion(l[1],l[2],l[3],l[0]);
+	}
+	
 	space.Space getSpace()	{
-		final List<double> l = new List<double>(8);
-		for(int i=0; i<l.length; ++i)
-			l[i] = getReal();
+		final List<double> l = getMultiReal(8);
 		return new space.Space(
 			new math.Vector(l[0],l[1],l[2],0.0),
 			new math.Quaternion(l[4],l[5],l[6],l[7]),
@@ -104,7 +119,47 @@ class IntReader	{
 }
 
 
-class BinaryReader extends IntReader	{
+class Chunk	{
+	final String name;
+	final int end;
+	Chunk( this.name, this.end );
+}
+
+class ChunkReader extends IntReader	{
+	final List<Chunk> chunks;
+	final String zeroChar;
+	static final int nameSize = 8;
+	
+	ChunkReader( final dom.Iterator<int> it ):
+		chunks = new List<Chunk>(),
+		zeroChar = new String.fromCharCodes([0]),
+		super(it);
+	
+	String enter()	{
+		final String str = getStringFixed(nameSize).replaceAll(zeroChar,'');
+		final int size = getLarge(4);
+		chunks.addLast(new Chunk( str, tell()+size ));
+		return str;
+	}
+	
+	String leave()	{
+		final Chunk ch = chunks.removeLast();
+		assert( ch.end == tell() );
+		skip( ch.end - tell() );
+		return ch.name;
+	}
+	
+	bool hasMore() => chunks.last().end > tell();
+	
+	void finish()	{
+		leave();
+		assert( empty() && chunks.length==0 );
+	}
+}
+
+
+
+class BinaryReader extends ChunkReader	{
 	final dom.Uint8Array array;
 	
 	BinaryReader( final dom.ArrayBuffer buffer ):
@@ -117,7 +172,8 @@ class BinaryReader extends IntReader	{
 	}
 }
 
-class TextReader extends IntReader	{
+
+class TextReader extends ChunkReader	{
 	final String text;
 	
 	TextReader( this.text ):

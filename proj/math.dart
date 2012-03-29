@@ -164,6 +164,11 @@ class Quaternion implements IDoubleList  {
   Quaternion.identity(): this(0.0,0.0,0.0,1.0);
   Quaternion.fromBase( final Vector v, this.w ): x=v.x, y=v.y, z=v.z;
   
+  static Quaternion lerp( final Quaternion a, final Quaternion b, double t )	{
+  	final double r = 1.0 - t;
+  	return new Quaternion( r*a.x+t*b.x, r*a.y+t*b.y, r*a.z+t*b.z, r*a.w+t*b.w ).normalize();
+  }	  
+  
   factory Quaternion.fromAxis( final Vector axis, double angleDegrees ){
   	final double halfRadians = degreesToHalfRadians * angleDegrees;
     final double sin = Math.sin( halfRadians );
@@ -204,10 +209,5 @@ class Quaternion implements IDoubleList  {
       return this;
     final double k = 1.0 / Math.sqrt(len2);
     return new Quaternion( x*k, y*k, z*k, w*k );
-  }
-  
-  Quaternion lerp(final Quaternion q, final double t) {
-    final double r = 1.0 - t;
-    return new Quaternion( r*x+t*q.x, r*y+t*q.y, r*z+t*q.z, r*w+t*q.w ); 
   }
 }

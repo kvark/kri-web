@@ -12,3 +12,5 @@ deploy_shaders:
 	cd stage && ./upload.sh shaders.txt
 deploy_models:
 	cd stage && ./upload.sh models.txt
+deploy_armatures:
+	cd stage && ./upload.sh armatures.txt

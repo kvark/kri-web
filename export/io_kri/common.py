@@ -14,6 +14,7 @@ class Settings:
 	doQuatInt	= False
 	fakeQuat	= 'Auto'
 	logInfo		= True
+	kFrameSec	= 30
 
 
 class Writer:
@@ -22,7 +23,7 @@ class Writer:
 	__slots__= 'fx','pos','counter','stop'
 	def __init__(self,path):
 		self.fx = open(path,'wb')
-		self.pos = 0
+		self.pos = []
 		self.counter = {'':0,'i':0,'w':0,'e':0}
 		self.stop = False
 	def sizeOf(self,tip):
@@ -30,11 +31,9 @@ class Writer:
 		return struct.calcsize(tip)
 	def pack(self,tip,*args):
 		import struct
-		#assert self.pos
 		self.fx.write( struct.pack('<'+tip,*args) )
 	def array(self,tip,ar):
 		import array
-		#assert self.pos
 		array.array(tip,ar).tofile(self.fx)
 	def text(self,*args):
 		for s in args:
@@ -44,18 +43,17 @@ class Writer:
 			self.pack('B%ds'%(x),x,bt)
 	def begin(self,name):
 		import struct
-		assert len(name)<8 and not self.pos
+		assert len(name)<8
 		bt = bytes(name,'ascii')
 		self.fx.write( struct.pack('<8sL',bt,0) )
-		self.pos = self.fx.tell()
+		self.pos.append( self.fx.tell() )
 	def end(self):
 		import struct
-		assert self.pos
-		off = self.fx.tell() - self.pos
+		pos = self.pos.pop()
+		off = self.fx.tell() - pos
 		self.fx.seek(-off-4,1)
 		self.fx.write( struct.pack('<L',off) )
 		self.fx.seek(+off+0,1)
-		self.pos = 0
 	def tell(self):
 		return self.fx.tell()
 	def log(self,indent,level,message):
@@ -70,6 +68,7 @@ class Writer:
 	def logu(self,indent,message):
 		print( "%s%s" % (Writer.tabs[indent],message) )
 	def conclude(self):
+		assert len(self.pos) == 0
 		self.fx.close()
 		c = self.counter
 		print(c['e'],'errors,',c['w'],'warnings,',c['i'],'infos')

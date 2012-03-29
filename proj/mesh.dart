@@ -126,11 +126,12 @@ class Manager extends load.Manager<Mesh>	{
 	
 	Mesh spawn(Mesh fallback) => new Mesh(fallback);
 	
-	void fill( final Mesh m, final load.IntReader br ){
+	void fill( final Mesh m, final load.ChunkReader br ){
 		final buff.Binding arrayBinding = new buff.Binding.array(gl);
 		final log = dom.window.console;
-		if (br.getString() != 'k3m')	{
-			log.debug('Mesh signature is bad, skipping');
+		final String signature = br.enter();
+		if (signature != 'k3mesh')	{
+			log.debug('Mesh signature is bad: ' + signature);
 			return;
 		}
 		m.nVert	= br.getLarge(4);
@@ -187,6 +188,6 @@ class Manager extends load.Manager<Mesh>	{
 			//log.debug('Offset after block: ' + br.tell().toString());
 		}
 		log.debug('nVert: ' + m.nVert.toString());
-		assert (br.empty());
+		br.finish();
 	}
 }

@@ -10,6 +10,7 @@
 #import('gen.dart',		prefix:'gen');
 #import('tex.dart',		prefix:'tex');
 #import('arm.dart',		prefix:'arm');
+#import('ani.dart',		prefix:'ani');
 
 
 class App {
@@ -45,19 +46,6 @@ class App {
     gl.enable( dom.WebGLRenderingContext.CULL_FACE );
     gl.frontFace( dom.WebGLRenderingContext.CW );
     gl.depthMask(true);
-    
-    if (localOnly)	{
-    	String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
-			'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
-		String fragText = 'void main() {gl_FragColor=vec4(1.0);}';
-		shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
-	    shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
-    	shader = new shade.Effect( gl, [shVert,shFrag] );
-    }else	{
-	    final shade.Manager shMan = new shade.Manager('http://demo.kvatom.com/shade/');
-	    shader = shMan.assemble( gl, ['simple-arm.glslv','simple.glslf'] );
-	    //shader = shMan.assemble( gl, ['simple.glslv','simple.glslf'] );
-    }
     
     me = new gen.Mesh(gl).cubeUnit();
     tex.Texture texture = new gen.Texture(gl).white();
@@ -100,6 +88,19 @@ class App {
     	skeleton = arLoader.load( 'jazz_dancing.k3arm', skeleton );
     }
     
+    if (localOnly)	{
+    	String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
+			'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
+		String fragText = 'void main() {gl_FragColor=vec4(1.0);}';
+		shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
+	    shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
+    	shader = new shade.Effect( gl, [shVert,shFrag] );
+    }else	{
+	    final shade.Manager shMan = new shade.Manager('http://demo.kvatom.com/shade/');
+	    shader = shMan.assemble( gl, ['simple-arm.glslv','simple.glslf'] );
+	    //shader = shMan.assemble( gl, ['simple.glslv','simple.glslf'] );
+    }
+
     block['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
     block['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
     block['t_main'] = texture;
@@ -161,9 +162,18 @@ class App {
   	final Date dateNow = new Date.now();
   	double time = dateNow.value.toDouble() / 10.0;
 	final frame.Control con = new frame.Control(gl);
-    con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
+    //con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
+    con.clear( new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
 
     if (skeleton!=null)	{
+    	final String aniName = 'DefaultAction.002';
+    	if (aniName != null)	{
+	    	final ani.Record rec = skeleton.records[aniName];
+    		double t1 = time;
+    		while (t1>rec.length)
+	    		t1 -= rec.length;
+    		skeleton.setMoment( aniName, t1 );
+    	}
     	skeleton.update();
     	skeleton.fillData(block);
     }
