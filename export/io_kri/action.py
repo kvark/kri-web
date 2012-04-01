@@ -75,14 +75,15 @@ def save_curve_pack(curves,offset):
 	for c in curves:
 		assert len(c.keyframe_points) == num
 		assert c.extrapolation == extra
-	out.pack('HB', num, (extra == 'LINEAR'))
+	out.pack('HBB', num, (extra == 'LINEAR'), Settings.keyBezier)
 	for i in range(num):
-		def h0(k): return k.co
-		def h1(k): return k.handle_left
-		def h2(k): return k.handle_right
 		kp = tuple(c.keyframe_points[i] for c in curves)
 		frame = kp[0].co[0]
 		out.pack('f', (frame-offset) / Settings.kFrameSec)
 		#print ('Time', x, i, data)
-		for fun in (h0,h1,h2): # ignoring handlers time
-			out.array('f', (fun(k)[1] for k in kp) )
+		out.array('f', (k.co[1] for k in kp))
+		if not Settings.keyBezier:
+			continue
+		# ignoring handlers time
+		out.array('f', (k.handle_left[1] for k in kp))
+		out.array('f', (k.handle_right[1] for k in kp))

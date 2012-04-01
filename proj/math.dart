@@ -167,7 +167,7 @@ class Quaternion implements IDoubleList  {
   static Quaternion lerp( final Quaternion a, final Quaternion b, double t )	{
   	final double r = 1.0 - t;
   	return new Quaternion( r*a.x+t*b.x, r*a.y+t*b.y, r*a.z+t*b.z, r*a.w+t*b.w ).normalize();
-  }	  
+  }
   
   factory Quaternion.fromAxis( final Vector axis, double angleDegrees ){
   	final double halfRadians = degreesToHalfRadians * angleDegrees;

@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-US" xml:lang="en-US" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>KriWeb - Demo</title>
+	<link href="style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div class="wrapper">
+	<div class="column side">
+		<div class="logo">
+			<img src="image/batman.png" border=0 style="float:left;" /> <a href="#">&nbsp;&nbsp;<span id="logo_starts">kri</span><span id="logo_ends">[WEB]</span></a>
+		</div>
+		<div class="clear"></div>
+		<div class="project_description">
+			<p>This site is a demo scene of KriWeb engine.</p>
+			<p>Todays demo is a girl Mia brought to you by Mixamo service. She is dancing some jazz song.
+			<p><b>Author:</b> <a href="">Dzmitry Malyshau</a></p>
+		</div>
+		<br /><br /><br />
+		<h3>Settings</h3>
+		<div class="project_description">
+			<p><input type="checkbox" name="skeleton" id="skeleton" checked class="settings" /> Skeleton</p>
+			<p><input type="checkbox" name="texture" id="texture" checked class="settings" /> Texture</p>
+			<p><input type="checkbox" name="wireframe" id="wireframe" checked class="settings" /> Wireframe</p>
+		</div>	
+	</div>
+	<div class="column center">
+		<canvas id="canvas" style="border: none;" width="500" height="500"></canvas>
+	</div>
+	<div class="column side">
+		<h3>Status</h3>
+		<div class="project_description">
+			<p><b>Skeleton</b> - Downloading 97%...</p>
+			<p><b>Texture</b> - Downloading 15%...</p>
+			<p><b>Model</b> - Downloading ...<span class="error">Failed</span></p>
+			<p><b>JS lib</b> - <span class="success">Completed</span></p>
+		</div>
+		
+		<h3>Models</h3>
+		<div class="project_description">
+			<p><img src="image/model.jpg" class="img_inline"/><br />Car</p>
+			<p><img src="image/model.jpg" class="img_inline"/><br />Girl2</p>
+			<p><img src="image/model.jpg" class="img_inline"/><br />Guy</p>
+			<p><img src="image/model.jpg" class="img_inline"/><br />Girl2</p>
+		</div>	
+	</div>
+	<div class="clear"></div>
+	
+</div><!--wrapper-->
+<script type="application/javascript" src="test.dart.js"></script>
+<script src="http://dart.googlecode.com/svn/branches/bleeding_edge/dart/client/dart.js"></script>
+</body>
+</html>

@@ -14,6 +14,7 @@ class Settings:
 	doQuatInt	= False
 	fakeQuat	= 'Auto'
 	logInfo		= True
+	keyBezier	= False
 	kFrameSec	= 30.0
 
 

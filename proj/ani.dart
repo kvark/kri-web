@@ -9,7 +9,7 @@ class Key<T>	{
 
 
 interface IPlayer	{
-	void setMoment( String animation, double time );
+	bool setMoment( String animation, double time );
 }
 
 interface IChannel	{
@@ -38,7 +38,7 @@ class Channel<T> implements IChannel	{
 			--i;
 		if (i==0 || i==keys.length)	{
 			final Key<T> a = keys[i>0 ? i-1 : 0];
-			if (extrapolate)	{
+			if (extrapolate && a.hl!=null && a.hl!=null)	{
 				return interpolate( a.co,
 					i>0 ? a.hr : a.hl,
 					i>0 ? (time-a.t) : (a.t-time) );
@@ -48,7 +48,7 @@ class Channel<T> implements IChannel	{
 		final Key<T> a = keys[i-1], b = keys[i];
 		assert (a.t != b.t);
 		final double t = (time - a.t) / (b.t - a.t);
-		if (bezier)	{
+		if (bezier && a.hr!=null && b.hl!=null)	{
 			final T va = interpolate( a.co, a.hr, t );
 			final T vb = interpolate( b.hl, b.co, t );
 			return interpolate( va, vb, t );
@@ -71,12 +71,14 @@ class Player implements IPlayer	{
 	final Map<String,Record> records;
 	Player(): records = new Map<String,Record>();
 	
-	void setMoment( String animation, double time ){
+	bool setMoment( String animation, double time ){
 		final Record rec = records[animation];
-		assert( rec != null );
+		if (rec == null)
+			return false;
 		assert( time>=0.0 && time<=rec.length );
 		for (IChannel chan in rec.channels)	{
 			chan.update( this, time );
 		}
+		return true;
 	}
 }

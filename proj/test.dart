@@ -50,13 +50,8 @@ class App {
     me = new gen.Mesh(gl).cubeUnit();
     tex.Texture texture = new gen.Texture(gl).white();
 
-    // draw  scene
-    final frame.Control con = new frame.Control(gl);
-    con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
-    final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
-    con.viewport( rect );
-    
     final view.Camera camera = new view.Camera();
+    final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
     camera.projector = new view.Projector.perspective( 60.0, rect.aspect(), 1.0, 10.0 );
     final space.Node node = new space.Node( 'model-node' );
     node.space = new space.Space.fromMoveScale(0.0,0.0,5.0,1.0);    	
@@ -73,38 +68,36 @@ class App {
     controlNode = node;
 	
     if (!localOnly)	{
-    	final String home = 'http://demo.kvatom.com/';
-    	final tex.Manager texLoader = new tex.Manager( gl, home+'image/' );
+    	final String home = '';
+    	final tex.Manager texLoader = new tex.Manager( gl, "${home}/image/" );
     	//texture = texLoader.load( 'CAR.TGA', texture );
     	texture = texLoader.load( 'SexyFem_Texture.tga', texture );
     	final tex.Binding texBind = new tex.Binding.tex2d(gl);
     	texBind.state( texture, false, false, 0 );
     	//log.debug( texture );
-    	final mesh.Manager meLoader = new mesh.Manager( gl, home+'mesh/' );
+    	final mesh.Manager meLoader = new mesh.Manager( gl, "${home}/mesh/" );
     	//me = meLoader.load( 'cube.k3mesh', me );
     	me = meLoader.load( 'jazz_dancing.k3mesh', me );
-    	final arm.Manager arLoader = new arm.Manager( home+'arm/' );
+    	final arm.Manager arLoader = new arm.Manager( "${home}/arm/" );
     	//skeleton = arLoader.load( 'cube.k3arm', null );
     	skeleton = arLoader.load( 'jazz_dancing.k3arm', skeleton );
-    }
-    
-    if (localOnly)	{
+	    final shade.Manager shMan = new shade.Manager( "${home}/shade/");
+	    shader = shMan.assemble( gl, ['simple-arm.glslv','simple.glslf'] );
+	    //shader = shMan.assemble( gl, ['simple.glslv','simple.glslf'] );
+    }else	{
     	String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
 			'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
 		String fragText = 'void main() {gl_FragColor=vec4(1.0);}';
 		shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
 	    shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
     	shader = new shade.Effect( gl, [shVert,shFrag] );
-    }else	{
-	    final shade.Manager shMan = new shade.Manager('http://demo.kvatom.com/shade/');
-	    shader = shMan.assemble( gl, ['simple-arm.glslv','simple.glslf'] );
-	    //shader = shMan.assemble( gl, ['simple.glslv','simple.glslf'] );
     }
 
+    //con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
     block['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
     block['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
     block['t_main'] = texture;
-    me.draw( gl, shader, block );
+    //me.draw( gl, shader, block );
     //log.debug( shader );
     
     int err = gl.getError();
@@ -162,13 +155,14 @@ class App {
   	final Date dateNow = new Date.now();
   	double time = dateNow.value.toDouble() / 1000.0;
 	final frame.Control con = new frame.Control(gl);
-    //con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
+    final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
+    con.viewport( rect );
     con.clear( new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
 
     if (skeleton!=null)	{
-    	final String aniName = 'DefaultAction.002';
-    	if (aniName != null)	{
-	    	final ani.Record rec = skeleton.records[aniName];
+    	final String aniName = /*'ArmatureAction'*/ 'DefaultAction.002';
+    	final ani.Record rec = skeleton.records[aniName];
+    	if (rec != null)	{
     		double t1 = time - (time/rec.length).floor() * rec.length;
     		skeleton.setMoment( aniName, t1 );
     	}

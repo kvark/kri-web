@@ -38,11 +38,12 @@ class Armature extends Node implements shade.IDataSource	{
    
 	Armature(String name): super(name), bones = new List<Bone>();
 	
-	void setMoment( String animation, double time ){
-		super.setMoment( animation, time );
+	bool setMoment( String animation, double time ){
+		bool rez = super.setMoment( animation, time );
 		for (final Bone b in bones)	{
-			b.setMoment( animation, time );
+			rez = b.setMoment( animation, time ) || rez;	//Note: keep order!
 		}
+		return rez;
 	}
     
     void update()	{
@@ -81,11 +82,12 @@ class ChanReader<T>	{
 		if (num == 0)
 			return chan;
 		chan.extrapolate	= br.getByte()>0;
+		chan.bezier			= br.getByte()>0;
 		for(int i=0; i<num; ++i)	{
 			double t = br.getReal();
 			T co = readPoint(br);
-			T hl = readPoint(br);
-			T hr = readPoint(br);
+			T hl = chan.bezier ? readPoint(br) : null;
+			T hr = chan.bezier ? readPoint(br) : null;
 			chan.keys.addLast(new ani.Key<T>( t, co, hl, hr ));
 		}
 		return chan;
@@ -129,7 +131,10 @@ class ChanReadRot extends ChanReader<math.Quaternion>	{
 	ani.IChannel readNew(load.IntReader br) => readInto( br, new ChannelRotate() );
 }
 class ChanReadScale extends ChanReader<double>	{
-	double readPoint(load.IntReader br) => br.getReal();
+	double readPoint(load.IntReader br)	{
+		final math.Vector scale = br.getVector3();
+		return scale.dot( new math.Vector.mono(1.0/3.0) );
+	}
 	ani.IChannel readNew(load.IntReader br) => readInto( br, new ChannelScale() );
 }
 
@@ -154,7 +159,7 @@ class Manager extends load.Manager<Armature>	{
 			final int parent = br.getByte()-1;
 			//print('Bone ' +name + ', parent: '+parent.toString());
 			final Space space = br.getSpace();
-			print(space.toString());
+			//print(space.toString());
 			final Bone b = new Bone(name,space);
 			b.parent = parent>=0 ? a.bones[parent] : a;
 			a.bones.addLast(b);
@@ -196,7 +201,7 @@ class Manager extends load.Manager<Armature>	{
 						rb.channels.add( chanRot.readNew(br) );
 						continue;
 					}else if (split[2]=='].scale')	{
-						assert( nSub == 1 );
+						assert( nSub == 3 );	//averaging
 						rb.channels.add( chanScale.readNew(br) );
 						continue;
 					}else

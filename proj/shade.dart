@@ -101,7 +101,7 @@ class Effect extends Program implements IDataSource  {
     for (int i=0; i<num; ++i) {
       final dom.WebGLActiveInfo info = gl.getActiveUniform( h, i );
       final dom.WebGLUniformLocation loc = gl.getUniformLocation( h, info.name );
-      final val = gl.getUniform( h, loc );
+      final val = null; //gl.getUniform( h, loc ); // todo: 10 uniforms/sec is not acceptable
       uniforms.add( new Uniform(loc,info,val) );
     }
   }
