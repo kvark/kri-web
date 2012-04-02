@@ -164,9 +164,19 @@ class Quaternion implements IDoubleList  {
   Quaternion.identity(): this(0.0,0.0,0.0,1.0);
   Quaternion.fromBase( final Vector v, this.w ): x=v.x, y=v.y, z=v.z;
   
-  static Quaternion lerp( final Quaternion a, final Quaternion b, double t )	{
-  	final double r = 1.0 - t;
-  	return new Quaternion( r*a.x+t*b.x, r*a.y+t*b.y, r*a.z+t*b.z, r*a.w+t*b.w ).normalize();
+  factory Quaternion.fromSum( final Quaternion a, final double wa, final Quaternion b, final double wb) =>
+  	new Quaternion( wa*a.x+wb*b.x, wa*a.y+wb*b.y, wa*a.z+wb*b.z, wa*a.w+wb*b.w );
+
+  static Quaternion lerp( final Quaternion a, final Quaternion b, double t )
+  	=> new Quaternion.fromSum( a, 1.0-t, b, t ).normalize();
+  
+  static Quaternion slerp( final Quaternion a, final Quaternion b, double t ){
+    final double cosHalf = a.dot(b);
+    final double halfAngle = Math.acos( cosHalf.abs() );
+    final double kf = 1.0 / Math.sin(halfAngle);
+    final double ka = kf * Math.sin(halfAngle * (1.0-t));
+    final double kb = kf * Math.sin(halfAngle * t);
+    return new Quaternion.fromSum( a, ka, cosHalf<0 ? b.negative() : b, kb );
   }
   
   factory Quaternion.fromAxis( final Vector axis, double angleDegrees ){
@@ -199,9 +209,12 @@ class Quaternion implements IDoubleList  {
     return new Quaternion.fromBase(v,e);  
   }
   
+  double dot(final Quaternion q) => x*q.x + y*q.y + z*q.z + w*q.w;
+  
   Vector base() => new Vector(x,y,z,0.0);
   Quaternion inverse() => new Quaternion(-x,-y,-z,w);
   double lengthSquare() => x*x + y*y + z*z + w*w;
+  Quaternion negative() => new Quaternion(-x,-y,-z,-w);
   
   Quaternion normalize()  {
     final double len2 = lengthSquare();

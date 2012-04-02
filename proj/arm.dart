@@ -109,7 +109,7 @@ class ChannelRotate extends ani.Channel<math.Quaternion> {
         n.space = new Space( n.space.movement, n.bindPose.rotation * q, n.space.scale );
 	}
     math.Quaternion interpolate( final math.Quaternion a, final math.Quaternion b, final double t )    {
-        return math.Quaternion.lerp(a,b,t);
+        return math.Quaternion.slerp(a,b,t);
     }
 }
 
