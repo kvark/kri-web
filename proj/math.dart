@@ -172,11 +172,12 @@ class Quaternion implements IDoubleList  {
   
   static Quaternion slerp( final Quaternion a, final Quaternion b, double t ){
     final double cosHalf = a.dot(b);
+    if (cosHalf+epsilon>1.0 || cosHalf-epsilon<-1.0)
+    	return a;
     final double halfAngle = Math.acos( cosHalf.abs() );
-    final double kf = 1.0 / Math.sin(halfAngle);
-    final double ka = kf * Math.sin(halfAngle * (1.0-t));
-    final double kb = kf * Math.sin(halfAngle * t);
-    return new Quaternion.fromSum( a, ka, cosHalf<0 ? b.negative() : b, kb );
+    final double ka = Math.sin(halfAngle * (1.0-t));
+    final double kb = Math.sin(halfAngle * t);
+    return new Quaternion.fromSum( a, ka, cosHalf<0 ? b.negative() : b, kb ).normalize();
   }
   
   factory Quaternion.fromAxis( final Vector axis, double angleDegrees ){
@@ -212,9 +213,9 @@ class Quaternion implements IDoubleList  {
   double dot(final Quaternion q) => x*q.x + y*q.y + z*q.z + w*q.w;
   
   Vector base() => new Vector(x,y,z,0.0);
-  Quaternion inverse() => new Quaternion(-x,-y,-z,w);
+  Quaternion inverse()	=> new Quaternion(-x,-y,-z,w);
+  Quaternion negative()	=> new Quaternion(-x,-y,-z,-w);
   double lengthSquare() => x*x + y*y + z*z + w*w;
-  Quaternion negative() => new Quaternion(-x,-y,-z,-w);
   
   Quaternion normalize()  {
     final double len2 = lengthSquare();
