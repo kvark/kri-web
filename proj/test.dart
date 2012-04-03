@@ -44,7 +44,6 @@ class App {
     
     gl.enable( dom.WebGLRenderingContext.DEPTH_TEST );
     gl.enable( dom.WebGLRenderingContext.CULL_FACE );
-    gl.frontFace( dom.WebGLRenderingContext.CW );
     gl.depthMask(true);
     
     me = new gen.Mesh(gl).cubeUnit();
@@ -54,13 +53,13 @@ class App {
     final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
     camera.projector = new view.Projector.perspective( 60.0, rect.aspect(), 1.0, 10.0 );
     final space.Node node = new space.Node( 'model-node' );
-    node.space = new space.Space.fromMoveScale(0.0,0.0,5.0,1.0);    	
+		node.space = new space.Space.fromMoveScale(0.0,0.0,-5.0,1.0);    	
     final space.Node child = new space.Node('child');
     child.parent = node;
     child.space = new space.Space(
-    	new math.Vector(0.0,-2.0,0.0,0.0),
+    	new math.Vector(0.0,2.0,0.0,0.0),
     	new math.Quaternion.fromAxis(new math.Vector.unitY(),180.0) *
-    	new math.Quaternion.fromAxis(new math.Vector.unitX(),-90.0),
+    	new math.Quaternion.fromAxis(new math.Vector.unitX(),90.0),
     	2.0 );
     //child.space = new space.Space.identity();
     viewData = new view.DataSource( child, camera );

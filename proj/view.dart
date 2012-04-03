@@ -26,13 +26,12 @@ class Projector implements space.IMatrix  {
   }
   
   Matrix _getPerspectiveMatrix()  {
-    final Vector den = (c0-c1).inverse(), sum = c1+c0;
-    // note: W has to be positive or it will not work at all
+    final Vector den = (c1-c0).inverse(), sum = c1+c0;
     return new Matrix(
       new Vector( 2.0*c0.z * den.x, 0.0, sum.x * den.x, 0.0 ),
       new Vector( 0.0, 2.0*c0.z * den.y, sum.y * den.y, 0.0 ),
-      new Vector( 0.0, 0.0, -sum.z * den.z, -2.0*c0.z*c1.z * den.z ),
-      new Vector( 0.0, 0.0, 1.0, 0.0 ));
+      new Vector( 0.0, 0.0, -sum.z * den.z, 2.0*c0.z*c1.z * den.z ),
+      new Vector( 0.0, 0.0, -1.0, 0.0 ));
   }
   
   Matrix _getOrthoMatrix() {
