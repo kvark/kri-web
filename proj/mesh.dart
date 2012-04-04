@@ -79,10 +79,10 @@ class Mesh {
     		return false;
     	}
     }
-    final int ntex = shader.activate(gl,data,true);
-    if (ntex<0)	{
+    if (!shader.activate( gl, data,true ))	{
 		print('Mesh failed to activate the shader');
     	blackList.add( shader );
+    	// option: release texture units
     	return false;
     }
     // prepare
@@ -113,6 +113,7 @@ class Mesh {
       gl.disableVertexAttribArray( loc );
     }
     new shade.Program.invalid().bind( gl );
+   	// option: release texture units
     return true;
   }
 }

@@ -11,12 +11,10 @@
 #import('tex.dart',		prefix:'tex');
 #import('arm.dart',		prefix:'arm');
 #import('ani.dart',		prefix:'ani');
+#import('ren.dart',		prefix:'ren');
 
 
 class App {
-  mesh.Mesh me = null;
-  shade.Effect shader = null;
-  final Map<String,Object> block;
   view.DataSource viewData = null;
   dom.WebGLRenderingContext gl = null;
   dom.CanvasElement canvas = null;
@@ -28,8 +26,13 @@ class App {
   
   mesh.Mesh axisMesh = null;
   shade.Effect axisShader = null;
+  
+  final ren.EntityBase entity;
+  final ren.Process process;
  
-  App(): block = new Map<String,Object>();
+  App():
+  	entity = new ren.EntityBase(),
+  	process = new ren.Process();
   
   void run() {
     final dom.Console log = dom.window.console;
@@ -46,7 +49,7 @@ class App {
     gl.enable( dom.WebGLRenderingContext.CULL_FACE );
     gl.depthMask(true);
     
-    me = new gen.Mesh(gl).cubeUnit();
+    entity.mesh = new gen.Mesh(gl).cubeUnit();
     tex.Texture texture = new gen.Texture(gl).white();
 
     final view.Camera camera = new view.Camera();
@@ -63,7 +66,7 @@ class App {
     	2.0 );
     //child.space = new space.Space.identity();
     viewData = new view.DataSource( child, camera );
-    viewData.fillData(block);
+    viewData.fillData( entity.data );
     controlNode = node;
 	
     if (!localOnly)	{
@@ -76,26 +79,26 @@ class App {
     	//log.debug( texture );
     	final mesh.Manager meLoader = new mesh.Manager( gl, "${home}/mesh/" );
     	//me = meLoader.load( 'cube.k3mesh', me );
-    	me = meLoader.load( 'jazz_dancing.k3mesh', me );
+    	entity.mesh = meLoader.load( 'jazz_dancing.k3mesh', entity.mesh );
     	final arm.Manager arLoader = new arm.Manager( "${home}/arm/" );
     	//skeleton = arLoader.load( 'cube.k3arm', null );
     	skeleton = arLoader.load( 'jazz_dancing.k3arm', skeleton );
 	    final shade.Manager shMan = new shade.Manager( "${home}/shade/");
-	    shader = shMan.assemble( gl, ['simple-arm.glslv','simple.glslf'] );
-	    //shader = shMan.assemble( gl, ['simple.glslv','simple.glslf'] );
+	    entity.shader = shMan.assemble( gl, ['simple-arm.glslv','simple.glslf'] );
+	    //entity.shader = shMan.assemble( gl, ['simple.glslv','simple.glslf'] );
     }else	{
     	String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
 			'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
 		String fragText = 'void main() {gl_FragColor=vec4(1.0);}';
 		shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
 	    shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
-    	shader = new shade.Effect( gl, [shVert,shFrag] );
+    	entity.shader = new shade.Effect( gl, [shVert,shFrag] );
     }
 
     //con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
-    block['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
-    block['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
-    block['t_main'] = texture;
+    entity.data['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
+    entity.data['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
+    entity.data['t_main'] = texture;
     //me.draw( gl, shader, block );
     //log.debug( shader );
     
@@ -121,7 +124,7 @@ class App {
   		((e.clientX-canvasOffX).toDouble() - hx) / (hx/dist),
   		(hy - (e.clientY-canvasOffY).toDouble())  / (hy/dist),
   		0.0, 1.0 );
-  	block['pos_light'] = v;
+  	entity.data['pos_light'] = v;
   	// move object
   	if (controlNode!=null && gripBase != null && (e.clientX!=gripX || e.clientY!=gripY))	{
   		final math.Vector voff = new math.Vector(
@@ -137,7 +140,7 @@ class App {
 		}			
 		controlNode.space = new space.Space( controlNode.space.movement,
 	    	  rot * gripBase, controlNode.space.scale );
-		viewData.fillData(block);
+		viewData.fillData( entity.data );
   	}
   }
   
@@ -166,14 +169,16 @@ class App {
     		skeleton.setMoment( aniName, t1 );
     	}
     	skeleton.update();
-    	skeleton.fillData(block);
+    	skeleton.fillData( entity.data );
     }
     //final view.DataSource data = shader.dataSources[0];
     //data.modelNode.space = new space.Space( data.modelNode.space.position,
     //  new math.Quaternion.fromAxis(new math.Vector.unitY(),time), 1.0 );
    	//controlNode.space.rotation = new math.Quaternion.fromAxis(new math.Vector(1.0,0.0,0.0,0.0),time);
    	//controlNode.space.movement = new math.Vector(0.0,Math.sin(time*0.01),5.0,0.0);
-    me.draw( gl, shader, block );
+   	process.draw( entity, null );
+   	process.flush( gl );
+    //me.draw( gl, shader, block );
   }
 }
 

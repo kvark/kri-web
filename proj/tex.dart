@@ -108,6 +108,32 @@ class Binding	{
 }
 
 
+class Accumulator extends Binding	{
+	final List<Texture> slots;
+	final Texture nullTexture;
+	
+	Accumulator( dom.WebGLRenderingContext gl ): super.tex2d(gl),
+		slots = new List<Texture>(), nullTexture = new Texture.zero();
+
+	int append(final Texture tex)	{
+		final int i = slots.length;
+		gl.activeTexture( dom.WebGLRenderingContext.TEXTURE0 + i );
+		bindRead( tex );
+		slots.add( tex );
+		return i;
+	}
+
+	int release()	{
+		final int num = slots.length;
+		for(int i=num; --i>=0; )	{
+			gl.activeTexture( dom.WebGLRenderingContext.TEXTURE0 + i );
+			bindRead( nullTexture );
+		}
+		return num;
+	}
+}
+
+
 // image TGA loader
 class Manager extends load.Manager<Texture>	{
 	final Binding bid;

@@ -2,7 +2,6 @@
 #import('dart:html',  prefix:'dom');
 #import('core.dart',  prefix:'core');
 #import('frame.dart', prefix:'frame');
-#import('tex.dart',	  prefix:'tex');
 #import('load.dart',  prefix:'load');
 
 
@@ -112,19 +111,17 @@ class Effect extends Program implements IDataSource  {
       data[uni.info.name] = uni.defaultValue;
   }
   
-  // returns number of texture units occupied, or -1 if failed
-  int activate( final dom.WebGLRenderingContext gl, final Map<String,Object> data, final bool complete ){
+  bool activate( final dom.WebGLRenderingContext gl, final Map<String,Object> data, final bool complete ){
   	if (!isFull())
-	  	return -1;
+	  	return false;
   	bind( gl );
+  	int texId = 0;
   	// load parameters
-  	final tex.Binding texBind = new tex.Binding.tex2d(gl);
-    int texId = 0;
     for (final Uniform uni in uniforms)  {
       final value = data[uni.info.name];
       if (value==null && complete)	{
       	print("Parameter not found: ${uni.info.name}");
-      	return ~texId;
+      	return false;
       }
       switch (uni.info.type)  {
       case dom.WebGLRenderingContext.FLOAT_VEC4:
@@ -136,19 +133,19 @@ class Effect extends Program implements IDataSource  {
           new dom.Float32Array.fromList(value.toList()) );
         break;
       case dom.WebGLRenderingContext.SAMPLER_2D:
+		gl.activeTexture( dom.WebGLRenderingContext.TEXTURE0 + texId );
         gl.uniform1i( uni.location, texId );
-        gl.activeTexture( dom.WebGLRenderingContext.TEXTURE0 + texId );
-        texBind.bindRead( value );	// todo: unbind where?
+        gl.bindTexture( dom.WebGLRenderingContext.TEXTURE_2D, value );
         ++texId; break;
       case dom.WebGLRenderingContext.SAMPLER_CUBE:
+		gl.activeTexture( dom.WebGLRenderingContext.TEXTURE0 + texId );
         gl.uniform1i( uni.location, texId );
-        gl.activeTexture( dom.WebGLRenderingContext.TEXTURE0 + texId );
         gl.bindTexture( dom.WebGLRenderingContext.TEXTURE_CUBE_MAP, value );
         ++texId; break;
-      default: return ~texId;
+      default: return false;
       }
     }
-    return texId;
+    return true;
   }
   
   // constructor
