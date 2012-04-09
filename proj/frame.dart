@@ -40,7 +40,7 @@ class RenderSurface implements ITarget {
   final Surface surface;
   
   RenderSurface( this.surface );
-  RenderSurface.zero(): surface = Surface.zero();
+  RenderSurface.zero(): surface = new Surface.zero();
   
   void bind(dom.WebGLRenderingContext gl, int point)  {
     gl.framebufferRenderbuffer( dom.WebGLRenderingContext.FRAMEBUFFER,
@@ -70,11 +70,9 @@ class Buffer {
   ITarget _color = null, _depth = null, _stencil = null;
   final ITarget nullRender;
   
-  Buffer( final dom.WebGLRenderingContext gl ):
-  	handle = gl.createFramebuffer(),
-    nullRender = new RenderSurface.zero();
-
-  Buffer.main(): handle = null;
+  Buffer._from( this.handle ): nullRender = new RenderSurface.zero();
+  Buffer( final dom.WebGLRenderingContext gl ): this._from( gl.createFramebuffer() );
+  Buffer.main(): this._from( null );
   
   void _update(final dom.WebGLRenderingContext gl, ITarget tNew, ITarget tOld, int slot)	{
   	if (tNew==tOld)

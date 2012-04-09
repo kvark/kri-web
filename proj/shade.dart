@@ -135,12 +135,12 @@ class Effect extends Program implements IDataSource  {
       case dom.WebGLRenderingContext.SAMPLER_2D:
 		gl.activeTexture( dom.WebGLRenderingContext.TEXTURE0 + texId );
         gl.uniform1i( uni.location, texId );
-        gl.bindTexture( dom.WebGLRenderingContext.TEXTURE_2D, value );
+        gl.bindTexture( dom.WebGLRenderingContext.TEXTURE_2D, value.getLiveHandle() );
         ++texId; break;
       case dom.WebGLRenderingContext.SAMPLER_CUBE:
 		gl.activeTexture( dom.WebGLRenderingContext.TEXTURE0 + texId );
         gl.uniform1i( uni.location, texId );
-        gl.bindTexture( dom.WebGLRenderingContext.TEXTURE_CUBE_MAP, value );
+        gl.bindTexture( dom.WebGLRenderingContext.TEXTURE_CUBE_MAP, value.getLiveHandle() );
         ++texId; break;
       default: return false;
       }

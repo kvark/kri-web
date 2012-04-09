@@ -183,7 +183,7 @@ class Manager extends load.Manager<Armature>	{
 				final String curveName = br.getString();
 				final int nSub = br.getByte();
 				final List<String> split = curveName.split('"');
-				//print(split);
+				print("Curve ${curveName}[${nSub}]");
 				if (split.length==3)	{
 					assert( split[0]=='pose.bones[' );
 					final Bone b = boneMap[split[1]];

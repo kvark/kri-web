@@ -32,7 +32,14 @@ class App {
  
   App():
   	entity = new ren.EntityBase(),
-  	process = new ren.Process();
+  	process = new ren.Process()	{
+  		entity.state = new ren.RasterState(
+  			new ren.Face(true,false),
+  			null,	// leave blend off
+  			new ren.PixelMask.withColor(true,0),
+  			new ren.PixelTest(dom.WebGLRenderingContext.LEQUAL, null, null)
+  			);
+  }
   
   void run() {
     final dom.Console log = dom.window.console;
@@ -44,11 +51,7 @@ class App {
     });
     
     log.debug(gl);
-    
-    gl.enable( dom.WebGLRenderingContext.DEPTH_TEST );
-    gl.enable( dom.WebGLRenderingContext.CULL_FACE );
-    gl.depthMask(true);
-    
+
     entity.mesh = new gen.Mesh(gl).cubeUnit();
     tex.Texture texture = new gen.Texture(gl).white();
 
@@ -95,12 +98,17 @@ class App {
     	entity.shader = new shade.Effect( gl, [shVert,shFrag] );
     }
 
-    //con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
     entity.data['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
     entity.data['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
     entity.data['t_main'] = texture;
-    //me.draw( gl, shader, block );
     //log.debug( shader );
+    
+	/* rudimentary direct access routines
+	gl.enable( dom.WebGLRenderingContext.DEPTH_TEST );
+    gl.enable( dom.WebGLRenderingContext.CULL_FACE );
+    gl.depthMask(true);
+    con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
+    me.draw( gl, shader, block );*/
     
     int err = gl.getError();
     if(err!=0)
@@ -156,13 +164,9 @@ class App {
   void frame()	{
   	final Date dateNow = new Date.now();
   	double time = dateNow.value.toDouble() / 1000.0;
-	final frame.Control con = new frame.Control(gl);
-    final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
-    con.viewport( rect );
-    con.clear( new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
 
     if (skeleton!=null)	{
-    	final String aniName = /*'ArmatureAction'*/ 'DefaultAction.002';
+    	final String aniName = /*'samba_dancing_2'*/ 'DefaultAction.002';
     	final ani.Record rec = skeleton.records[aniName];
     	if (rec != null)	{
     		double t1 = time - (time/rec.length).floor() * rec.length;
@@ -176,9 +180,14 @@ class App {
     //  new math.Quaternion.fromAxis(new math.Vector.unitY(),time), 1.0 );
    	//controlNode.space.rotation = new math.Quaternion.fromAxis(new math.Vector(1.0,0.0,0.0,0.0),time);
    	//controlNode.space.movement = new math.Vector(0.0,Math.sin(time*0.01),5.0,0.0);
-   	process.draw( entity, null );
+   	//me.draw( gl, shader, block );
+
+    final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
+   	final ren.PixelMask mask = new ren.PixelMask.all();
+   	final ren.Target target = new ren.Target( new frame.Buffer.main(), rect, null );
+   	process.clear( mask, target, new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
+   	process.draw( entity, target );
    	process.flush( gl );
-    //me.draw( gl, shader, block );
   }
 }
 
