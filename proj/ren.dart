@@ -47,8 +47,9 @@ class BlendChannel	{
 
 class Blend implements IState	{
 	final BlendChannel color, alpha;
+	final frame.Color refValue;
 	
-	Blend( this.color, this.alpha );
+	Blend( this.color, this.alpha, this.refValue );
 
 	void activate( final dom.WebGLRenderingContext gl ){
 		if (color!=null && alpha!=null)	{
@@ -61,6 +62,8 @@ class Blend implements IState	{
 				gl.blendFunc( color.source, color.dest );
 			else
 				gl.blendFuncSeparate( color.source, color.dest, alpha.source, alpha.dest );
+			if (refValue != null)
+				gl.blendColor( refValue.r, refValue.g, refValue.b, refValue.a );
 		}else
 			gl.disable( dom.WebGLRenderingContext.BLEND );
 	}
