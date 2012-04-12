@@ -19,6 +19,17 @@ interface ICall	{
 	bool issue( final frame.Control control );
 }
 
+final Map<String,int> comparison = const {
+	'never':	dom.WebGLRenderingContext.NEVER,
+	'always':	dom.WebGLRenderingContext.ALWAYS,
+	'<':		dom.WebGLRenderingContext.LESS,
+	'<=':		dom.WebGLRenderingContext.LEQUAL,
+	'==':		dom.WebGLRenderingContext.EQUAL,
+	'>=':		dom.WebGLRenderingContext.GEQUAL,
+	'>':		dom.WebGLRenderingContext.GREATER,
+	'!=':		dom.WebGLRenderingContext.NOTEQUAL
+};
+
 
 class Face implements IState	{
 	final bool front, back;
@@ -93,7 +104,10 @@ class Stencil	{
 	final int function, refValue, mask;
 	final int opFail, opDepthFail, opPass;
 	
-	Stencil( this.function, this.refValue, this.mask, this.opFail, this.opDepthFail, this.opPass );
+	Stencil( String funCode, this.refValue, this.mask, this.opFail, this.opDepthFail, this.opPass ):
+		function = comparison[funCode]	{
+		assert (function != null);
+	}
 
 	void activate( final dom.WebGLRenderingContext gl, int face ){
 		gl.stencilFuncSeparate( face, function, refValue, mask );
@@ -106,7 +120,10 @@ class PixelTest implements IState	{
 	final int depthFun;
 	final Stencil front, back;
 	
-	PixelTest( this.depthFun, this.front, this.back );
+	PixelTest( String depthFunCode, this.front, this.back ):
+		depthFun = depthFunCode!=null ? comparison[depthFunCode] : null	{
+		assert (depthFunCode==null || depthFun != null);
+	}
 
 	void activate( final dom.WebGLRenderingContext gl ){
 		// set depth

@@ -32,13 +32,14 @@ class App {
  
   App():
   	entity = new ren.EntityBase(),
-  	process = new ren.Process()	{
-  		entity.state = new ren.RasterState(
-  			new ren.Face(true,false),
-  			null,	// leave blend off
-  			new ren.PixelMask.withColor(true,0),
-  			new ren.PixelTest(dom.WebGLRenderingContext.LEQUAL, null, null)
-  			);
+  	process = new ren.Process()
+  {
+  	entity.state = new ren.RasterState(
+  		new ren.Face(true,false),
+  		null,	// leave blend off
+  		new ren.PixelMask.withColor(true,0),
+  		new ren.PixelTest(dom.WebGLRenderingContext.LEQUAL, null, null)
+  		);
   }
   
   void run() {

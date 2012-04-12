@@ -1,6 +1,14 @@
 #import('unittest.dart',		prefix:'unit');
 #import('../proj/math.dart',	prefix:'math');
 
+#import('../proj/ren.dart',		prefix:'ren');
+#import('../proj/mesh.dart',	prefix:'mesh');
+#import('../proj/buff.dart',	prefix:'buff');
+#import('../proj/shade.dart',	prefix:'shade');
+#import('../proj/frame.dart',	prefix:'frame');
+#import('dart:html',			prefix:'dom');
+
+
 void main()	{
 	unit.group('Math:', (){
 		final double scalar = 2.5;
@@ -10,8 +18,10 @@ void main()	{
 		unit.test('Vector operators', (){
 			math.Vector rez = vector*(new math.Vector.one()) + new math.Vector.zero();
 			Expect.isTrue( rez.isEqual(vector) );
-			Expect.isTrue( math.isScalarZero( new math.Vector.unitX().dot(new math.Vector.unitY()) ));
-			Expect.isTrue( math.isScalarZero(vector.length()*scalar - vector.scale(scalar).length()) );
+			double val = new math.Vector.unitX().dot(new math.Vector.unitY());
+			Expect.isTrue( math.isScalarZero( val ));
+			val = vector.length()*scalar - vector.scale(scalar).length();
+			Expect.isTrue( math.isScalarZero( val ));
 			rez = new math.Vector.unitX();
 			Expect.isTrue( rez.normalize().isEqual(rez) );
 		});
@@ -36,5 +46,45 @@ void main()	{
 			math.Matrix mult = new math.Matrix.fromQuat( quat * q2, 1.0, vz );
 			Expect.isTrue( mult.isEqual(mx*m2) );
 		});
+	});
+	unit.group('Render:', (){
+		//final dom.CanvasElement canvas = new dom.CanvasElement();
+		final dom.CanvasElement canvas = null;
+		final dom.WebGLRenderingContext gl = canvas.getContext('experimental-webgl');
+		
+		final ren.EntityBase entity = new ren.EntityBase();
+		entity.state = new ren.RasterState(
+			new ren.Face(true,false),
+			null,	// leave blend off
+			new ren.PixelMask.withColor(true,0),
+			new ren.PixelTest(dom.WebGLRenderingContext.LEQUAL, null, null)
+  		);
+  		
+  		unit.test('Vertex buffer', (){
+			final buff.Binding bufBuilder = new buff.Binding.array(gl);
+  			final math.Vector position = new math.Vector.zero();
+	  		final buff.Unit buffer = bufBuilder.spawn( buff.toFloat32([position]) );
+  			entity.mesh = new mesh.Mesh(null);
+	  		entity.mesh.nVert = 1; entity.mesh.nInd = 0;
+  			entity.mesh.elements['a_pos'] = new mesh.Element.float32(1,buffer,0,0);
+  		});
+		
+		unit.test('Shader link', (){
+			final String textVert = 'attribute vec3 a_pos; void main() {gl_Position=vec4(a_position,1.0);}';
+			final String textFrag = 'void main() {gl_FragColor=vec4(1.0);}';
+	  		entity.shader = new shade.Effect(gl, [
+  				new shade.Unit.vertex(gl,textVert),
+  				new shade.Unit.fragment(gl,textFrag)
+  				]);
+  		});
+
+		unit.test('Render', (){
+			final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
+   			final ren.Target target = new ren.Target( new frame.Buffer.main(), rect, null );
+	   		final ren.Process process = new ren.Process();
+		   	process.clear( entity.state.mask, target, new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
+	   		process.draw( entity, target );
+	   		process.flush( gl );
+	   	});
 	});
 }
