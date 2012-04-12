@@ -19,7 +19,7 @@ interface ICall	{
 	bool issue( final frame.Control control );
 }
 
-final Map<String,int> comparison = const {
+final Map<String,int> comparison = const{
 	'never':	dom.WebGLRenderingContext.NEVER,
 	'always':	dom.WebGLRenderingContext.ALWAYS,
 	'<':		dom.WebGLRenderingContext.LESS,
@@ -28,6 +28,17 @@ final Map<String,int> comparison = const {
 	'>=':		dom.WebGLRenderingContext.GEQUAL,
 	'>':		dom.WebGLRenderingContext.GREATER,
 	'!=':		dom.WebGLRenderingContext.NOTEQUAL
+};
+
+final Map<String,int> operation = const{
+	'':		dom.WebGLRenderingContext.KEEP,
+	'0':	dom.WebGLRenderingContext.ZERO,
+	'=':	dom.WebGLRenderingContext.REPLACE,
+	'+':	dom.WebGLRenderingContext.INCR,
+	'-':	dom.WebGLRenderingContext.DECR,
+	'~':	dom.WebGLRenderingContext.INVERT,
+	'++':	dom.WebGLRenderingContext.INCR_WRAP,
+	'--':	dom.WebGLRenderingContext.DECR_WRAP
 };
 
 
@@ -104,9 +115,10 @@ class Stencil	{
 	final int function, refValue, mask;
 	final int opFail, opDepthFail, opPass;
 	
-	Stencil( String funCode, this.refValue, this.mask, this.opFail, this.opDepthFail, this.opPass ):
-		function = comparison[funCode]	{
-		assert (function != null);
+	Stencil( String funCode, this.refValue, this.mask, String fail, String depthFail, String pass ):
+		function = comparison[funCode],		opFail = operation[fail],
+		opDepthFail = operation[depthFail], opPass = operation[pass]{
+		assert (function!=null && opFail!=null && opDepthFail!=null && opPass!=null );
 	}
 
 	void activate( final dom.WebGLRenderingContext gl, int face ){

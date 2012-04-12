@@ -37,7 +37,6 @@ class Mesh {
   int nVert = 0, nInd = 0;
   final List<shade.Effect> blackList;
   int polyType = 0;
-  int drawn = 0;
   
   Mesh( this.fallback ):
   	elements = new Map<String,Element>(),
@@ -92,11 +91,7 @@ class Mesh {
       bindArray.bindRead( el.buffer );
       el.bind( gl, loc );
       gl.enableVertexAttribArray( loc );
-      if (drawn==0)	{
-      	print("[${loc}] = ${info.name} ${el}");
-      }
     });
-    drawn = 1;
     bindArray.unbind();
     // draw
     assert (polyType > 0);
