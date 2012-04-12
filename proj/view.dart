@@ -26,7 +26,7 @@ class Projector implements space.IMatrix  {
   }
   
   Matrix _getPerspectiveMatrix()  {
-    final Vector den = (c1-c0).inverse(), sum = c1+c0;
+    final Vector den = (c1-c0).inverse3(), sum = c1+c0;
     return new Matrix(
       new Vector( 2.0*c0.z * den.x, 0.0, sum.x * den.x, 0.0 ),
       new Vector( 0.0, 2.0*c0.z * den.y, sum.y * den.y, 0.0 ),
@@ -35,7 +35,7 @@ class Projector implements space.IMatrix  {
   }
   
   Matrix _getOrthoMatrix() {
-    final Vector den = (c1-c0).inverse(), sum = c1+c0;
+    final Vector den = (c1-c0).inverse3(), sum = c1+c0;
     return new Matrix(
       new Vector( +2.0*den.x, 0.0, 0.0, -sum.x * den.x ),
       new Vector( 0.0, +2.0*den.y, 0.0, -sum.y * den.y ),

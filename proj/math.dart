@@ -6,7 +6,8 @@ interface IDoubleList  {
   List<double> toList();
 }
 
-final double degreesToHalfRadians = Math.PI / 360.0 ;
+final double degreesToHalfRadians = Math.PI / 360.0;
+bool isScalarZero(double scalar) => scalar.abs()<epsilon;
 
 
 class Vector implements IDoubleList {
@@ -28,16 +29,19 @@ class Vector implements IDoubleList {
   Vector operator-(final Vector v) => new Vector( x-v.x, y-v.y, z-v.z, w-v.w );
   Vector operator*(final Vector v) => new Vector( x*v.x, y*v.y, z*v.z, w*v.w );
   
-  Vector scale(double val)    => new Vector( x*val, y*val, z*val, w );
-  double dot(final Vector v)  => x*v.x + y*v.y + z*v.z + w*v.w;
+  Vector scale(double val)		=> new Vector( x*val, y*val, z*val, w*val );
+  Vector scale3(double val) 	=> new Vector( x*val, y*val, z*val, w );
+  double dot(final Vector v)	=> x*v.x + y*v.y + z*v.z + w*v.w;
   double lengthSquare() => dot( this );
   double length() => Math.sqrt( dot(this) );
   
-  Vector perspective() => scale( 1.0/w );
+  Vector perspective() => scale3( 1.0/w );
   
   bool isZero() => lengthSquare() < epsilon;
+  bool isEqual(final Vector v)	=> (this-v).isZero();
   
-  Vector inverse() => new Vector( 1.0/x, 1.0/y, 1.0/z, w );
+  Vector inverse3() => new Vector( 1.0/x, 1.0/y, 1.0/z, w );
+  Vector setW(double W) => new Vector(x,y,z,W);
   
   Vector cross(final Vector v)  {
     assert( w==0.0 && v.w==0.0 );
@@ -109,6 +113,8 @@ class Matrix implements IDoubleList  {
   Matrix transpose() => new Matrix( columnX(), columnY(), columnZ(), columnW() );
   
   double lengthSquare() => x.lengthSquare() + y.lengthSquare() + z.lengthSquare() + w.lengthSquare();
+  
+  bool isEqual(final Matrix m)	=> (this-m).lengthSquare() < epsilon;
   
   bool isAffine() {
     final Vector p0 = new Vector.unitW();
@@ -216,6 +222,8 @@ class Quaternion implements IDoubleList  {
   Quaternion inverse()	=> new Quaternion(-x,-y,-z,w);
   Quaternion negative()	=> new Quaternion(-x,-y,-z,-w);
   double lengthSquare() => x*x + y*y + z*z + w*w;
+  
+  bool isEqual(final Quaternion q) => new Quaternion.fromSum(this,1.0,q,-1.0).lengthSquare() < epsilon;
   
   Quaternion normalize()  {
     final double len2 = lengthSquare();
