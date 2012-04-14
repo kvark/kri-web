@@ -25,8 +25,7 @@ class Mesh	{
   	final buff.Unit vBuffer = bArr.spawn( buff.toFloat32(vertices) );
  
     final mesh.Mesh me = new mesh.Mesh(null);
-    me.setPolygons('2');
-    me.nVert = 6;
+    me.init('2',6,0);
     me.elements['a_position']	= new mesh.Element.float32( 3, vBuffer, 12,0 );
     return me;
   }
@@ -79,9 +78,7 @@ class Mesh	{
     final buff.Unit vIndex  = bInd.spawn( buff.toUint8(i2) );
  
     final mesh.Mesh me = new mesh.Mesh(null);
-    me.setPolygons('3');
-    me.nVert = 24;
-    me.nInd = 36;
+    me.init('3',24,36);
     me.elements['a_position']	= new mesh.Element.float32( 3, vBuffer, 32,0 );
     me.elements['a_tex0']		= new mesh.Element.float32( 2, vBuffer, 32,12 );
     me.elements['a_normal']		= new mesh.Element.float32( 3, vBuffer, 32,20 );

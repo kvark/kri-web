@@ -48,16 +48,16 @@ void main()	{
 		});
 	});
 	unit.group('Render:', (){
-		//final dom.CanvasElement canvas = new dom.CanvasElement();
-		final dom.CanvasElement canvas = null;
+		final dom.CanvasElement canvas = dom.document.query('#canvas');
 		final dom.WebGLRenderingContext gl = canvas.getContext('experimental-webgl');
 		
 		final ren.EntityBase entity = new ren.EntityBase();
 		entity.state = new ren.RasterState(
-			new ren.Face(true,false),
-			null,	// leave blend off
-			new ren.PixelMask.withColor(true,0),
-			new ren.PixelTest(dom.WebGLRenderingContext.LEQUAL, null, null)
+			new ren.Face.ccw(),
+			new ren.Blend.none(),
+			new ren.PixelMask.withColor(true,0,0),
+			new ren.PixelTest('<=', null, null),
+			new ren.Offset.none()
   		);
   		
   		unit.test('Vertex buffer', (){
@@ -65,12 +65,12 @@ void main()	{
   			final math.Vector position = new math.Vector.zero();
 	  		final buff.Unit buffer = bufBuilder.spawn( buff.toFloat32([position]) );
   			entity.mesh = new mesh.Mesh(null);
-	  		entity.mesh.nVert = 1; entity.mesh.nInd = 0;
+  			entity.mesh.init('1',1,0);
   			entity.mesh.elements['a_pos'] = new mesh.Element.float32(1,buffer,0,0);
   		});
 		
 		unit.test('Shader link', (){
-			final String textVert = 'attribute vec3 a_pos; void main() {gl_Position=vec4(a_position,1.0);}';
+			final String textVert = 'attribute vec3 a_pos; void main() {gl_Position=vec4(a_pos,1.0);}';
 			final String textFrag = 'void main() {gl_FragColor=vec4(1.0);}';
 	  		entity.shader = new shade.Effect(gl, [
   				new shade.Unit.vertex(gl,textVert),

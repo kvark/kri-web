@@ -35,10 +35,11 @@ class App {
   	process = new ren.Process()
   {
   	entity.state = new ren.RasterState(
-  		new ren.Face(true,false),
-  		null,	// leave blend off
-  		new ren.PixelMask.withColor(true,0),
-  		new ren.PixelTest(dom.WebGLRenderingContext.LEQUAL, null, null)
+  		new ren.Face.ccw(),
+  		new ren.Blend.none(),
+  		new ren.PixelMask.withColor(true,0,0),
+  		new ren.PixelTest('<=', null, null),
+  		new ren.Offset.none()
   		);
   }
   

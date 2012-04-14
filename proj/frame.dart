@@ -10,6 +10,8 @@ class Color {
   Color( this.r, this.g, this.b, this.a );
   Color.black(): this(0.0,0.0,0.0,0.0);
   Color.white(): this(1.0,1.0,1.0,1.0);
+  Color.safe( final Color c ): this(
+  	c.r==null?0.0:c.r, c.g==null?0.0:c.g, c.b==null?0.0:c.b, c.a==null?0.0:c.a );
 }
 
 class Rect  {

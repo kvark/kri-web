@@ -41,13 +41,33 @@ final Map<String,int> operation = const{
 	'--':	dom.WebGLRenderingContext.DECR_WRAP
 };
 
+final Map<String,int> blendFactor = const{
+	'0':	dom.WebGLRenderingContext.ZERO,
+	'1':	dom.WebGLRenderingContext.ONE,
+	'Sc':	dom.WebGLRenderingContext.SRC_COLOR,
+	'1-Sc':	dom.WebGLRenderingContext.ONE_MINUS_SRC_COLOR,
+	'Dc':	dom.WebGLRenderingContext.DST_COLOR,
+	'1-Dc':	dom.WebGLRenderingContext.ONE_MINUS_DST_COLOR,
+	'Sa':	dom.WebGLRenderingContext.SRC_ALPHA,
+	'1-Sa':	dom.WebGLRenderingContext.ONE_MINUS_SRC_ALPHA,
+	'Da':	dom.WebGLRenderingContext.DST_ALPHA,
+	'1-Da':	dom.WebGLRenderingContext.ONE_MINUS_DST_ALPHA,
+	'Cc':	dom.WebGLRenderingContext.CONSTANT_COLOR,
+	'1-Cc':	dom.WebGLRenderingContext.ONE_MINUS_CONSTANT_COLOR,
+	'Ca':	dom.WebGLRenderingContext.CONSTANT_ALPHA,
+	'1-Ca':	dom.WebGLRenderingContext.ONE_MINUS_CONSTANT_ALPHA,
+	'SaS':	dom.WebGLRenderingContext.SRC_ALPHA_SATURATE
+};
+
 
 class Face implements IState	{
-	final bool front, back;
+	final bool front, back, clockwise;
 	
-	Face( this.front, this.back );
+	Face( this.front, this.back, this.clockwise );
+	Face.ccw(): this(true,false,false);
 	
 	void activate( final dom.WebGLRenderingContext gl ){
+		gl.frontFace( clockwise ? dom.WebGLRenderingContext.CW : dom.WebGLRenderingContext.CCW );
 		if (!front || !back)	{
 			gl.enable(	dom.WebGLRenderingContext.CULL_FACE );
 			if (!front)
@@ -63,8 +83,18 @@ class Face implements IState	{
 
 
 class BlendChannel	{
-	final int equation, source, dest;
-	BlendChannel( this.equation, this.source, this.dest );
+	final int equation, source, destination;
+
+	BlendChannel( this.equation, String src, String dst ):
+		source = blendFactor[src], destination = blendFactor[dst]	{
+		assert( source!=null && destination!=null );
+	}
+	BlendChannel.add( String src, String dst ):
+		this( dom.WebGLRenderingContext.FUNC_ADD, src, dst );
+	BlendChannel.sub( String src, String dst ):
+		this( dom.WebGLRenderingContext.FUNC_SUBTRACT, src, dst );
+	BlendChannel.revSub( String src, String dst ):
+		this( dom.WebGLRenderingContext.FUNC_REVERSE_SUBTRACT, src, dst );
 }
 
 class Blend implements IState	{
@@ -72,18 +102,19 @@ class Blend implements IState	{
 	final frame.Color refValue;
 	
 	Blend( this.color, this.alpha, this.refValue );
+	Blend.none(): this( null, null, null );
 
 	void activate( final dom.WebGLRenderingContext gl ){
-		if (color!=null && alpha!=null)	{
+		if (color!=null)	{
 			gl.enable(	dom.WebGLRenderingContext.BLEND );
-			if (color.equation == alpha.equation)
+			if (alpha==null || color.equation == alpha.equation)
 				gl.blendEquation( color.equation );
 			else
 				gl.blendEquationSeparate( color.equation, alpha.equation );
-			if (color.source == alpha.source && color.dest == alpha.dest)
-				gl.blendFunc( color.source, color.dest );
+			if (color.source == alpha.source && color.destination == alpha.destination)
+				gl.blendFunc( color.source, color.destination );
 			else
-				gl.blendFuncSeparate( color.source, color.dest, alpha.source, alpha.dest );
+				gl.blendFuncSeparate( color.source, color.destination, alpha.source, alpha.destination );
 			if (refValue != null)
 				gl.blendColor( refValue.r, refValue.g, refValue.b, refValue.a );
 		}else
@@ -94,18 +125,24 @@ class Blend implements IState	{
 
 class PixelMask implements IState	{
 	final bool depth;
-	final int stencil;
+	final int stencilFront,stencilBack;
 	final bool red,green,blue,alpha;
 	
-	PixelMask( this.depth, this.stencil, this.red, this.green, this.blue, this.alpha );
-	PixelMask.withColor( bool d, int s ): this( d,s,true,true,true,true );
-	PixelMask.all(): this( true, -1, true,true,true,true );
+	PixelMask( this.depth, this.stencilFront, this.stencilBack, this.red, this.green, this.blue, this.alpha );
+	PixelMask.withColor( bool d, int sf, int sb ): this( d,sf,sb,true,true,true,true );
+	PixelMask.all(): this( true, -1,-1, true,true,true,true );
 	
 	bool hasColor()	=> red || green || blue || alpha;
 	
 	void activate( final dom.WebGLRenderingContext gl ){
 		gl.depthMask( depth );
-		gl.stencilMask( stencil );
+		// stencil
+		if (stencilFront!=stencilBack)	{
+			gl.stencilMaskSeparate( dom.WebGLRenderingContext.FRONT, stencilFront );
+			gl.stencilMaskSeparate( dom.WebGLRenderingContext.BACK, stencilBack );
+		}else
+			gl.stencilMask( stencilFront );
+		// color
 		gl.colorMask( red, green, blue, alpha );
 	}
 }
@@ -136,6 +173,7 @@ class PixelTest implements IState	{
 		depthFun = depthFunCode!=null ? comparison[depthFunCode] : null	{
 		assert (depthFunCode==null || depthFun != null);
 	}
+	PixelTest.none(): this( null, null, null );
 
 	void activate( final dom.WebGLRenderingContext gl ){
 		// set depth
@@ -157,24 +195,39 @@ class PixelTest implements IState	{
 	}
 }
 
+class Offset implements IState	{
+	final double factor, units;
+	
+	Offset( this.factor, this.units );
+	Offset.none(): this(0.0,0.0);
+	
+	void activate( final dom.WebGLRenderingContext gl ){
+		if (factor!=0.0 || units!=0.0)	{
+			gl.enable(	dom.WebGLRenderingContext.POLYGON_OFFSET_FILL );
+			gl.polygonOffset( factor, units );
+		}else
+			gl.disable(	dom.WebGLRenderingContext.POLYGON_OFFSET_FILL );
+	}
+}
+
 
 class RasterState implements IState	{
 	final Face face;
 	final Blend blend;
 	final PixelMask mask;
 	final PixelTest test;
+	final Offset offset;
 	
-	RasterState( this.face, this.blend, this.mask, this.test );
+	RasterState( this.face, this.blend, this.mask, this.test, this.offset );
+	RasterState.initial(): this( new Face.ccw(), new Blend.none(),
+		new PixelMask.all(), new PixelTest.none(), new Offset.none() );
 	
 	void activate( final dom.WebGLRenderingContext gl ){
-		if (face != null)
-			face.activate( gl );
-		if (blend != null)
-			blend.activate( gl );
-		if (mask != null)
-			mask.activate( gl );
-		if (test != null)
-			test.activate( gl );
+		face.activate( gl );
+		blend.activate( gl );
+		mask.activate( gl );
+		test.activate( gl );
+		offset.activate( gl );
 	}
 }
 
@@ -261,9 +314,9 @@ class CallClear implements ICall	{
 		target.activate( control );
 		pixelMask.activate( control.gl );
 		control.clear(
-			pixelMask.hasColor()	? valueColor	: null,
-			pixelMask.depth			? valueDepth	: null,
-			pixelMask.stencil != 0	? valueStencil	: null);
+			pixelMask.hasColor()		? valueColor	: null,
+			pixelMask.depth				? valueDepth	: null,
+			pixelMask.stencilFront != 0	? valueStencil	: null);
 		return true;
 	}
 }

@@ -30,29 +30,32 @@ class Element  {
 }
 
 
+final Map<String,int> polygon = const	{
+	'1':  dom.WebGLRenderingContext.POINTS,
+	'2':  dom.WebGLRenderingContext.LINES,
+  	'2l': dom.WebGLRenderingContext.LINE_LOOP,
+	'2s': dom.WebGLRenderingContext.LINE_STRIP,
+  	'3':  dom.WebGLRenderingContext.TRIANGLES,
+	'3f': dom.WebGLRenderingContext.TRIANGLE_FAN,
+  	'3s': dom.WebGLRenderingContext.TRIANGLE_STRIP
+};
+
+
 class Mesh {
   final Map<String,Element> elements;
   final Mesh fallback;
   Element indices = null;
+  int polyType = -1;
   int nVert = 0, nInd = 0;
   final List<shade.Effect> blackList;
-  int polyType = 0;
   
   Mesh( this.fallback ):
   	elements = new Map<String,Element>(),
   	blackList = new List<shade.Effect>();
 
-  void setPolygons(final String type)	{
- 	final Map<String,int> polyTypes = const	{
-  	  '1':  dom.WebGLRenderingContext.POINTS,
-	  '2':  dom.WebGLRenderingContext.LINES,
-  	  '2l': dom.WebGLRenderingContext.LINE_LOOP,
-	  '2s': dom.WebGLRenderingContext.LINE_STRIP,
-  	  '3':  dom.WebGLRenderingContext.TRIANGLES,
-	  '3f': dom.WebGLRenderingContext.TRIANGLE_FAN,
-  	  '3s': dom.WebGLRenderingContext.TRIANGLE_STRIP
-	};
-  	polyType = polyTypes[type];
+  void init(final String type, int nv, int ni)	{
+ 	polyType = polygon[type];
+ 	nVert = nv; nInd = ni;
   }
   
   bool contains(final dom.WebGLActiveInfo info)  {
@@ -94,7 +97,7 @@ class Mesh {
     });
     bindArray.unbind();
     // draw
-    assert (polyType > 0);
+    assert (polyType >= 0);
     if (indices != null)  {
       buff.Binding bindIndex = new buff.Binding.index(gl);
       bindIndex.bindRead( indices.buffer );
@@ -130,11 +133,10 @@ class Manager extends load.Manager<Mesh>	{
 			log.debug('Mesh signature is bad: ' + signature);
 			return;
 		}
-		m.nVert	= br.getLarge(4);
-		m.nInd	= br.getLarge(4);
-		log.debug(m.nVert);
-		log.debug(m.nInd);
-		m.setPolygons( br.getString() );
+		int nv = br.getLarge(4);
+		int ni = br.getLarge(4);
+		log.debug("nV=${nv}, nI=${ni}");
+		m.init( br.getString(), nv, ni );
 		final int numBuffers = br.getByte();
 		for (int iBuf=0; iBuf<numBuffers; ++iBuf)	{
 			final buff.Unit unit = new buff.Unit( gl, null );
