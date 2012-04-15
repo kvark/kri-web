@@ -5,8 +5,11 @@
 #import('frame.dart',	prefix:'frame');
 
 
-interface IState	{
-		void activate( final dom.WebGLRenderingContext gl );
+interface IPipe	{
+	// mode is: 0 for raster operations (Blit,Clear)
+	// 1 - points, 2 - lines, 3 - triangles
+	IPipe activate(	final dom.WebGLRenderingContext gl, final int mode, final IPipe cache );
+	void verify(	final dom.WebGLRenderingContext gl );
 }
 
 interface IEntity extends shade.IDataSource	{
@@ -16,7 +19,7 @@ interface IEntity extends shade.IDataSource	{
 }
 
 interface ICall	{
-	bool issue( final frame.Control control );
+	bool issue( final frame.Control control, final RasterState cache );
 }
 
 final Map<String,int> comparison = const{
@@ -60,30 +63,246 @@ final Map<String,int> blendFactor = const{
 };
 
 
-class Face implements IState	{
-	final bool front, back, clockwise;
+class Primitive implements IPipe	{
+	static final int stateId = dom.WebGLRenderingContext.CULL_FACE;
+	final bool frontCw, cull;
+	final int cullMode;
+	final double lineWidth;
 	
-	Face( this.front, this.back, this.clockwise );
-	Face.ccw(): this(true,false,false);
+	Primitive( this.frontCw, this.cull, this.cullMode, this.lineWidth );
+	Primitive.show( bool front, bool back, bool clockwise ):
+		this( clockwise, !front || !back,
+			(front && !back ? dom.WebGLRenderingContext.BACK :
+			(back && !front ? dom.WebGLRenderingContext.FRONT :
+			dom.WebGLRenderingContext.FRONT_AND_BACK )),
+			1.0 );
+	Primitive.ccw(): this.show(true,false,false);
+	Primitive.line(double width): this(false,false,0,width);
 	
-	void activate( final dom.WebGLRenderingContext gl ){
-		gl.frontFace( clockwise ? dom.WebGLRenderingContext.CW : dom.WebGLRenderingContext.CCW );
-		if (!front || !back)	{
-			gl.enable(	dom.WebGLRenderingContext.CULL_FACE );
-			if (!front)
-				gl.cullFace( dom.WebGLRenderingContext.FRONT );
-			else if (!back)
-				gl.cullFace( dom.WebGLRenderingContext.BACK );
-			else
-				gl.cullFace( dom.WebGLRenderingContext.FRONT_AND_BACK );
-		}else
-			gl.disable(	dom.WebGLRenderingContext.CULL_FACE );
+	Primitive _changeWidth(double width) => new Primitive( frontCw, cull, cullMode, width );
+	
+	Primitive activate( final dom.WebGLRenderingContext gl, final int mode, final Primitive cache ){
+		if (mode==3)	{
+			if (cache==null || frontCw != cache.frontCw)
+				gl.frontFace( frontCw ? dom.WebGLRenderingContext.CW : dom.WebGLRenderingContext.CCW );
+			if (!cull && (cache==null || cache.cull))	{
+				gl.disable(	stateId );
+			}
+			if (!cull)	{
+				return new Primitive( frontCw, cull,
+					cache!=null ? cache.cullMode	:null,
+					cache!=null ? cache.lineWidth	:null );
+			}
+			if (cache==null || !cache.cull)
+				gl.enable( stateId );
+			if (cache==null || cullMode != cache.cullMode)
+				gl.cullFace( cullMode );
+			return new Primitive( frontCw, cull, cullMode,
+				cache!=null ? lineWidth : null );
+		}
+		if (mode==2)	{
+			if (cache==null || lineWidth != cache.lineWidth)
+				gl.lineWidth( lineWidth );
+			return cache!=null ? cache._changeWidth(lineWidth) : null;
+		}
+		return cache;
+	}
+
+	void verify( final dom.WebGLRenderingContext gl ){
+		final int realFront	= gl.getParameter( dom.WebGLRenderingContext.FRONT_FACE );
+		assert( (realFront == dom.WebGLRenderingContext.CW) == clockwise );
+		assert( gl.isEnabled(stateId) == cull );
+		assert( gl.getParameter(dom.WebGLRenderingContext.CULL_FACE_MODE) == cullMode );
+		assert( gl.getParameter(dom.WebGLRenderingContext.LINE_WIDTH) == lineWidth );
+	}
+}
+
+
+class Offset implements IPipe	{
+	static final int stateId = dom.WebGLRenderingContext.POLYGON_OFFSET_FILL;
+	final bool on;
+	final double factor, units;
+	
+	Offset( this.on, this.factor, this.units );
+	Offset.none(): this(false,0.0,0.0);
+	
+	Offset disabled() => new Offset( false, factor, units );
+	
+	Offset activate( final dom.WebGLRenderingContext gl, final int mode, final Offset cache ){
+		if (mode==0)
+			return cache;
+		if (!on && (cache==null || cache.on))
+			gl.disable(	stateId );
+		if (!on)
+			return cache!=null ? cache.disabled() : null;
+		if (cache==null || !cache.on)
+			gl.enable(	stateId );
+		if (cache==null || factor!=cache.factor || units!=cache.units)
+			gl.polygonOffset( factor, units );
+		return this;
+	}
+
+	void verify( final dom.WebGLRenderingContext gl ){
+	}
+}
+
+
+class Scissor implements IPipe	{
+	static final int stateId = dom.WebGLRenderingContext.SCISSOR_TEST;
+	final bool on;
+	final frame.Rect area;
+	
+	Scissor( this.on, this.area );
+	Scissor.off(): this( false, null );
+
+	Scissor disabled() => new Scissor( false, area );
+	
+	Scissor activate( final dom.WebGLRenderingContext gl, final int mode, final Scissor cache ){
+		if (!on && (cache==null || cache.on))
+			gl.disable( stateId );
+		if (!on)
+			return cache!=null ? cache.disabled() : null;
+		if (cache==null || !cache.on)
+			gl.enable( stateId );
+		if (cache==null || area != cache.area)
+			gl.scissor( area.x, area.y, area.w, area.h );
+		return this;
+	}
+	
+	void verify( final dom.WebGLRenderingContext gl ){
+		assert( gl.isEnabled(stateId) == on );
+		final List<double> box = gl.getParameter( dom.WebGLRenderingContext.SCISSOR_BOX );
+		assert( area.x==box[0] && area.y==box[1] && area.z==box[2] && area.w==box[3] );
+	}
+}
+
+
+class MultiSample implements IPipe	{
+	MultiSample();
+	MultiSample activate( final dom.WebGLRenderingContext gl, final int mode, final MultiSample cache ){
+		return cache;
+	}
+	void verify( final dom.WebGLRenderingContext gl ){
+	}
+}
+
+
+class StencilChannel	{
+	final int function, refValue;
+	final int readMask, writeMask;
+	final int opFail, opDepthFail, opPass;
+	
+	StencilChannel( String funCode, this.refValue, this.readMask, this.writeMask,
+		String fail, String depthFail, String pass ):
+		function = comparison[funCode],		opFail = operation[fail],
+		opDepthFail = operation[depthFail], opPass = operation[pass]{
+		assert (function!=null && opFail!=null && opDepthFail!=null && opPass!=null );
+	}
+	
+	StencilChannel _changeMask(int mask) => StencilChannel( function, refValue,
+		readMask, mask, opFail, opDepthFail, opPass );
+
+	StencilChannel activate( final dom.WebGLRenderingContext gl,
+		final int mode, final int face, final StencilChannel cache ){
+		if (cache==null || writeMask != cache.writeMask)
+			gl.stencilMaskSeparate( face, writeMask );
+		if (mode==0)
+			return cache!=null ? cache._changeMask(writeMask) : null;
+		if (cache==null || function!=cache.function || refValue!=cache.refValue || readMask!=cache.readMask)
+			gl.stencilFuncSeparate( face, function, refValue, readMask );
+		if (cache==null || opFail!=cache.opFail || opDepthFail!=cache.opDepthFail || opPass!=cache.opPass)
+			gl.stencilOpSeparate( face, opFail, opDepthFail, opPass );
+		return this;
+	}
+}
+
+
+class Stencil implements IPipe	{
+	static final int stateId = dom.WebGLRenderingContext.STENCIL_TEST;
+	final bool on;
+	final StencilChannel front, back;
+	
+	Stencil( this.on, this.front, this.back );
+	Stencil.simple( StencilChannel chan ): this( true, chan, chan );
+	
+	Stencil _disabled()	=> new Stencil( false, front, back );
+
+	Stencil activate( final dom.WebGLRenderingContext gl, final int mode, final Stencil cache ){
+		if (mode!=0)	{
+			if (!on && (cache==null || cache.on))
+				gl.disable( stateId );
+			if (!on)
+				return cache!=null ? cache._disabled() : null;
+			if (cache==null || !cache.on)
+				gl.enable( stateId );
+		}
+		if (front==back)	{
+			final StencilChannel both = front.activate( gl, mode,
+				dom.WebGLRenderingContext.FRONT_AND_BACK,
+				cache!=null ? cache.front :null);
+			return new Stencil( on, both, both );
+		}
+		return new Stencil( on,
+			front	.activate( gl, mode, dom.WebGLRenderingContext.FRONT, cache!=null ? cache.front :null),
+			back	.activate( gl, mode, dom.WebGLRenderingContext.BACK, cache!=null ? cache.back :null) );
+	}
+
+	void verify( final dom.WebGLRenderingContext gl ){
+		assert( gl.isEnabled(stateId) == on );
+		// front
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_FUNC)				== front.function );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_REF)				== front.refValue );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_VALUE_MASK)		== front.readMask );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_WRITEMASK)		== front.writeMask );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_FAIL)				== front.opFail );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_PASS_DEPTH_FAIL)	== front.opDepthFail );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_PASS_DEPTH_PASS)	== front.opPass );
+		// back
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_FUNC)			== back.function );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_REF)				== back.refValue );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_VALUE_MASK)		== back.readMask );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_WRITEMASK)		== back.writeMask );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_FAIL)			== back.opFail );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_PASS_DEPTH_FAIL)	== back.opDepthFail );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_PASS_DEPTH_PASS)	== back.opPass );
+	}
+}
+
+
+class Depth implements IPipe	{
+	static final int stateId = dom.WebGLRenderingContext.DEPTH_TEST;
+	final bool on, writeMask;
+	final int function;
+	
+	Depth( this.on, this.writeMask, this.function );
+	
+	Depth _changeMask(bool mask) => new Depth( on, mask, function );
+	
+	Depth activate( final dom.WebGLRenderingContext gl, final int mode, final Depth cache ){
+		if ((on || mode==0) && (cache==null || writeMask != cache.writeMask))
+			gl.depthMask( writeMask );
+		if (mode==0)
+			return cache!=null ? cache._changeMask(mask) : null;
+		if (!on && (cache==null || cache.on))
+			gl.disable( stateId );
+		if (on && (cache==null || !cache.on))
+			gl.disable( stateId );
+		if (on && (cache==null || function != cache.function))
+			gl.depthFunc( function );
+		return this;
+	}
+	void verify( final dom.WebGLRenderingContext gl ){
+		assert( gl.isEnabled(stateId) == on );
+		assert( gl.getParameter(dom.WebGLRenderingContext.DEPTH_WRITEMASK) == writeMask );
+		assert( gl.getParameter(dom.WebGLRenderingContext.DEPTH_FUNC) == function );
 	}
 }
 
 
 class BlendChannel	{
 	final int equation, source, destination;
+
+	BlendChannel.empty(): equation=0, source=0, destination=0;
 
 	BlendChannel( this.equation, String src, String dst ):
 		source = blendFactor[src], destination = blendFactor[dst]	{
@@ -97,17 +316,31 @@ class BlendChannel	{
 		this( dom.WebGLRenderingContext.FUNC_REVERSE_SUBTRACT, src, dst );
 }
 
-class Blend implements IState	{
+class Blend implements IPipe	{
+	static final int stateId = dom.WebGLRenderingContext.BLEND;
+	final bool on;
 	final BlendChannel color, alpha;
 	final frame.Color refValue;
 	
-	Blend( this.color, this.alpha, this.refValue );
-	Blend.none(): this( null, null, null );
+	Blend( this.on, this.color, this.alpha, this.refValue );
+	Blend.simple( BlendChannel chan ): this( true, chan, chan, new frame.Color.black() );
+	Blend.none(): this(false,null,null,null);
+	
+	Blend _disabled() => new Blend( false, color, alpha, refValue );
 
-	void activate( final dom.WebGLRenderingContext gl ){
-		if (color!=null)	{
-			gl.enable(	dom.WebGLRenderingContext.BLEND );
-			if (alpha==null || color.equation == alpha.equation)
+	Blend activate( final dom.WebGLRenderingContext gl, final int mode, final Blend cache ){
+		if (mode==0)
+			return cache;
+		if (!on && (cache==null || cache.on))
+			gl.disable( stateId );
+		if (!on)
+			return cache!=null ? cache._disabled() : null;
+		if (cache==null || !cache.on)
+			gl.enable( stateId );
+		//TODO: overload equality operator when language has support for it
+		assert( color!=null && alpha!=null && refValue!=null );
+		if (cache==null || color != cache.color || alpha != cache.alpha)	{
+			if (color.equation == alpha.equation)
 				gl.blendEquation( color.equation );
 			else
 				gl.blendEquationSeparate( color.equation, alpha.equation );
@@ -115,15 +348,26 @@ class Blend implements IState	{
 				gl.blendFunc( color.source, color.destination );
 			else
 				gl.blendFuncSeparate( color.source, color.destination, alpha.source, alpha.destination );
-			if (refValue != null)
-				gl.blendColor( refValue.r, refValue.g, refValue.b, refValue.a );
-		}else
-			gl.disable( dom.WebGLRenderingContext.BLEND );
+		}
+		if (cache==null || refValue != cache.refValue)
+			gl.blendColor( refValue.r, refValue.g, refValue.b, refValue.a );
+		return this;
+	}
+
+	void verify( final dom.WebGLRenderingContext gl ){
+		assert( gl.isEnabled(stateId) == on );
+		assert( gl.getParameter(dom.WebGLRenderingContext.BLEND_EQUATION) == color.equation );
+		assert( gl.getParameter(dom.WebGLRenderingContext.BLEND_SRC) == color.source );
+		assert( gl.getParameter(dom.WebGLRenderingContext.BLEND_DST) == color.destination );
+		assert( gl.getParameter(dom.WebGLRenderingContext.BLEND_EQUATION_ALPHA) == alpha.equation );
+		assert( gl.getParameter(dom.WebGLRenderingContext.BLEND_SRC_ALPHA) == alpha.source );
+		assert( gl.getParameter(dom.WebGLRenderingContext.BLEND_DST_ALPHA) == alpha.destination );
+		//TODO: find a way to check the constant color
 	}
 }
 
 
-class PixelMask implements IState	{
+class PixelMask implements IPipe	{
 	final bool depth;
 	final int stencilFront,stencilBack;
 	final bool red,green,blue,alpha;
@@ -145,10 +389,13 @@ class PixelMask implements IState	{
 		// color
 		gl.colorMask( red, green, blue, alpha );
 	}
+
+	void verify( final dom.WebGLRenderingContext gl ){
+	}
 }
 
 
-class Stencil	{
+class StencilChannelOld	{
 	final int function, refValue, mask;
 	final int opFail, opDepthFail, opPass;
 	
@@ -162,12 +409,15 @@ class Stencil	{
 		gl.stencilFuncSeparate( face, function, refValue, mask );
 		gl.stencilOpSeparate( face, opFail, opDepthFail, opPass );
 	}
+
+	void verify( final dom.WebGLRenderingContext gl ){
+	}
 }
 
 
-class PixelTest implements IState	{
+class PixelTest implements IPipe	{
 	final int depthFun;
-	final Stencil front, back;
+	final StencilChannelOld front, back;
 	
 	PixelTest( String depthFunCode, this.front, this.back ):
 		depthFun = depthFunCode!=null ? comparison[depthFunCode] : null	{
@@ -193,55 +443,64 @@ class PixelTest implements IState	{
 		}else
 			gl.disable(	dom.WebGLRenderingContext.STENCIL_TEST );
 	}
-}
 
-class Offset implements IState	{
-	final double factor, units;
-	
-	Offset( this.factor, this.units );
-	Offset.none(): this(0.0,0.0);
-	
-	void activate( final dom.WebGLRenderingContext gl ){
-		if (factor!=0.0 || units!=0.0)	{
-			gl.enable(	dom.WebGLRenderingContext.POLYGON_OFFSET_FILL );
-			gl.polygonOffset( factor, units );
-		}else
-			gl.disable(	dom.WebGLRenderingContext.POLYGON_OFFSET_FILL );
+	void verify( final dom.WebGLRenderingContext gl ){
 	}
 }
 
 
-class RasterState implements IState	{
-	final Face face;
-	final Blend blend;
-	final PixelMask mask;
-	final PixelTest test;
+
+
+class RasterState implements IPipe	{
+	final Primitive primitive;
 	final Offset offset;
+	final Scissor scissor;
+	final MultiSample multiSample;
+	final Depth depth;
+	final Stencil stencil;
+	final Blend blend;
 	
-	RasterState( this.face, this.blend, this.mask, this.test, this.offset );
-	RasterState.initial(): this( new Face.ccw(), new Blend.none(),
+	RasterState( this.primitive, this.scissor, this.multiSample, this.blend, this.mask, this.test, this.offset );
+	RasterState.initial(): this( new Face.ccw(), new Scissor.off(), new multiSample.off(), new Blend.none(),
 		new PixelMask.all(), new PixelTest.none(), new Offset.none() );
 	
-	void activate( final dom.WebGLRenderingContext gl ){
-		face.activate( gl );
-		blend.activate( gl );
-		mask.activate( gl );
-		test.activate( gl );
-		offset.activate( gl );
+	RasterState activate( final dom.WebGLRenderingContext gl, final int mode, final RasterState cache ){
+		return new RasterState(
+			primitive	.activate( gl, cache!=null ? cache.primitive :null, polyType ),
+			scissor		.activate( gl, cache!=null ? cache.scissor :null ),
+			multiSample	.activate( gl, cache!=null ? cache.multiSample :null ),
+			blend		.activate( gl, cache!=null ? cache.blend :null ),
+			mask		.activate( gl, cache!=null ? cache.mask :null ),
+			test		.activate( gl, cache!=null ? cache.test :null ),
+			offset		.activate( gl, cache!=null ? cache.offset :null ));
+	}
+	
+	void verify( final dom.WebGLRenderingContext gl ){
+		primitive	.verify( gl );
+		scissor		.verify( gl );
+		multiSample	.verify( gl );
+		blend		.verify( gl );
+		mask		.verify( gl );
+		test		.verify( gl );
+		offset		.verify( gl );
 	}
 }
 
 
 class Target	{
 	final frame.Buffer buffer;
-	final frame.Rect viewport, scissor;
+	final frame.Rect viewRect;
+	final double depthMin, depthMax;
 	
-	Target( this.buffer, this.viewport, this.scissor );
+	Target( this.buffer, this.viewRect, this.depthMin, this.depthMax );
 	
 	void activate( final frame.Control control ){
 		control.bind( buffer );
-		control.viewport(viewport);
-		control.scissor(scissor);
+		control.viewport( viewRect, depthMin, depthMax );
+	}
+
+	void verify( final dom.WebGLRenderingContext gl ){
+		//todo
 	}
 }
 
@@ -291,11 +550,11 @@ class CallDraw implements ICall	{
 	CallDraw(this.mesh, this.shader, this.state, this.target):
 		parameters = new Map<String,Object>();
 	// implementation
-	bool issue( final frame.Control control ){
+	RasterState issue( final frame.Control control, final RasterState cache ){
 		target.activate( control );
-		state.activate( control.gl );
+		RasterState newState = state.activate( control.gl, cache );
 		mesh.draw( control.gl, shader, parameters );
-		return true;
+		return newState;
 	}
 }
 
@@ -310,14 +569,14 @@ class CallClear implements ICall	{
 	// constructor
 	CallClear( this.pixelMask, this.target, this.valueColor, this.valueDepth, this.valueStencil );
 	// implementation
-	bool issue( final frame.Control control ){
+	RasterState issue( final frame.Control control, final RaseterState cache ){
 		target.activate( control );
 		pixelMask.activate( control.gl );
 		control.clear(
 			pixelMask.hasColor()		? valueColor	: null,
 			pixelMask.depth				? valueDepth	: null,
 			pixelMask.stencilFront != 0	? valueStencil	: null);
-		return true;
+		return cache;
 	}
 }
 
@@ -329,8 +588,12 @@ class CallTransform implements ICall	{}
 
 class Process	{
 	final List<ICall> batches;
+	RasterState _cache = null;
+	final bool useCache;
 	
-	Process(): batches = new List<ICall>();
+	Process(this.useCache): batches = new List<ICall>();
+
+	void resetCache()	{ _cache = null; }
 	
 	void draw(IEntity ent, Target target)	{
 		final CallDraw call = new CallDraw( ent.getMesh(), ent.getEffect(), ent.getState(), target );
@@ -351,7 +614,9 @@ class Process	{
 	int flush(final dom.WebGLRenderingContext gl)	{
 		final frame.Control control = new frame.Control(gl);
 		for (final ICall call in batches)	{
-			call.issue(control);
+			if (!useCache)
+				resetCache();
+			cache = call.issue(control,cache);
 		}
 		return abort();
 	}

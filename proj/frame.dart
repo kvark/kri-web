@@ -22,6 +22,7 @@ class Rect  {
 
 
 
+
 class Surface extends core.Handle<dom.WebGLRenderbuffer> implements tex.IPlane  {
   Surface(dom.WebGLRenderingContext gl): super( gl.createRenderbuffer(), null );
   Surface.zero(): super(null,null);
@@ -105,17 +106,9 @@ class Control  {
   
   // helper functions
   
-  void scissor(final Rect r)	{
-  	if (r != null)	{
-	  	gl.scissor ( r.x, r.y, r.w, r.h );
-		gl.enable(	dom.WebGLRenderingContext.SCISSOR_TEST );
-	}else	{
-		gl.disable(	dom.WebGLRenderingContext.SCISSOR_TEST );
-	}
-  }
-  
-  void viewport(final Rect r)	{
+  void viewport(final Rect r, double zMin, double zMax)	{
   	gl.viewport( r.x, r.y, r.w, r.h );
+  	gl.depthRange( zMin, zMax );
   }
   
   void clear(final Color color, double depth, int stencil) {

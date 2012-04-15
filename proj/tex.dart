@@ -8,6 +8,7 @@ interface IPlane {
 	int getWidth();
 	int getHeight();
 	int getDepth();
+	int getSamples();
 }
 
 
@@ -21,6 +22,7 @@ class Texture extends core.Handle<dom.WebGLTexture> implements IPlane {
   int getWidth()	=> 0;
   int getHeight()	=> 0;
   int getDepth()	=> 0;
+  int getSamples()	=> 0;
 }
 
 

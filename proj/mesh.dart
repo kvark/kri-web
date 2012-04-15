@@ -45,7 +45,7 @@ class Mesh {
   final Map<String,Element> elements;
   final Mesh fallback;
   Element indices = null;
-  int polyType = -1;
+  String polyType = null;
   int nVert = 0, nInd = 0;
   final List<shade.Effect> blackList;
   
@@ -54,8 +54,9 @@ class Mesh {
   	blackList = new List<shade.Effect>();
 
   void init(final String type, int nv, int ni)	{
- 	polyType = polygon[type];
+ 	polyType = type;
  	nVert = nv; nInd = ni;
+ 	assert( polygon[type] != null );
   }
   
   bool contains(final dom.WebGLActiveInfo info)  {
@@ -97,14 +98,15 @@ class Mesh {
     });
     bindArray.unbind();
     // draw
-    assert (polyType >= 0);
+    final int type = polygon[polyType];
+    assert (type!=null);
     if (indices != null)  {
       buff.Binding bindIndex = new buff.Binding.index(gl);
       bindIndex.bindRead( indices.buffer );
-      gl.drawElements( polyType, nInd, indices.type, 0 );
+      gl.drawElements( type, nInd, indices.type, 0 );
       bindIndex.unbind();
     }else {
-      gl.drawArrays( polyType, 0, nVert ); 
+      gl.drawArrays( type, 0, nVert ); 
     }
     // cleanup
     for(int loc in shader.attributes.getKeys()) {
