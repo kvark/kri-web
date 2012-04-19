@@ -32,14 +32,17 @@ class App {
  
   App():
   	entity = new ren.EntityBase(),
-  	process = new ren.Process()
+  	process = new ren.Process(true)
   {
   	entity.state = new ren.RasterState(
-  		new ren.Face.ccw(),
+  		new ren.Primitive.ccw(),
+  		new ren.Offset.none(),
+  		new ren.Scissor.off(),
+  		new ren.MultiSample.off(),
+  		new ren.Stencil.off(),
+  		new ren.Depth.on('<='),
   		new ren.Blend.none(),
-  		new ren.PixelMask.withColor(true,0,0),
-  		new ren.PixelTest('<=', null, null),
-  		new ren.Offset.none()
+  		new ren.PixelMask.withColor(true,0,0)
   		);
   }
   
@@ -186,8 +189,8 @@ class App {
 
     final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
    	final ren.PixelMask mask = new ren.PixelMask.all();
-   	final ren.Target target = new ren.Target( new frame.Buffer.main(), rect, null );
-   	process.clear( mask, target, new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
+   	final ren.Target target = new ren.Target( new frame.Buffer.main(), rect, 0.0, 1.0 );
+   	process.clear( null, mask, target, new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
    	process.draw( entity, target );
    	process.flush( gl );
   }
