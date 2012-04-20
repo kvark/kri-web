@@ -53,14 +53,15 @@ void main()	{
 		
 		final ren.EntityBase entity = new ren.EntityBase();
 		entity.state = new ren.Build().depth('<=').end();
-  		
+		final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
+ 		
   		unit.test('Vertex buffer', (){
 			final buff.Binding bufBuilder = new buff.Binding.array(gl);
   			final math.Vector position = new math.Vector.zero();
-	  		final buff.Unit buffer = bufBuilder.spawn( buff.toFloat32([position]) );
+	  		final buff.Unit buffer = bufBuilder.spawn( buff.toFloat32(position.toList()) );
   			entity.mesh = new mesh.Mesh(null);
   			entity.mesh.init('1',1,0);
-  			entity.mesh.elements['a_pos'] = new mesh.Element.float32(1,buffer,0,0);
+  			entity.mesh.elements['a_pos'] = new mesh.Element.float32(3,buffer,0,0);
   		});
 		
 		unit.test('Shader link', (){
@@ -73,12 +74,17 @@ void main()	{
   		});
 
 		unit.test('Render', (){
-			final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
    			final ren.Target target = new ren.Target( new frame.Buffer.main(), rect, 0.0, 1.0 );
 	   		final ren.Process process = new ren.Process(false);
 		   	process.clear( null, entity.state.mask, target, new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
 	   		process.draw( entity, target );
 	   		process.flush( gl );
+	   	});
+	   	unit.test('Read back', (){
+		   	final frame.Control control = new frame.Control(gl);
+	   		final dom.Uint8Array result = control.readUint8( rect, 'rgba' );
+	   		for (int x in result)
+	   			Expect.isTrue( x==0xFF );
 	   	});
 	});
 }

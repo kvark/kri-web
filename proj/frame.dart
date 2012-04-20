@@ -127,4 +127,17 @@ class Control  {
     }
     gl.clear( mask );
   }
+  
+  dom.Uint8Array readUint8(final Rect rect, final String format)	{
+  	int idFormat = 0, count = 0;
+  	if (format == 'rgba')	{
+  		idFormat = dom.WebGLRenderingContext.RGBA;
+  		count = 4;
+  	}
+  	assert( idFormat!=0 && count!=0 );
+  	final dom.Uint8Array array = new dom.Uint8Array( rect.w * rect.h * count );
+	gl.readPixels( rect.x, rect.y, rect.w, rect.h,
+		idFormat, dom.WebGLRenderingContext.UNSIGNED_BYTE, array );  	
+	return array;
+  }
 }
