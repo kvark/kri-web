@@ -266,6 +266,7 @@ class Depth implements IPipe	{
 	Depth.on( final String funCode ): this( true, comparison[funCode] ){
 		assert( compare != null );
 	}
+	Depth.off(): this(false,0);
 	
 	Depth activate( final dom.WebGLRenderingContext gl, final Depth cache ){
 		if (!on && (cache==null || cache.on))
@@ -308,7 +309,7 @@ class Blend implements IPipe	{
 	
 	Blend( this.on, this.color, this.alpha, this.refValue );
 	Blend.simple( BlendChannel chan ): this( true, chan, chan, new frame.Color.black() );
-	Blend.none(): this(false,null,null,null);
+	Blend.off(): this(false,null,null,null);
 	
 	Blend _disabled() => new Blend( false, color, alpha, refValue );
 
@@ -393,7 +394,7 @@ class RasterState implements IPipe	{
 	
 	RasterState( this.primitive, this.offset, this.scissor, this.multiSample, this.stencil, this.depth, this.blend, this.mask );
 	RasterState.initial(): this( new Primitive.ccw(), new Offset.none(), new Scissor.off(), new MultiSample.off(),
-		new Stencil.off(), new Depth.on('<='), new Blend.none(), new PixelMask.all() );
+		new Stencil.off(), new Depth.on('<='), new Blend.off(), new PixelMask.all() );
 	
 	RasterState changePixel( final Scissor newScissor, final PixelMask newMask ) => new RasterState( primitive, offset,
 		newScissor, multiSample, stencil, depth, blend, newMask );
@@ -428,6 +429,56 @@ class RasterState implements IPipe	{
 		if (mask!=null)
 			mask		.verify( gl );
 	}
+}
+
+
+class Build	{
+	Primitive	_primitive	= null;
+	Offset		_offset		= null;
+	Scissor		_scissor	= null;
+	MultiSample	_multi		= null;
+	Stencil		_stencil	= null;
+	Depth		_depth		= null;
+	Blend		_blend		= null;
+	PixelMask	_mask		= null;
+	
+	Build offset(double units, double factor)	{
+		_offset = new Offset( true, units, factor );
+		return this;
+	}
+	Build scissor(frame.Rect rect)	{
+		_scissor = new Scissor( true, rect );
+		return this;
+	}
+	Build multiSample()	{
+		return this;
+	}
+	Build stencil(StencilChannel chan)	{
+		_stencil = new Stencil.simple(chan);
+		return this;
+	}
+	Build depth(String funCode)	{
+		_depth = new Depth.on(funCode);
+		return this;
+	}
+	Build blend(BlendChannel chan)	{
+		_blend = new Blend.simple(chan);
+		return this;
+	}
+	Build mask(bool color, bool depth, int stencil)	{
+		_mask = new PixelMask( depth, stencil, stencil, color, color, color, color );
+		return this;
+	}
+	
+	RasterState end() => new RasterState(
+			_primitive	!=null ? _primitive	: new Primitive.ccw(),
+			_offset		!=null ? _offset	: new Offset.none(),
+			_scissor	!=null ? _scissor	: new Scissor.off(),
+			_multi		!=null ? _multi		: new MultiSample.off(),
+			_stencil	!=null ? _stencil	: new Stencil.off(),
+			_depth		!=null ? _depth		: new Depth.off(),
+			_blend		!=null ? _blend		: new Blend.off(),
+			_mask		!=null ? _mask		: new PixelMask.all() );
 }
 
 

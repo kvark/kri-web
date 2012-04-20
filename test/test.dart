@@ -52,16 +52,7 @@ void main()	{
 		final dom.WebGLRenderingContext gl = canvas.getContext('experimental-webgl');
 		
 		final ren.EntityBase entity = new ren.EntityBase();
-		entity.state = new ren.RasterState(
-			new ren.Primitive.ccw(),
-			new ren.Offset.none(),
-			new ren.Scissor.off(),
-			new ren.MultiSample.off(),
-			new ren.Stencil.off(),
-			new ren.Depth.on('<='),
-			new ren.Blend.none(),
-			new ren.PixelMask.withColor(true,0,0)
-  		);
+		entity.state = new ren.Build().depth('<=').end();
   		
   		unit.test('Vertex buffer', (){
 			final buff.Binding bufBuilder = new buff.Binding.array(gl);
