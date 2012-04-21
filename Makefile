@@ -2,9 +2,9 @@ DART_PATH	=../../dart-sdk/bin/frogc
 OPTIONS		=--enable_type_checks --enable_asserts
 
 code:
-	cd proj && ${DART_PATH} ${OPTIONS} demo.dart && mv *.js ../deploy
+	cd app	&& ${DART_PATH} ${OPTIONS} demo.dart && mv *.js ../deploy
 units:
-	cd test && ${DART_PATH} ${OPTIONS} test.dart && mv *.js ../deploy
+	cd test	&& ${DART_PATH} ${OPTIONS} test.dart && mv *.js ../deploy
 
 deploy:	deploy_code
 

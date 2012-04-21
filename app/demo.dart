@@ -1,20 +1,20 @@
 #import('dart:html',	prefix:'dom');
-#import('ani.dart',		prefix:'ani');
-#import('arm.dart',		prefix:'arm');
-#import('buff.dart',	prefix:'buff');
-#import('cap.dart',		prefix:'cap');
-#import('frame.dart',	prefix:'frame');
-#import('gen.dart',		prefix:'gen');
-#import('load.dart',	prefix:'load');
-#import('math.dart',	prefix:'math');
-#import('mesh.dart',	prefix:'mesh');
-#import('parse.dart',	prefix:'parse');
-#import('rast.dart',	prefix:'rast');
-#import('ren.dart',		prefix:'ren');
-#import('shade.dart',	prefix:'shade');
-#import('space.dart',	prefix:'space');
-#import('tex.dart',		prefix:'tex');
-#import('view.dart',	prefix:'view');
+#import('../proj/ani.dart',		prefix:'ani');
+#import('../proj/arm.dart',		prefix:'arm');
+#import('../proj/buff.dart',	prefix:'buff');
+#import('../proj/cap.dart',		prefix:'cap');
+#import('../proj/frame.dart',	prefix:'frame');
+#import('../proj/gen.dart',		prefix:'gen');
+#import('../proj/load.dart',	prefix:'load');
+#import('../proj/math.dart',	prefix:'math');
+#import('../proj/mesh.dart',	prefix:'mesh');
+#import('../proj/parse.dart',	prefix:'parse');
+#import('../proj/rast.dart',	prefix:'rast');
+#import('../proj/ren.dart',		prefix:'ren');
+#import('../proj/shade.dart',	prefix:'shade');
+#import('../proj/space.dart',	prefix:'space');
+#import('../proj/tex.dart',		prefix:'tex');
+#import('../proj/view.dart',	prefix:'view');
 
 
 class App {
