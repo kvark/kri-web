@@ -531,8 +531,10 @@ class Material implements shade.IDataSource	{
 	}
 }
 
+// Calls argument conventions: target, what, how
 
 class CallDraw implements ICall	{
+	final Target target;
 	// data
 	final m.Mesh mesh;
 	// program
@@ -540,9 +542,8 @@ class CallDraw implements ICall	{
 	final Map<String,Object> parameters;
 	// environment
 	final RasterState state;
-	final Target target;
 	// constructor
-	CallDraw(this.mesh, this.shader, this.state, this.target):
+	CallDraw(this.target, this.mesh, this.shader, this.state):
 		parameters = new Map<String,Object>();
 	// implementation
 	RasterState issue( final frame.Control control, final RasterState cache ){
@@ -554,21 +555,21 @@ class CallDraw implements ICall	{
 }
 
 class CallClear implements ICall	{
-	// environment
-	final Scissor scissor;
-	final PixelMask pixelMask;
 	final frame.Buffer buffer;
 	// values
 	final frame.Color valueColor;
 	final double valueDepth;
 	final int valueStencil;
+	// environment
+	final Scissor scissor;
+	final PixelMask pixelMask;
 	// constructor
-	CallClear( this.scissor, this.pixelMask, this.buffer, this.valueColor, this.valueDepth, this.valueStencil );
+	CallClear( this.buffer, this.valueColor, this.valueDepth, this.valueStencil, this.scissor, this.pixelMask );
 	// implementation
 	RasterState issue( final frame.Control control, final RasterState cache ){
 		control.bind( buffer );
-		final PixelMask newMask = pixelMask	.activate( control.gl, cache!=null ? cache.mask :null );
 		final Scissor newScissor = scissor	.activate( control.gl, cache!=null ? cache.scissor :null );
+		final PixelMask newMask = pixelMask	.activate( control.gl, cache!=null ? cache.mask :null );
 		control.clear(
 			pixelMask.hasColor()		? valueColor	: null,
 			pixelMask.depth				? valueDepth	: null,
@@ -593,14 +594,14 @@ class Process	{
 
 	void resetCache()	{ _cache = null; }
 	
-	void draw(IEntity ent, Target target)	{
-		final CallDraw call = new CallDraw( ent.getMesh(), ent.getEffect(), ent.getState(), target );
+	void draw( Target target, IEntity ent ){
+		final CallDraw call = new CallDraw( target, ent.getMesh(), ent.getEffect(), ent.getState() );
 		ent.fillData( call.parameters );
 		batches.add(call);
 	}
 	
-	void clear( frame.Rect rect, PixelMask mask, frame.Buffer buffer, frame.Color vColor, double vDepth, int vStencil ){
-		batches.add(new CallClear( new Scissor(rect!=null,rect), mask, buffer, vColor, vDepth, vStencil ));
+	void clear( frame.Buffer buffer, frame.Color vColor, double vDepth, int vStencil, frame.Rect rect, PixelMask mask ){
+		batches.add(new CallClear( buffer, vColor, vDepth, vStencil, new Scissor(rect!=null,rect), mask ));
 	}
 	
 	int abort()	{

@@ -80,9 +80,10 @@ void main()	{
 		unit.test('Render', (){
    			final ren.Target target = new ren.Target( new frame.Buffer.main(), rect, 0.0, 1.0 );
 	   		final ren.Process process = new ren.Process(false);
-		   	process.clear( null, entity.state.mask, target.buffer,
-		   		new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
-	   		process.draw( entity, target );
+		   	process.clear( target.buffer,
+		   		new frame.Color(0.0,0.0,0.0,0.0), 1.0, null,
+		   		null, entity.state.mask );
+	   		process.draw( target, entity );
 	   		process.flush( gl );
 	   	});
 	   	

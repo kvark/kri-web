@@ -181,8 +181,10 @@ class App {
     final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
    	final ren.PixelMask mask = new ren.PixelMask.all();
    	final ren.Target target = new ren.Target( new frame.Buffer.main(), rect, 0.0, 1.0 );
-   	process.clear( null, mask, target.buffer, new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
-   	process.draw( entity, target );
+   	process.clear( target.buffer,
+   		new frame.Color(0.0,0.0,0.0,0.0), 1.0, null,
+   		null, mask );
+   	process.draw( target, entity );
    	process.flush( gl );
   }
 }
