@@ -1,12 +1,13 @@
 #import('unittest.dart',		prefix:'unit');
-#import('../proj/math.dart',	prefix:'math');
-#import('../proj/ren.dart',		prefix:'ren');
-#import('../proj/mesh.dart',	prefix:'mesh');
-#import('../proj/buff.dart',	prefix:'buff');
-#import('../proj/shade.dart',	prefix:'shade');
-#import('../proj/frame.dart',	prefix:'frame');
-#import('../proj/cap.dart',		prefix:'cap');
 #import('dart:html',			prefix:'dom');
+#import('../proj/buff.dart',	prefix:'buff');
+#import('../proj/cap.dart',		prefix:'cap');
+#import('../proj/frame.dart',	prefix:'frame');
+#import('../proj/math.dart',	prefix:'math');
+#import('../proj/mesh.dart',	prefix:'mesh');
+#import('../proj/parse.dart',	prefix:'parse');
+#import('../proj/ren.dart',		prefix:'ren');
+#import('../proj/shade.dart',	prefix:'shade');
 
 
 void main()	{
@@ -52,7 +53,7 @@ void main()	{
 		final dom.WebGLRenderingContext gl = canvas.getContext('experimental-webgl');
 		
 		final ren.EntityBase entity = new ren.EntityBase();
-		entity.state = new ren.Build().depth('<=').end();
+		entity.state = new parse.Build().depth('<=').end();
 		final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
 		
 		unit.test('Capabilities', (){

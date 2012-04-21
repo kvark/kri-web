@@ -1,18 +1,20 @@
 #import('dart:html',	prefix:'dom');
-#import('shade.dart',	prefix:'shade');
-#import('buff.dart',	prefix:'buff');
-#import('mesh.dart',	prefix:'mesh');
-#import('math.dart',	prefix:'math');
-#import('space.dart',	prefix:'space');
-#import('frame.dart',	prefix:'frame');
-#import('view.dart',	prefix:'view');
-#import('load.dart',	prefix:'load');
-#import('gen.dart',		prefix:'gen');
-#import('tex.dart',		prefix:'tex');
-#import('arm.dart',		prefix:'arm');
 #import('ani.dart',		prefix:'ani');
-#import('ren.dart',		prefix:'ren');
+#import('arm.dart',		prefix:'arm');
+#import('buff.dart',	prefix:'buff');
 #import('cap.dart',		prefix:'cap');
+#import('frame.dart',	prefix:'frame');
+#import('gen.dart',		prefix:'gen');
+#import('load.dart',	prefix:'load');
+#import('math.dart',	prefix:'math');
+#import('mesh.dart',	prefix:'mesh');
+#import('parse.dart',	prefix:'parse');
+#import('rast.dart',	prefix:'rast');
+#import('ren.dart',		prefix:'ren');
+#import('shade.dart',	prefix:'shade');
+#import('space.dart',	prefix:'space');
+#import('tex.dart',		prefix:'tex');
+#import('view.dart',	prefix:'view');
 
 
 class App {
@@ -35,7 +37,7 @@ class App {
   	entity = new ren.EntityBase(),
   	process = new ren.Process(true)
   {
-  	entity.state = new ren.Build().depth('<=').end();
+  	entity.state = new parse.Build().depth('<=').end();
   }
   
   void run() {
@@ -179,7 +181,7 @@ class App {
    	//me.draw( gl, shader, block );
 
     final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
-   	final ren.PixelMask mask = new ren.PixelMask.all();
+   	final rast.Mask mask = new rast.Mask.all();
    	final ren.Target target = new ren.Target( new frame.Buffer.main(), rect, 0.0, 1.0 );
    	process.clear( target.buffer,
    		new frame.Color(0.0,0.0,0.0,0.0), 1.0, null,
