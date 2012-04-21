@@ -95,6 +95,8 @@ class IntReader	{
 		for(int i=0; i<num; ++i)
 			rez.addLast( getReal() );
 		return rez;
+		//final dom.Uint8Array blob = getArray(num*4);
+		//return new dom.Float32Array.fromBuffer( blob.buffer );
 	}
 	
 	math.Vector getVector3()	{

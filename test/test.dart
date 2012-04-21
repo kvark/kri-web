@@ -76,10 +76,12 @@ void main()	{
 		unit.test('Render', (){
    			final ren.Target target = new ren.Target( new frame.Buffer.main(), rect, 0.0, 1.0 );
 	   		final ren.Process process = new ren.Process(false);
-		   	process.clear( null, entity.state.mask, target, new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
+		   	process.clear( null, entity.state.mask, target.buffer,
+		   		new frame.Color(0.0,0.0,0.0,0.0), 1.0, null );
 	   		process.draw( entity, target );
 	   		process.flush( gl );
 	   	});
+	   	
 	   	unit.test('Read back', (){
 		   	final frame.Control control = new frame.Control(gl);
 	   		final dom.Uint8Array result = control.readUint8( rect, 'rgba' );

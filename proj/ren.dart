@@ -557,16 +557,16 @@ class CallClear implements ICall	{
 	// environment
 	final Scissor scissor;
 	final PixelMask pixelMask;
-	final Target target;
+	final frame.Buffer buffer;
 	// values
 	final frame.Color valueColor;
 	final double valueDepth;
 	final int valueStencil;
 	// constructor
-	CallClear( this.scissor, this.pixelMask, this.target, this.valueColor, this.valueDepth, this.valueStencil );
+	CallClear( this.scissor, this.pixelMask, this.buffer, this.valueColor, this.valueDepth, this.valueStencil );
 	// implementation
 	RasterState issue( final frame.Control control, final RasterState cache ){
-		target.activate( control );
+		control.bind( buffer );
 		final PixelMask newMask = pixelMask	.activate( control.gl, cache!=null ? cache.mask :null );
 		final Scissor newScissor = scissor	.activate( control.gl, cache!=null ? cache.scissor :null );
 		control.clear(
@@ -599,8 +599,8 @@ class Process	{
 		batches.add(call);
 	}
 	
-	void clear( frame.Rect rect, PixelMask mask, Target target, frame.Color vColor, double vDepth, int vStencil ){
-		batches.add(new CallClear( new Scissor(rect!=null,rect), mask, target, vColor, vDepth, vStencil ));
+	void clear( frame.Rect rect, PixelMask mask, frame.Buffer buffer, frame.Color vColor, double vDepth, int vStencil ){
+		batches.add(new CallClear( new Scissor(rect!=null,rect), mask, buffer, vColor, vDepth, vStencil ));
 	}
 	
 	int abort()	{
