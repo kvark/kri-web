@@ -1,4 +1,4 @@
-#library('shade');
+#library('kri:shade');
 #import('dart:html',  prefix:'dom');
 #import('core.dart',  prefix:'core');
 #import('frame.dart', prefix:'frame');

@@ -1,4 +1,4 @@
-#library('mesh');
+#library('kri:mesh');
 #import('dart:html',  prefix:'dom');
 #import('buff.dart',  prefix:'buff');
 #import('shade.dart', prefix:'shade');

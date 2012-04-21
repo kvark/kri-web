@@ -1,4 +1,4 @@
-#library('ani');
+#library('kri:ani');
 
 
 class Key<T>	{

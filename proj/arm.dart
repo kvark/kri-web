@@ -1,4 +1,4 @@
-#library('arm');
+#library('kri:arm');
 #import('ani.dart',		prefix:'ani');
 #import('math.dart',	prefix:'math');
 #import('load.dart',	prefix:'load');

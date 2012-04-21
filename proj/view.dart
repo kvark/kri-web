@@ -1,4 +1,4 @@
-#library('view');
+#library('kri:view');
 #import('math.dart');
 #import('space.dart', prefix:'space');
 #import('shade.dart', prefix:'shade');

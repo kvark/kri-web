@@ -1,4 +1,4 @@
-#library('space');
+#library('kri:space');
 #import('ani.dart', prefix:'ani');
 #import('math.dart');
 

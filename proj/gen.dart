@@ -1,4 +1,4 @@
-#library('gen');
+#library('kri:gen');
 #import('core.dart', prefix:'core');
 #import('math.dart', prefix:'math');
 #import('mesh.dart', prefix:'mesh');

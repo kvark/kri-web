@@ -1,4 +1,4 @@
-#library('math');
+#library('kri:math');
 
 final double epsilon = 1.0e-5; 
 

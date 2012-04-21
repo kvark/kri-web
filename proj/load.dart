@@ -1,4 +1,4 @@
-#library('load');
+#library('kri:load');
 #import('dart:html',	prefix:'dom');
 #import('math.dart',	prefix:'math');
 #import('space.dart',	prefix:'space');

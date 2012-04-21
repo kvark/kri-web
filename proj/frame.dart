@@ -1,4 +1,4 @@
-#library('frame');
+#library('kri:frame');
 #import('dart:html', prefix:'dom');
 #import('core.dart', prefix:'core');
 #import('tex.dart',  prefix:'tex');

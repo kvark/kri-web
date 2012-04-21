@@ -1,4 +1,4 @@
-#library('buff');
+#library('kri:buff');
 #import('dart:html', prefix:'dom');
 #import('core.dart', prefix:'core');
 

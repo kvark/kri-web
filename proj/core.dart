@@ -1,4 +1,4 @@
-#library('core');
+#library('kri:core');
 
 
 class Handle<Type>	{

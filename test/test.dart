@@ -1,11 +1,11 @@
 #import('unittest.dart',		prefix:'unit');
 #import('../proj/math.dart',	prefix:'math');
-
 #import('../proj/ren.dart',		prefix:'ren');
 #import('../proj/mesh.dart',	prefix:'mesh');
 #import('../proj/buff.dart',	prefix:'buff');
 #import('../proj/shade.dart',	prefix:'shade');
 #import('../proj/frame.dart',	prefix:'frame');
+#import('../proj/cap.dart',		prefix:'cap');
 #import('dart:html',			prefix:'dom');
 
 
@@ -54,6 +54,10 @@ void main()	{
 		final ren.EntityBase entity = new ren.EntityBase();
 		entity.state = new ren.Build().depth('<=').end();
 		final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
+		
+		unit.test('Capabilities', (){
+			new cap.System(gl);
+		});
  		
   		unit.test('Vertex buffer', (){
 			final buff.Binding bufBuilder = new buff.Binding.array(gl);

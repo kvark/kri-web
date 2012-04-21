@@ -12,6 +12,7 @@
 #import('arm.dart',		prefix:'arm');
 #import('ani.dart',		prefix:'ani');
 #import('ren.dart',		prefix:'ren');
+#import('cap.dart',		prefix:'cap');
 
 
 class App {
@@ -38,7 +39,6 @@ class App {
   }
   
   void run() {
-    final dom.Console log = dom.window.console;
     canvas = dom.document.query('#canvas');
     gl = canvas.getContext('experimental-webgl');
     canvas.rect.then((final dom.ElementRect rect)	{
@@ -46,7 +46,7 @@ class App {
     	canvasOffY = rect.offset.top;
     });
     
-    log.debug(gl);
+    print( new cap.System(gl) );
 
     entity.mesh = new gen.Mesh(gl).cubeUnit();
     tex.Texture texture = new gen.Texture(gl).white();
@@ -162,11 +162,11 @@ class App {
   	double time = dateNow.value.toDouble() / 1000.0;
 
     if (skeleton!=null)	{
-    	final String aniName = /*'samba_dancing_2'*/ 'DefaultAction.002';
-    	final ani.Record rec = skeleton.records[aniName];
-    	if (rec != null)	{
+    	for(final String aniName in skeleton.records.getKeys())	{
+    		final ani.Record rec = skeleton.records[aniName];
     		double t1 = time - (time/rec.length).floor() * rec.length;
     		skeleton.setMoment( aniName, t1 );
+    		break;
     	}
     	skeleton.update();
     	skeleton.fillData( entity.data );

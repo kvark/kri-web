@@ -1,4 +1,4 @@
-#library('ren');
+#library('kri:ren');
 #import('dart:html',	prefix:'dom');
 #import('mesh.dart',	prefix:'m');
 #import('shade.dart',	prefix:'shade');
