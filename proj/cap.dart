@@ -20,7 +20,7 @@ class System	{
 	//final List<int> shaderBinaryFormats;
 	//final bool shaderCompiler;
 
-	//final String extensions;
+	final List<String> extensions;
 	final String renderer;
 	final String shadingLanguageVersion;
 	final String vendor;
@@ -44,7 +44,7 @@ class System	{
 		//shaderBinaryFormats		= gl.getParameter( dom.WebGLRenderingContext.SHADER_BINARY_FORMATS ),
 		//shaderCompiler				= gl.getParameter( dom.WebGLRenderingContext.SHADER_COMPILER ),
 		
-		//extensions			= gl.getParameter( dom.WebGLRenderingContext.EXTENSIONS ),
+		extensions				= [],//gl.getSupportedExtensions(),
 		renderer				= gl.getParameter( dom.WebGLRenderingContext.RENDERER ),
 		shadingLanguageVersion	= gl.getParameter( dom.WebGLRenderingContext.SHADING_LANGUAGE_VERSION ),
 		vendor					= gl.getParameter( dom.WebGLRenderingContext.VENDOR ),
@@ -52,5 +52,6 @@ class System	{
 	{}
 	
 	String toString() => "Vendor:${vendor}, Version:${version}, Renderer:${renderer}"
-		"\nUniforms vectors: vertex=${nVertexUniformVectors}, fragment=${nFragmentUniformVectors}";
+		"\nUniforms vectors: vertex=${nVertexUniformVectors}, fragment=${nFragmentUniformVectors}"
+		"\nExtensions: ${Strings.join(extensions,',')}";
 }

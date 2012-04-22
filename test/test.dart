@@ -3,9 +3,11 @@
 #import('../proj/buff.dart',	prefix:'buff');
 #import('../proj/cap.dart',		prefix:'cap');
 #import('../proj/frame.dart',	prefix:'frame');
+#import('../proj/load.dart',	prefix:'load');
 #import('../proj/math.dart',	prefix:'math');
 #import('../proj/mesh.dart',	prefix:'mesh');
 #import('../proj/parse.dart',	prefix:'parse');
+#import('../proj/rast.dart',	prefix:'rast');
 #import('../proj/ren.dart',		prefix:'ren');
 #import('../proj/shade.dart',	prefix:'shade');
 
@@ -53,7 +55,7 @@ void main()	{
 		final dom.WebGLRenderingContext gl = canvas.getContext('experimental-webgl');
 		
 		final ren.EntityBase entity = new ren.EntityBase();
-		entity.state = new parse.Build().depth('<=').end();
+		entity.state = new parse.Build().setDepth('<=').end();
 		final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
 		
 		unit.test('Capabilities', (){
@@ -94,5 +96,18 @@ void main()	{
 	   		for (int x in result)
 	   			Expect.isTrue( x==0xFF );
 	   	});
+	});
+	unit.group('XML:', (){
+		final dom.DOMParser parser = new dom.DOMParser();
+		String text = '';
+		unit.test('Load', (){
+			text = new load.Loader('schema/').getNow('sample.xml');
+			Expect.isTrue( text!=null && text!='' );
+		});
+		unit.test('Parse', (){
+			final dom.Document doc = parser.parseFromString(text,'text/xml');
+			final rast.State state = new parse.Parse().rast( doc.documentElement );
+			print( "${state}" );
+		});
 	});
 }

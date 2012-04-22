@@ -37,7 +37,7 @@ class App {
   	entity = new ren.EntityBase(),
   	process = new ren.Process(true)
   {
-  	entity.state = new parse.Build().depth('<=').end();
+  	entity.state = new parse.Build().setDepth('<=').end();
   }
   
   void run() {
@@ -179,6 +179,9 @@ class App {
    	//controlNode.space.rotation = new math.Quaternion.fromAxis(new math.Vector(1.0,0.0,0.0,0.0),time);
    	//controlNode.space.movement = new math.Vector(0.0,Math.sin(time*0.01),5.0,0.0);
    	//me.draw( gl, shader, block );
+   	
+   	if (gl.isContextLost())
+   		return;
 
     final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
    	final rast.Mask mask = new rast.Mask.all();

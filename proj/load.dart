@@ -201,7 +201,7 @@ class Loader {
     return req;
   }
   
-  var getNow( String path ){
+  String getNow( String path ){
     final req = makeRequest( path, false );
     req.send();
     if (req.status != 200)

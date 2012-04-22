@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<kri:Rast xmlns:kri="rast">
+	<kri:Primitive cull="back" />
+	<kri:Depth func="&lt;=" />
+	<kri:Mask depth="true" color="true" />
+</kri:Rast>
