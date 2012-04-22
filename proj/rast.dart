@@ -177,20 +177,20 @@ class MultiSample implements IPipe	{
 class StencilChannel	{
 	final int function, refValue;
 	final int readMask;
-	final int opFail, opDepthFail, opPass;
+	final int onFail, onDepthFail, onPass;
 	
 	StencilChannel( String funCode, this.refValue, this.readMask,
 		String fail, String depthFail, String pass ):
-		function = comparison[funCode],		opFail = operation[fail],
-		opDepthFail = operation[depthFail], opPass = operation[pass]{
-		assert (function!=null && opFail!=null && opDepthFail!=null && opPass!=null );
+		function = comparison[funCode],		onFail = operation[fail],
+		onDepthFail = operation[depthFail], onPass = operation[pass]{
+		assert (function!=null && onFail!=null && onDepthFail!=null && onPass!=null );
 	}
 	
 	StencilChannel activate( final dom.WebGLRenderingContext gl, final int face, final StencilChannel cache ){
 		if (cache==null || function!=cache.function || refValue!=cache.refValue || readMask!=cache.readMask)
 			gl.stencilFuncSeparate( face, function, refValue, readMask );
-		if (cache==null || opFail!=cache.opFail || opDepthFail!=cache.opDepthFail || opPass!=cache.opPass)
-			gl.stencilOpSeparate( face, opFail, opDepthFail, opPass );
+		if (cache==null || onFail!=cache.onFail || onDepthFail!=cache.onDepthFail || onPass!=cache.onPass)
+			gl.stencilOpSeparate( face, onFail, onDepthFail, onPass );
 		return this;
 	}
 }
@@ -231,16 +231,16 @@ class Stencil implements IPipe	{
 		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_FUNC)				== front.function );
 		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_REF)				== front.refValue );
 		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_VALUE_MASK)		== front.readMask );
-		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_FAIL)				== front.opFail );
-		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_PASS_DEPTH_FAIL)	== front.opDepthFail );
-		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_PASS_DEPTH_PASS)	== front.opPass );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_FAIL)				== front.onFail );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_PASS_DEPTH_FAIL)	== front.onDepthFail );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_PASS_DEPTH_PASS)	== front.onPass );
 		// back
 		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_FUNC)			== back.function );
 		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_REF)				== back.refValue );
 		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_VALUE_MASK)		== back.readMask );
-		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_FAIL)			== back.opFail );
-		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_PASS_DEPTH_FAIL)	== back.opDepthFail );
-		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_PASS_DEPTH_PASS)	== back	.opPass );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_FAIL)			== back.onFail );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_PASS_DEPTH_FAIL)	== back.onDepthFail );
+		assert( gl.getParameter(dom.WebGLRenderingContext.STENCIL_BACK_PASS_DEPTH_PASS)	== back.onPass );
 	}
 }
 

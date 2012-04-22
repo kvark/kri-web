@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:annotation>
+		<xs:documentation xml:lang="en">
+		KriWeb elements definitions.
+		</xs:documentation>
+	</xs:annotation>
+	
+	<!-- Shared -->
+	<xs:simpleType name="TFloatPositive">
+		<xs:restriction base="xs:float">
+			<xs:minInclusive value="0.0" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="TFace">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="front" />
+			<xs:enumeration value="back" />
+			<xs:enumeration value="all" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="TFunction">
+		<xs:restriction base="xs:string">
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- Primitive -->
+	<xs:complexType name="TPrimitive">
+		<xs:attribute name="front">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="cw" />
+					<xs:enumeration value="ccw" />
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="cull" type="TFace" />
+		<xs:attribute name="lineWidth" type="TFloatPositive" />
+	</xs:complexType>
+
+	<!-- Offset -->
+	<xs:complexType name="TOffset">
+		<xs:attribute name="factor"	type="xs:float" />
+		<xs:attribute name="units"	type="xs:float" />
+	</xs:complexType>
+	
+	<!--Scissor -->
+	<xs:complexType name="TScissor">
+		<xs:attribute name="x" type="TFloatPositive" />
+		<xs:attribute name="y" type="TFloatPositive" />
+		<xs:attribute name="w" type="TFloatPositive" />
+		<xs:attribute name="h" type="TFloatPositive" />
+	</xs:complexType>
+	
+	<!--MultiSample -->
+	<xs:complexType name="TMultiSample">
+	</xs:complexType>
+
+	<!-- Stencil -->
+	<xs:simpleType name="TOperation">
+		<xs:restriction base="xs:string">
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:complexType name="TStencilChannel">
+		<xs:sequence>
+			<xs:element name="Test">
+				<xs:complexType>
+					<xs:attribute name="func"	type="TFunction" />
+					<xs:attribute name="ref"	type="xs:int" />
+					<xs:attribute name="mask"	type="xs:int" />
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Operation" minOccurs="0">
+				<xs:complexType>
+					<xs:attribute name="fail"		type="TOperation" />
+					<xs:attribute name="depthFail"	type="TOperation" />
+					<xs:attribute name="pass"		type="TOperation" />
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="face" type="TFace" />
+	</xs:complexType>
+	
+	<xs:complexType name="TStencil">
+		<xs:sequence>
+			<xs:element name="Channel" type="TStencilChannel" maxOccurs="2"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<!-- Depth -->
+	<xs:complexType name="TDepth">
+		<xs:attribute name="func" type="TFunction" />
+	</xs:complexType>
+	
+	<!-- Blend -->
+	<xs:simpleType name="TBlendEquation">
+		<xs:restriction base="xs:string">
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="TBlendFactor">
+		<xs:restriction base="xs:string">
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:complexType name="TBlendChannel">
+		<xs:attribute name="equation"		type="TBlendEquation" />
+		<xs:attribute name="source"			type="TBlendFactor" />
+		<xs:attribute name="destination"	type="TBlendFactor" />
+	</xs:complexType>
+	
+	<xs:complexType name="TBlend">
+		<xs:sequence>
+			<xs:element name="Channel" type="TBlendChannel" maxOccurs="2" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<!-- Mask -->
+	<xs:simpleType name="TMaskColor">
+		<xs:restriction base="xs:string">
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:complexType name="TMask">
+		<xs:attribute name="stencilFront"	type="xs:int" />
+		<xs:attribute name="stencilBack"	type="xs:int" />
+		<xs:attribute name="depth"			type="xs:boolean" />
+		<xs:attribute name="color"			type="TMaskColor" />
+	</xs:complexType>
+	
+	<!-- Rasterizer -->
+	<xs:element name="Rast">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Primitive"	type="TPrimitive"		minOccurs="0" maxOccurs="1" />
+				<xs:element name="Offset"		type="TOffset"			minOccurs="0" maxOccurs="1" />
+				<xs:element name="Scissor"		type="TScissor"			minOccurs="0" maxOccurs="1" />
+				<xs:element name="MultiSample"	type="TMultiSample"		minOccurs="0" maxOccurs="1" />
+				<xs:element name="Stencil"		type="TStencil"			minOccurs="0" maxOccurs="1" />
+				<xs:element name="Depth"		type="TDepth"			minOccurs="0" maxOccurs="1" />
+				<xs:element name="Blend"		type="TBlend"			minOccurs="0" maxOccurs="1" />
+				<xs:element name="Mask"			type="TMask"			minOccurs="0" maxOccurs="1" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+</xs:schema>
