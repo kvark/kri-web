@@ -101,7 +101,7 @@ void main()	{
 		final dom.DOMParser parser = new dom.DOMParser();
 		String text = '';
 		unit.test('Load', (){
-			text = new load.Loader('schema/').getNow('sample.xml');
+			text = new load.Loader('schema/').getNow('test.xml');
 			Expect.isTrue( text!=null && text!='' );
 		});
 		unit.test('Parse', (){

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<kri:Rast xmlns:kri="rast">
+	<kri:Primitive front="ccw" cull="back" lineWidth="0.5" />
+	<kri:Offset units="0.4" factor="1.0" />
+	<kri:Scissor x="0" y="0" w="100" h="100" />
+	<kri:MultiSample />
+	<kri:Stencil>
+		<kri:Channel face="all">
+			<kri:Test func="==" ref="1" mask="3" />
+			<kri:Operation fail="" depthFail="+" pass="~" />
+		</kri:Channel>
+	</kri:Stencil>
+	<kri:Depth func="&lt;=" />
+	<kri:Blend>
+		<kri:Channel on="color" equation="d-s" source="Sa" destination="Cc"/>
+		<kri:Channel on="alpha" equation="s+d" source="Sc" destination="1" />
+		<kri:Ref r="0.4" g="0.3" b="0.2" a="0.1" />
+	</kri:Blend>
+	<kri:Mask stencilFront="-1" stencilBack="-2" depth="true" color="RGB" />
+</kri:Rast>

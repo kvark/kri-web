@@ -13,6 +13,12 @@
 		</xs:restriction>
 	</xs:simpleType>
 
+	<xs:simpleType name="TIntPositive">
+		<xs:restriction base="xs:int">
+			<xs:minInclusive value="0" />
+		</xs:restriction>
+	</xs:simpleType>
+
 	<xs:simpleType name="TFace">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="front" />
@@ -25,6 +31,13 @@
 		<xs:restriction base="xs:string">
 		</xs:restriction>
 	</xs:simpleType>
+	
+	<xs:complexType name="TColor">
+		<xs:attribute name="r" type="TFloatPositive" />
+		<xs:attribute name="g" type="TFloatPositive" />
+		<xs:attribute name="b" type="TFloatPositive" />
+		<xs:attribute name="a" type="TFloatPositive" />
+	</xs:complexType>
 
 	<!-- Primitive -->
 	<xs:complexType name="TPrimitive">
@@ -48,10 +61,10 @@
 	
 	<!--Scissor -->
 	<xs:complexType name="TScissor">
-		<xs:attribute name="x" type="TFloatPositive" />
-		<xs:attribute name="y" type="TFloatPositive" />
-		<xs:attribute name="w" type="TFloatPositive" />
-		<xs:attribute name="h" type="TFloatPositive" />
+		<xs:attribute name="x" type="TIntPositive" />
+		<xs:attribute name="y" type="TIntPositive" />
+		<xs:attribute name="w" type="TIntPositive" />
+		<xs:attribute name="h" type="TIntPositive" />
 	</xs:complexType>
 	
 	<!--MultiSample -->
@@ -96,6 +109,14 @@
 	</xs:complexType>
 	
 	<!-- Blend -->
+	<xs:simpleType name="TBlendArea">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="color" />
+			<xs:enumeration value="alpha" />
+			<xs:enumeration value="both" />
+		</xs:restriction>
+	</xs:simpleType>
+	
 	<xs:simpleType name="TBlendEquation">
 		<xs:restriction base="xs:string">
 		</xs:restriction>
@@ -107,6 +128,7 @@
 	</xs:simpleType>
 	
 	<xs:complexType name="TBlendChannel">
+		<xs:attribute name="on"				type="TBlendArea" />
 		<xs:attribute name="equation"		type="TBlendEquation" />
 		<xs:attribute name="source"			type="TBlendFactor" />
 		<xs:attribute name="destination"	type="TBlendFactor" />
@@ -115,6 +137,7 @@
 	<xs:complexType name="TBlend">
 		<xs:sequence>
 			<xs:element name="Channel" type="TBlendChannel" maxOccurs="2" />
+			<xs:element name="Ref" type="TColor" minOccurs="0" maxOccurs="1" />
 		</xs:sequence>
 	</xs:complexType>
 

@@ -33,6 +33,12 @@ final Map<String,int> operation = const{
 	'--':	dom.WebGLRenderingContext.DECR_WRAP
 };
 
+final Map<String,int> blendEquation = const{
+	's+d':	dom.WebGLRenderingContext.FUNC_ADD,
+	's-d':	dom.WebGLRenderingContext.FUNC_SUBTRACT,
+	'd-s':	dom.WebGLRenderingContext.FUNC_REVERSE_SUBTRACT
+};
+
 final Map<String,int> blendFactor = const{
 	'0':	dom.WebGLRenderingContext.ZERO,
 	'1':	dom.WebGLRenderingContext.ONE,
@@ -280,8 +286,9 @@ class BlendChannel	{
 
 	BlendChannel( this.equation, String src, String dst ):
 		source = blendFactor[src], destination = blendFactor[dst]	{
-		assert( source!=null && destination!=null );
+		assert( equation!=null && source!=null && destination!=null );
 	}
+	
 	BlendChannel.add( String src, String dst ):
 		this( dom.WebGLRenderingContext.FUNC_ADD, src, dst );
 	BlendChannel.sub( String src, String dst ):
@@ -340,13 +347,15 @@ class Blend implements IPipe	{
 
 
 class Mask implements IPipe	{
-	final bool depth;
 	final int stencilFront,stencilBack;
+	final bool depth;
 	final bool red,green,blue,alpha;
 	
-	Mask( this.depth, this.stencilFront, this.stencilBack, this.red, this.green, this.blue, this.alpha );
-	Mask.withColor( bool d, int sf, int sb ): this( d,sf,sb,true,true,true,true );
-	Mask.all(): this( true, -1,-1, true,true,true,true );
+	Mask( this.stencilFront, this.stencilBack, this.depth, this.red, this.green, this.blue, this.alpha );
+	Mask.withColor( int sf, int sb, bool d ): this( sf,sb,d, true,true,true,true );
+	Mask.all(): this( -1,-1,true, true,true,true,true );
+	Mask.fromString( int sf, int sb, bool d, String c ):
+		this( sf,sb,d, c.contains('R'), c.contains('G'), c.contains('B'), c.contains('A') );
 	
 	bool hasColor()	=> red || green || blue || alpha;
 	

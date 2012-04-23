@@ -5,6 +5,7 @@
 #import('rast.dart',	prefix:'rast');
 #import('shade.dart',	prefix:'shade');
 
+
 interface IEntity extends shade.IDataSource	{
 	m.Mesh			getMesh();
 	shade.Effect	getEffect();
