@@ -1,5 +1,9 @@
 <?xml version="1.0"?>
-<kri:Rast xmlns:kri="rast">
+<kri:Rast
+		xmlns:kri="http://www.kri.org/rast"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="rast.xsd">
+
 	<kri:Primitive front="ccw" cull="back" lineWidth="0.5" />
 	<kri:Offset units="0.4" factor="1.0" />
 	<kri:Scissor x="0" y="0" w="100" h="100" />
