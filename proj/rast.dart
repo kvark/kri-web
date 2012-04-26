@@ -169,13 +169,38 @@ class Scissor implements IPipe	{
 
 
 class MultiSample implements IPipe	{
-	MultiSample();
-	MultiSample.off();
+	static final int stateAlpha	= dom.WebGLRenderingContext.SAMPLE_ALPHA_TO_COVERAGE;
+	static final int stateCover	= dom.WebGLRenderingContext.SAMPLE_COVERAGE;
+
+	final bool alpha,cover,invert;
+	final int value;
+
+	MultiSample( this.alpha, this.cover, this.value, this.invert );
+	MultiSample.alpha( bool a ): this( a, false, 0, false );
+	MultiSample.off(): this.alpha(false);
 	
 	MultiSample activate( final dom.WebGLRenderingContext gl, final MultiSample cache ){
-		return cache;
+		if (cache==null || alpha != cache.alpha)	{
+			if (alpha)
+				gl.enable(stateAlpha);
+			else
+				gl.disable(stateAlpha);
+		}
+		if (!cover && (cache==null || cache.cover))	{
+			gl.disable(stateCover);
+			return new MultiSample( alpha, false, cache.value, cache.invert );
+		}
+		if (cover && (cache==null || !cache.cover))
+			gl.enable(stateCover);
+		if (cache==null || value!=cache.value || invert!=cache.invert)
+			gl.sampleCoverage( value, invert );
+		return new MultiSample( alpha, true, value, invert );
 	}
 	void verify( final dom.WebGLRenderingContext gl ){
+		assert( gl.isEnabled(stateAlpha) == alpha );
+		assert( gl.isEnabled(stateCover) == cover );
+		assert( gl.getParameter(dom.WebGLRenderingContext.SAMPLE_COVERAGE_VALUE)	== value );
+		assert( gl.getParameter(dom.WebGLRenderingContext.SAMPLE_COVERAGE_INVERT)	== invert );
 	}
 }
 

@@ -74,6 +74,15 @@
 	
 	<!--MultiSample -->
 	<xs:complexType name="TMultiSample">
+		<xs:all>
+			<xs:element name="Coverage" minOccurs="0">
+				<xs:complexType>
+					<xs:attribute name="value"	type="xs:int" />
+					<xs:attribute name="invert"	type="xs:boolean" />
+				</xs:complexType>
+			</xs:element>
+		</xs:all>
+		<xs:attribute name="alpha" type="xs:boolean" />
 	</xs:complexType>
 
 	<!-- Stencil -->

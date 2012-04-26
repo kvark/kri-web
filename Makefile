@@ -19,5 +19,8 @@ deploy_models:
 deploy_armatures:
 	cd stage && ./upload.sh armatures.txt
 
+validate_xml:
+	cd deploy/schema && xmllint --schema rast.xsd test.xml
+
 release:
 	cd stage && ./upload.sh release.txt
