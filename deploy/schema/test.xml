@@ -1,8 +1,11 @@
 <?xml version="1.0"?>
 <kri:Rast
 		xmlns:kri="http://www.kri.org/rast"
+		xmlns:kw="http://www.kri.org/world"
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		xsi:schemaLocation="rast.xsd">
+		xsi:schemaLocation="
+			rast.xsd
+			world.xsd">
 
 	<kri:Primitive front="ccw" cull="back" lineWidth="0.5" />
 	<kri:Offset units="0.4" factor="1.0" />

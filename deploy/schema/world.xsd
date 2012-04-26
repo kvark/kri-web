@@ -52,44 +52,55 @@
 	<xs:simpleType name="TFloatList">
 		<xs:list itemType="xs:float" />
 	</xs:simpleType>
+	<xs:simpleType name="TFloatList4">
+		<xs:restriction base="this:TFloatList">
+			<xs:maxLength value="4" />
+		</xs:restriction>
+	</xs:simpleType>
 	<xs:complexType name="TDataVector">
-		<!--xs:simpleContent>
-			<xs:restriction base="xs:list">
-				<xs:itemType value="xs:float" />
-				<xs:maxLength value="4" />
+		<xs:simpleContent>
+			<xs:extension base="this:TFloatList4">
 				<xs:attribute name="name" type="xs:string"/>
-			</xs:restriction>
-		</xs:simpleContent-->
+			</xs:extension>
+		</xs:simpleContent>
 	</xs:complexType>
+	<xs:simpleType name="TFloatList44">
+		<xs:restriction base="this:TFloatList">
+			<xs:maxLength value="16" />
+		</xs:restriction>
+	</xs:simpleType>
 	<xs:complexType name="TDataMatrix">
-		<!--xs:simpleContent>
-			<xs:restriction base="this:TFloatList">
-				<xs:maxLength value="16" />
-				<xs:attribute name="name" type="xs:string" />
-			</xs:restriction>
-		</xs:simpleContent-->
+		<xs:simpleContent>
+			<xs:extension base="this:TFloatList44">
+				<xs:attribute name="name" type="xs:string"/>
+			</xs:extension>
+		</xs:simpleContent>
 	</xs:complexType>
 	
 	<xs:simpleType name="TIntList">
 		<xs:list itemType="xs:int" />
 	</xs:simpleType>
+	<xs:simpleType name="TIntList4">
+		<xs:restriction base="this:TIntList">
+			<xs:maxLength value="4" />
+		</xs:restriction>
+	</xs:simpleType>
 	<xs:complexType name="TDataIVector">
-		<!--xs:simpleContent>
-			<xs:restriction base="this:TIntList">
-				<xs:maxLength value="4" />
-				<xs:attribute name="name" type="xs:string" />
-			</xs:restriction>
-		</xs:simpleContent-->
+		<xs:simpleContent>
+			<xs:extension base="this:TIntList4">
+				<xs:attribute name="name" type="xs:string"/>
+			</xs:extension>
+		</xs:simpleContent>
 	</xs:complexType>
 
 	
 	<xs:complexType name="TDataBlock">
 		<xs:sequence>
-			<xs:element name="float"	type="this:TDataFloat"	minOccurs="0" />
-			<xs:element name="vector"	type="this:TDataVector"	minOccurs="0" />
+			<xs:element name="float"	type="this:TDataFloat"		minOccurs="0" />
+			<xs:element name="vector"	type="this:TDataVector"		minOccurs="0" />
 			<xs:element name="int"		type="this:TDataInt"		minOccurs="0" />
 			<xs:element name="ivector"	type="this:TDataIVector"	minOccurs="0" />
-			<xs:element name="matrix"	type="this:TDataMatrix"	minOccurs="0" />
+			<xs:element name="matrix"	type="this:TDataMatrix"		minOccurs="0" />
 		</xs:sequence>
 	</xs:complexType>
 	
@@ -100,15 +111,18 @@
 			<xs:element name="Program"	type="this:TProgram" />
 			<xs:element name="Data"		type="this:TDataBlock" />
 		</xs:all>
+		<xs:attribute name="name" type="xs:string" />
 	</xs:complexType>
 	
-	<xs:complexType name="Entity">
-		<xs:sequence>
-			<xs:element name="Material" type="this:TMaterial" />
-		</xs:sequence>
-		<xs:attribute name="mesh" type="xs:string" />
+	<xs:complexType name="TEntity">
+		<xs:attribute name="material"	type="xs:string" />
+		<xs:attribute name="mesh"		type="xs:string" />
 	</xs:complexType>
 
-	<xs:complexType name="Node">
+	<xs:complexType name="TNode">
+		<xs:sequence>
+			<xs:element name="Node"		type="this:TNode"	minOccurs="0" maxOccurs="99" />
+			<xs:element name="Entity"	type="this:TEntity"	minOccurs="0" maxOccurs="99" />
+		</xs:sequence>
 	</xs:complexType>
 </xs:schema>
