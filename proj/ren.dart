@@ -54,11 +54,19 @@ class EntityBase implements IEntity	{
 	}
 }
 
+class Technique	{
+	final rast.State state;
+	final shade.Effect effect;
+}
 
 class Material implements shade.IDataSource	{
-	rast.State state;
-	final shade.Effect effect;
+	final String name;
 	final Map<String,Object> data;
+	final Map<String,Technique> techniques;
+	
+	Material( this.name ):
+		data = new Map<String,Object>(),
+		techniques = new Map<String,Technique>();
 	
 	void fillData(final Map<String,Object> block)	{
 		for (String key in block.getKeys())

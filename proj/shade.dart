@@ -161,31 +161,34 @@ class Effect extends Program implements IDataSource  {
 
 class Manager	{
 	final load.Loader loader;
+	final dom.WebGLRenderingContext gl;
 	final Map<String,Unit>		_cacheUnit;
 	final Map<String,Effect>	_cacheEffect;
 
-	Manager(String home): loader = new load.Loader(home),
+	Manager( this.gl, String home ): loader = new load.Loader(home),
 		_cacheUnit = new Map<String,Unit>(),
 		_cacheEffect = new Map<String,Effect>();
 	
-	Effect assemble( final dom.WebGLRenderingContext gl, final List<String> paths)	{
+	Unit loadUnit( final String path, int type ){
+		Unit un = _cacheUnit[path];
+		if (un == null)	{
+			final String text = loader.getNow(path);
+			if (type<=0 && path.endsWith('.glslv'))
+				type = dom.WebGLRenderingContext.VERTEX_SHADER;
+			if (type<=0 && path.endsWith('.glslf'))
+				type = dom.WebGLRenderingContext.FRAGMENT_SHADER;
+			_cacheUnit[path] = un = new Unit( gl, type, text );
+		}
+		return un;
+	}
+	
+	Effect assemble( final List<String> paths ){
 		final String mix = Strings.join(paths,'|');
 		Effect ef = _cacheEffect[mix];
 		if (ef==null)	{
 			final List<Unit> units = new List<Unit>();
-			for (final String sp in paths)	{
-				Unit un = _cacheUnit[sp];
-				if (un == null)	{
-					final String text = loader.getNow(sp);
-					int type = 0;
-					if (sp.endsWith('.glslv'))
-						type = dom.WebGLRenderingContext.VERTEX_SHADER;
-					if (sp.endsWith('.glslf'))
-						type = dom.WebGLRenderingContext.FRAGMENT_SHADER;
-					_cacheUnit[sp] = un = new Unit( gl, type, text );
-				}
-				units.add(un);
-			}
+			for (final String sp in paths)
+				units.add( loadUnit(sp,0) );
 			_cacheEffect[mix] = ef = new Effect( gl, units );
 		}
 		return ef;

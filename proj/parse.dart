@@ -1,7 +1,10 @@
 #library('kri:parse');
 #import('dart:html',	prefix:'dom');
-#import('rast.dart');
 #import('frame.dart',	prefix:'frame');
+#import('rast.dart');
+#import('ren.dart',		prefix:'ren');
+#import('shade.dart',	prefix:'shade');
+
 
 // Rasterization State Builder
 
@@ -65,6 +68,9 @@ final Map<String,int> faceCode = const{
 
 
 class Parse	{
+	final String prefix;
+	Parse( this.prefix );
+
 	int readInt( dom.Element root, String name, int fallback )	{
 		String str = root.attributes[name];
 		return str!=null ? Math.parseInt(str) : fallback;
@@ -76,9 +82,9 @@ class Parse	{
 	bool readBool( dom.Element root, String name, bool fallback )	{
 		String str = root.attributes[name];
 		switch (str)	{
-			case 'true':	return true;
-			case 'false':	return false;
-			case null:		return fallback;
+			case 'false':	case '0':	return false;
+			case 'true':	case '1':	return true;
+			case null:	return fallback;
 			default: print("Unknown bool: ${str}");
 				return fallback;
 		}
@@ -131,7 +137,19 @@ class Parse	{
 	
 	
 	MultiSample rastMultiSample( final dom.Element root ){
-		return null;
+		bool coverage = false, invert = false;
+		int coverValue = 0;
+		bool alpha = readBool(root,'alpha',false);
+		for (final dom.Element el in root.nodes)	{
+			if (el is! dom.Element)
+				continue;
+			assert( el.tagName == "${prefix}:Coverage" );
+			coverage = true;
+			coverValue = readInt(el,'value',coverValue);
+			invert = readBool(el,'invert',invert);
+			break;
+		}
+		return new MultiSample( alpha, coverage, coverValue, invert );
 	}
 	
 	
@@ -142,12 +160,12 @@ class Parse	{
 			if (el is! dom.Element)
 				continue;
 			switch (el.tagName)	{
-				case 'kri:Test':
+				case "${prefix}:Test":
 					func		= el.attributes['func'];
 					ref			= readInt(el,'ref',ref);
 					mask		= readInt(el,'mask',mask);
 					break;
-				case 'kri:Operation':
+				case "${prefix}:Operation":
 					onFail		= el.attributes['fail'];
 					onDepthFail	= el.attributes['depthFail'];
 					onPass		= el.attributes['pass'];
@@ -162,7 +180,7 @@ class Parse	{
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
-			assert( el.tagName == 'kri:Channel' );
+			assert( el.tagName == "${prefix}:Channel" );
 			String face = el.attributes['face'];
 			StencilChannel chan = rastStencilChannel(el);
 			switch (face)	{
@@ -207,11 +225,11 @@ class Parse	{
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
-			if (el.tagName == 'kri:Ref')	{
+			if (el.tagName == "${prefix}:Ref")	{
 				ref = frameColor(el);
 				continue;
 			}
-			assert( el.tagName == 'kri:Channel' );
+			assert( el.tagName == "${prefix}:Channel" );
 			String on = el.attributes['on'];
 			BlendChannel chan = rastBlendChannel(el);
 			switch (on)	{
@@ -249,17 +267,65 @@ class Parse	{
 			if (el is! dom.Element)
 				continue;
 			switch (el.tagName)	{
-				case 'kri:Primitive'	: b.primitive	= rastPrimitive		(el); break;
-				case 'kri:Offset'		: b.offset		= rastOffset		(el); break;
-				case 'kri:Scissor'		: b.scissor		= rastScissor		(el); break;
-				case 'kri:MultiSample'	: b.multiSample = rastMultiSample	(el); break;
-				case 'kri:Stencil'		: b.stencil		= rastStencil		(el); break;
-				case 'kri:Depth'		: b.depth		= rastDepth			(el); break;
-				case 'kri:Blend'		: b.blend		= rastBlend			(el); break;
-				case 'kri:Mask'			: b.mask		= rastMask			(el); break;
+				case "${prefix}:Primitive"	: b.primitive	= rastPrimitive		(el); break;
+				case "${prefix}:Offset"		: b.offset		= rastOffset		(el); break;
+				case "${prefix}:Scissor"	: b.scissor		= rastScissor		(el); break;
+				case "${prefix}:MultiSample": b.multiSample = rastMultiSample	(el); break;
+				case "${prefix}:Stencil"	: b.stencil		= rastStencil		(el); break;
+				case "${prefix}:Depth"		: b.depth		= rastDepth			(el); break;
+				case "${prefix}:Blend"		: b.blend		= rastBlend			(el); break;
+				case "${prefix}:Mask"		: b.mask		= rastMask			(el); break;
 				default: print("Unknown XML tag: ${el.tagName}");
 			}
 		}
 		return b.end();
+	}
+	
+	shade.Effect matProgram( final dom.Element root, final shade.Manager man ){
+		final List<shade.Unit> units = new List<shade.Unit>();
+		List<String> pathList = new List<String>();
+		for (final dom.Element el in root.nodes)	{
+			if (el is! dom.Element)
+				continue;
+			assert( el.tagName=="{prefix}:Object" );
+			final String stype = el.attributes['type'];
+			final int itype =
+				(stype=='vertex' 	? dom.WebGLRenderingContext.VERTEX_SHADER	: 
+				(stype=='fragment'	? dom.WebGLRenderingContext.FRAGMENT_SHADER	: 
+				0));
+			final String path = el.attributes['path'];
+			shade.Unit un = null;
+			if (path!=null)	{
+				if (pathList!=null)
+					pathList.add(path);
+				un = man.loadUnit(path,itype);
+			}else	{
+				pathList = null;
+				un = new shade.Unit( man.gl, itype, el.nodes[0].text );
+			}
+			units.add(un);
+		}
+		return pathList != null ? man.assemble( pathList ):
+			new shade.Effect( man.gl, units );
+	}
+	
+	ren.Technique matTechnique( final dom.Element root, final shade.Manager man ){
+		State state = null;
+		shade.Effect prog = null;
+		for (final dom.Element el in root.nodes)	{
+			if (el is! dom.Element)
+				continue;
+			switch (el.tagName)	{
+				case "${prefix}:State":		state = rast(el);			break;
+				case "${prefix}:Program":	prog = matProgram(el,man);	break;
+				default: print("Unknown technique node: ${el.tagName}");
+			}
+		}
+		return new ren.Technique(state,prog);
+	}
+	
+	ren.Material material( final dom.Element root ){
+		final ren.Material mat = new ren.Material( root.attributes['name'] );
+		return mat;
 	}
 }

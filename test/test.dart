@@ -106,7 +106,7 @@ void main()	{
 		});
 		unit.test('Parse', (){
 			final dom.Document doc = parser.parseFromString(text,'text/xml');
-			final rast.State state = new parse.Parse().rast( doc.documentElement );
+			final rast.State state = new parse.Parse('kri').rast( doc.documentElement );
 			print( "${state}" );
 		});
 	});

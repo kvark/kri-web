@@ -84,9 +84,9 @@ class App {
     	final arm.Manager arLoader = new arm.Manager( "${home}/arm/" );
     	//skeleton = arLoader.load( 'cube.k3arm', null );
     	skeleton = arLoader.load( 'jazz_dancing.k3arm', skeleton );
-	    final shade.Manager shMan = new shade.Manager( "${home}/shade/");
-	    entity.shader = shMan.assemble( gl, ['simple-arm.glslv','simple.glslf'] );
-	    //entity.shader = shMan.assemble( gl, ['simple.glslv','simple.glslf'] );
+	    final shade.Manager shMan = new shade.Manager( gl, "${home}/shade/");
+	    entity.shader = shMan.assemble( ['simple-arm.glslv','simple.glslf'] );
+	    //entity.shader = shMan.assemble( ['simple.glslv','simple.glslf'] );
     }else	{
     	String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
 			'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';

@@ -104,13 +104,19 @@
 		</xs:sequence>
 	</xs:complexType>
 	
+	<xs:complexType name="TTechnique">
+		<xs:all>
+			<xs:element name="State		type="r:TRast" />
+			<xs:element name="Program"	type="this:TProgram" />
+		</xs:all>
+		<xs:attribute name="name" type="xs:string" />
+	</xs:complexType>
 
 	<xs:complexType name="TMaterial">
-		<xs:all>
-			<xs:element name="Rast"		type="r:TRast" />
-			<xs:element name="Program"	type="this:TProgram" />
-			<xs:element name="Data"		type="this:TDataBlock" />
-		</xs:all>
+		<xs:sequence>
+			<xs:element name="Data"			type="this:TDataBlock" />
+			<xs:element name="Technique"	type="this:TTechnique" maxOccurs="100" />
+		</xs:sequence>
 		<xs:attribute name="name" type="xs:string" />
 	</xs:complexType>
 	
