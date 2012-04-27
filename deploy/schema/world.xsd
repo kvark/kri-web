@@ -14,22 +14,25 @@
 		</xs:documentation>
 	</xs:annotation>
 
+	<xs:simpleType name="TShaderType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="vertex" />
+			<xs:enumeration value="fragment" />
+		</xs:restriction>
+	</xs:simpleType>
 
 	<xs:complexType name="TShader">
-		<xs:attribute name="type">
-			<xs:simpleType>
-				<xs:restriction base="xs:string">
-					<xs:enumeration value="vertex" />
-					<xs:enumeration value="fragment" />
-				</xs:restriction>
-			</xs:simpleType>
-		</xs:attribute>
-		<xs:attribute name="path" type="xs:string" />
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute name="type" type="this:TShaderType" />
+				<xs:attribute name="path" type="xs:string" />
+			</xs:extension>
+		</xs:simpleContent>
 	</xs:complexType>
 	
 	<xs:complexType name="TProgram">
 		<xs:sequence>
-			<xs:element name="Object" type="this:TShader" maxOccurs="10"/>
+			<xs:element name="Object" type="this:TShader" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
 	
@@ -96,17 +99,17 @@
 	
 	<xs:complexType name="TDataBlock">
 		<xs:sequence>
-			<xs:element name="float"	type="this:TDataFloat"		minOccurs="0" />
-			<xs:element name="vector"	type="this:TDataVector"		minOccurs="0" />
-			<xs:element name="int"		type="this:TDataInt"		minOccurs="0" />
-			<xs:element name="ivector"	type="this:TDataIVector"	minOccurs="0" />
-			<xs:element name="matrix"	type="this:TDataMatrix"		minOccurs="0" />
+			<xs:element name="Float"	type="this:TDataFloat"		minOccurs="0" />
+			<xs:element name="Vector"	type="this:TDataVector"		minOccurs="0" />
+			<xs:element name="Matrix"	type="this:TDataMatrix"		minOccurs="0" />
+			<xs:element name="Int"		type="this:TDataInt"		minOccurs="0" />
+			<xs:element name="IVector"	type="this:TDataIVector"	minOccurs="0" />
 		</xs:sequence>
 	</xs:complexType>
 	
 	<xs:complexType name="TTechnique">
 		<xs:all>
-			<xs:element name="State		type="r:TRast" />
+			<xs:element name="State"	type="r:TRast" />
 			<xs:element name="Program"	type="this:TProgram" />
 		</xs:all>
 		<xs:attribute name="name" type="xs:string" />
@@ -115,7 +118,7 @@
 	<xs:complexType name="TMaterial">
 		<xs:sequence>
 			<xs:element name="Data"			type="this:TDataBlock" />
-			<xs:element name="Technique"	type="this:TTechnique" maxOccurs="100" />
+			<xs:element name="Technique"	type="this:TTechnique" maxOccurs="unbounded" />
 		</xs:sequence>
 		<xs:attribute name="name" type="xs:string" />
 	</xs:complexType>
@@ -127,8 +130,8 @@
 
 	<xs:complexType name="TNode">
 		<xs:sequence>
-			<xs:element name="Node"		type="this:TNode"	minOccurs="0" maxOccurs="99" />
-			<xs:element name="Entity"	type="this:TEntity"	minOccurs="0" maxOccurs="99" />
+			<xs:element name="Node"		type="this:TNode"	minOccurs="0" maxOccurs="unbounded" />
+			<xs:element name="Entity"	type="this:TEntity"	minOccurs="0" maxOccurs="unbounded" />
 		</xs:sequence>
 	</xs:complexType>
 </xs:schema>

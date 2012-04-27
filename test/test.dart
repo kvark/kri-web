@@ -13,6 +13,9 @@
 
 
 void main()	{
+	final dom.CanvasElement canvas = dom.document.query('#canvas');
+	final dom.WebGLRenderingContext gl = canvas.getContext('experimental-webgl');
+	
 	unit.group('Math:', (){
 		final double scalar = 2.5;
 		final math.Vector vector = new math.Vector(1.0,2.0,3.0,0.1);
@@ -51,9 +54,6 @@ void main()	{
 		});
 	});
 	unit.group('Render:', (){
-		final dom.CanvasElement canvas = dom.document.query('#canvas');
-		final dom.WebGLRenderingContext gl = canvas.getContext('experimental-webgl');
-		
 		final ren.EntityBase entity = new ren.EntityBase();
 		entity.state = new parse.Build().setDepth('<=').end();
 		final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
@@ -99,6 +99,7 @@ void main()	{
 	});
 	unit.group('XML:', (){
 		final dom.DOMParser parser = new dom.DOMParser();
+		final shade.Manager shMan = new shade.Manager( gl, '/shade/' );
 		String text = '';
 		unit.test('Load', (){
 			text = new load.Loader('schema/').getNow('test.xml');
@@ -106,8 +107,20 @@ void main()	{
 		});
 		unit.test('Parse', (){
 			final dom.Document doc = parser.parseFromString(text,'text/xml');
-			final rast.State state = new parse.Parse('kri').rast( doc.documentElement );
-			print( "${state}" );
+			final parse.Parse ps = new parse.Parse('r','w');
+			for (final dom.Element el in doc.documentElement.nodes)	{
+				if (el is! dom.Element)
+					continue;
+				if (el.tagName == 't:Rast')	{
+					final rast.State state = ps.getRast(el);
+					print( "${state}" );
+				}else
+				if (el.tagName == 't:Material')	{
+					final ren.Material mat = ps.getMaterial( el, shMan );
+					print( "${mat}" );
+				}else
+					Expect.fail("Unknown tag: ${el.tagName}");
+			}
 		});
 	});
 }

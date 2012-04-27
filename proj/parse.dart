@@ -1,6 +1,7 @@
 #library('kri:parse');
 #import('dart:html',	prefix:'dom');
 #import('frame.dart',	prefix:'frame');
+#import('math.dart',	prefix:'math');
 #import('rast.dart');
 #import('ren.dart',		prefix:'ren');
 #import('shade.dart',	prefix:'shade');
@@ -65,11 +66,12 @@ final Map<String,int> faceCode = const{
 	'back':		dom.WebGLRenderingContext.BACK,
 	'all':		dom.WebGLRenderingContext.FRONT_AND_BACK
 };
+typedef Object FConvert(String str);
 
 
 class Parse	{
-	final String prefix;
-	Parse( this.prefix );
+	final String nsRast, nsWorld;
+	Parse( this.nsRast, this.nsWorld );
 
 	int readInt( dom.Element root, String name, int fallback )	{
 		String str = root.attributes[name];
@@ -90,7 +92,7 @@ class Parse	{
 		}
 	}
 	
-	frame.Color frameColor( final dom.Element root )=>
+	frame.Color getFrameColor( final dom.Element root )=>
 		new frame.Color(
 			readDouble(root,'r',0.0),
 			readDouble(root,'g',0.0),
@@ -99,7 +101,7 @@ class Parse	{
 			);
 
 	
-	Primitive rastPrimitive( final dom.Element root ){
+	Primitive getRastPrimitive( final dom.Element root ){
 		// read front type
 		bool frontCw = false;
 		String front = root.attributes['front'];
@@ -120,14 +122,14 @@ class Parse	{
 	}
 	
 	
-	Offset rastOffset( final dom.Element root ) =>
+	Offset getRastOffset( final dom.Element root ) =>
 		new Offset( true,
 			readDouble(root, 'units', 0.0),
 			readDouble(root, 'factor', 0.0)
 			);
 	
 	
-	Scissor rastScissor( final dom.Element root ) =>
+	Scissor getRastScissor( final dom.Element root ) =>
 		new Scissor( true, new frame.Rect(
 			readInt(root,'x',0),
 			readInt(root,'y',0),
@@ -136,14 +138,14 @@ class Parse	{
 			));
 	
 	
-	MultiSample rastMultiSample( final dom.Element root ){
+	MultiSample getRastMultiSample( final dom.Element root ){
 		bool coverage = false, invert = false;
 		int coverValue = 0;
 		bool alpha = readBool(root,'alpha',false);
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
-			assert( el.tagName == "${prefix}:Coverage" );
+			assert( el.tagName == "${nsRast}:Coverage" );
 			coverage = true;
 			coverValue = readInt(el,'value',coverValue);
 			invert = readBool(el,'invert',invert);
@@ -153,19 +155,19 @@ class Parse	{
 	}
 	
 	
-	StencilChannel rastStencilChannel( final dom.Element root ){
+	StencilChannel getRastStencilChannel( final dom.Element root ){
 		String func=''; int ref=0, mask=-1;
 		String onFail='',onDepthFail='',onPass='';
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
 			switch (el.tagName)	{
-				case "${prefix}:Test":
+				case "${nsRast}:Test":
 					func		= el.attributes['func'];
 					ref			= readInt(el,'ref',ref);
 					mask		= readInt(el,'mask',mask);
 					break;
-				case "${prefix}:Operation":
+				case "${nsRast}:Operation":
 					onFail		= el.attributes['fail'];
 					onDepthFail	= el.attributes['depthFail'];
 					onPass		= el.attributes['pass'];
@@ -175,14 +177,14 @@ class Parse	{
 		return new StencilChannel( func,ref,mask, onFail,onDepthFail,onPass );
 	}
 	
-	Stencil rastStencil( final dom.Element root ){
+	Stencil getRastStencil( final dom.Element root ){
 		StencilChannel front=null, back=null;
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
-			assert( el.tagName == "${prefix}:Channel" );
+			assert( el.tagName == "${nsRast}:Channel" );
 			String face = el.attributes['face'];
-			StencilChannel chan = rastStencilChannel(el);
+			StencilChannel chan = getRastStencilChannel(el);
 			switch (face)	{
 				case 'front':	assert( front==null );
 					front=chan;	break;
@@ -199,11 +201,11 @@ class Parse	{
 	}
 	
 
-	Depth rastDepth( final dom.Element root ) =>
+	Depth getRastDepth( final dom.Element root ) =>
 		new Depth.on( root.attributes['func'] );
 	
 
-	BlendChannel rastBlendChannel( final dom.Element root )	{
+	BlendChannel getRastBlendChannel( final dom.Element root )	{
 		String s = root.attributes['source'];
 		String d = root.attributes['destination'];
 		String e = root.attributes['equation'];
@@ -219,19 +221,19 @@ class Parse	{
 		};
 	}
 
-	Blend rastBlend( final dom.Element root ){
+	Blend getRastBlend( final dom.Element root ){
 		BlendChannel color=null, alpha=null;
 		frame.Color ref = new frame.Color.black();
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
-			if (el.tagName == "${prefix}:Ref")	{
-				ref = frameColor(el);
+			if (el.tagName == "${nsRast}:Ref")	{
+				ref = getFrameColor(el);
 				continue;
 			}
-			assert( el.tagName == "${prefix}:Channel" );
+			assert( el.tagName == "${nsRast}:Channel" );
 			String on = el.attributes['on'];
-			BlendChannel chan = rastBlendChannel(el);
+			BlendChannel chan = getRastBlendChannel(el);
 			switch (on)	{
 				case 'color':	assert( color==null );
 					color=chan;	break;
@@ -248,7 +250,7 @@ class Parse	{
 	}
 	
 
-	Mask rastMask( final dom.Element root ){
+	Mask getRastMask( final dom.Element root ){
 		int sf = readInt(root,'stencilFront',-1);
 		int sb = readInt(root,'stencilBack',-1);
 		bool d = readBool(root,'depth',true);
@@ -260,34 +262,38 @@ class Parse	{
 	}
 
 
-	State rast( final dom.Element root ){
+	State getRast( final dom.Element root ){
 		final Build b = new Build();
 		//for (final dom.Element el in root.elements)	{
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
 			switch (el.tagName)	{
-				case "${prefix}:Primitive"	: b.primitive	= rastPrimitive		(el); break;
-				case "${prefix}:Offset"		: b.offset		= rastOffset		(el); break;
-				case "${prefix}:Scissor"	: b.scissor		= rastScissor		(el); break;
-				case "${prefix}:MultiSample": b.multiSample = rastMultiSample	(el); break;
-				case "${prefix}:Stencil"	: b.stencil		= rastStencil		(el); break;
-				case "${prefix}:Depth"		: b.depth		= rastDepth			(el); break;
-				case "${prefix}:Blend"		: b.blend		= rastBlend			(el); break;
-				case "${prefix}:Mask"		: b.mask		= rastMask			(el); break;
+				case "${nsRast}:Primitive"	: b.primitive	= getRastPrimitive	(el); break;
+				case "${nsRast}:Offset"		: b.offset		= getRastOffset		(el); break;
+				case "${nsRast}:Scissor"	: b.scissor		= getRastScissor	(el); break;
+				case "${nsRast}:MultiSample": b.multiSample = getRastMultiSample(el); break;
+				case "${nsRast}:Stencil"	: b.stencil		= getRastStencil	(el); break;
+				case "${nsRast}:Depth"		: b.depth		= getRastDepth		(el); break;
+				case "${nsRast}:Blend"		: b.blend		= getRastBlend		(el); break;
+				case "${nsRast}:Mask"		: b.mask		= getRastMask		(el); break;
 				default: print("Unknown XML tag: ${el.tagName}");
 			}
 		}
 		return b.end();
 	}
 	
-	shade.Effect matProgram( final dom.Element root, final shade.Manager man ){
+	shade.Effect getMatProgram( final dom.Element root, final shade.Manager man ){
+		if (man == null )	{
+			print("Unable to load a shader without a manager");
+			return null;
+		}
 		final List<shade.Unit> units = new List<shade.Unit>();
 		List<String> pathList = new List<String>();
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
-			assert( el.tagName=="{prefix}:Object" );
+			assert( el.tagName=="${nsWorld}:Object" );
 			final String stype = el.attributes['type'];
 			final int itype =
 				(stype=='vertex' 	? dom.WebGLRenderingContext.VERTEX_SHADER	: 
@@ -309,23 +315,79 @@ class Parse	{
 			new shade.Effect( man.gl, units );
 	}
 	
-	ren.Technique matTechnique( final dom.Element root, final shade.Manager man ){
+	ren.Technique getMatTechnique( final dom.Element root, final shade.Manager man ){
 		State state = null;
 		shade.Effect prog = null;
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
 			switch (el.tagName)	{
-				case "${prefix}:State":		state = rast(el);			break;
-				case "${prefix}:Program":	prog = matProgram(el,man);	break;
+				case "${nsWorld}:State":		state = getRast(el);			break;
+				case "${nsWorld}:Program":	prog = getMatProgram(el,man);	break;
 				default: print("Unknown technique node: ${el.tagName}");
 			}
 		}
 		return new ren.Technique(state,prog);
 	}
 	
-	ren.Material material( final dom.Element root ){
+	void getDataBlock( final dom.Element root, final Map<String,Object> data ){
+		List convert(List<String> str, FConvert fun, int num, Object filler)	{
+			List ls = [];
+			int i=0;
+			for (String sv in str)	{
+				if ((++i & 1) != 0)	//only odd numbers
+					ls.add( fun(sv) );
+			}
+			while (ls.length<num)
+				ls.add(filler);
+			return ls;
+		}
+		for (final dom.Element el in root.nodes)	{
+			if (el is! dom.Element)
+				continue;
+			Object value = null;
+			final String name = el.attributes['name'];
+			final String content = el.nodes[0].text;
+			final List<String> sar = content.split( new RegExp(@"(\s+)") );
+			switch (el.tagName)	{
+				case "${nsWorld}:Float":
+					value = Math.parseDouble(content);
+					break;
+				case "${nsWorld}:Vector":
+					List ls = convert( sar, Math.parseDouble, 4, 0.0 );
+					value = new math.Vector( ls[0], ls[1], ls[2], ls[3] );
+					break;
+				case "${nsWorld}:Matrix":
+					List ls = convert( sar, Math.parseDouble, 16, 0.0 );
+					value = new math.Matrix(
+						new math.Vector( ls[0x0], ls[0x1], ls[0x2], ls[0x3] ),
+						new math.Vector( ls[0x4], ls[0x5], ls[0x6], ls[0x7] ),
+						new math.Vector( ls[0x8], ls[0x9], ls[0xA], ls[0xB] ),
+						new math.Vector( ls[0xC], ls[0xD], ls[0xE], ls[0xF] ));
+					break;
+				case "${nsWorld}:Int":
+					value = Math.parseInt(content);
+					break;
+				case "${nsWorld}:IVector":
+					List ls = convert( sar, Math.parseInt, 4, 0 );
+					print("Int vector ${name}? not supported yet...");
+					break;
+				default: print("Unknown data element: ${el.tagName}");
+			}
+			data[name] = value;
+		}
+	}
+	
+	ren.Material getMaterial( final dom.Element root, final shade.Manager man ){
 		final ren.Material mat = new ren.Material( root.attributes['name'] );
+		for (final dom.Element el in root.nodes)	{
+			if (el is! dom.Element)
+				continue;
+			if (el.tagName == "${nsWorld}:Technique")
+				mat.techniques[el.attributes['name']] = getMatTechnique( el, man );
+			if (el.tagName == "${nsWorld}:Data")
+				getDataBlock( el, mat.data );
+		}
 		return mat;
 	}
 }

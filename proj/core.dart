@@ -27,4 +27,6 @@ class Handle<Type>	{
 		assert (_fallback!=null);
 		return _fallback.getLiveHandle();
 	}
+	
+	String toString() => "Handle ready=${_readyState}";
 }

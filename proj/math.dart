@@ -24,7 +24,7 @@ class Vector implements IDoubleList {
   Vector.unitY(): this(0.0,1.0,0.0,0.0);
   Vector.unitZ(): this(0.0,0.0,1.0,0.0);
   Vector.unitW(): this(0.0,0.0,0.0,1.0);
-  
+
   Vector operator+(final Vector v) => new Vector( x+v.x, y+v.y, z+v.z, w+v.w );
   Vector operator-(final Vector v) => new Vector( x-v.x, y-v.y, z-v.z, w-v.w );
   Vector operator*(final Vector v) => new Vector( x*v.x, y*v.y, z*v.z, w*v.w );
@@ -62,7 +62,7 @@ class Matrix implements IDoubleList  {
   Matrix( this.x, this.y, this.z, this.w );
   Matrix.affine( this.x, this.y, this.z ): w=new Vector.unitW();
   Matrix.identity(): this( new Vector.unitX(), new Vector.unitY(), new Vector.unitZ(), new Vector.unitW() );
-
+  
   Matrix.translation(final Vector v): this(
       new Vector(1.0,0.0,0.0,v.x),
       new Vector(0.0,1.0,0.0,v.y),

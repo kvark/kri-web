@@ -156,6 +156,8 @@ class Effect extends Program implements IDataSource  {
     fillAttributes( gl );
     fillUniforms( gl );
   }
+  
+  String toString() => "Effect with ${attributes.length} attributes and ${uniforms.length} uniforms";
 }
 
 

@@ -57,6 +57,8 @@ class EntityBase implements IEntity	{
 class Technique	{
 	final rast.State state;
 	final shade.Effect effect;
+	
+	Technique( this.state, this.effect );
 }
 
 class Material implements shade.IDataSource	{

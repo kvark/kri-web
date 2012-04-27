@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema
+		targetNamespace	="http://www.kri.org/test"
+		xmlns:xs		="http://www.w3.org/2001/XMLSchema"
+		xmlns:r			="http://www.kri.org/rast"
+		xmlns:w			="http://www.kri.org/world"
+		elementFormDefault="qualified">
+		
+	<xs:import namespace="http://www.kri.org/rast"	schemaLocation="rast.xsd" />
+	<xs:import namespace="http://www.kri.org/world"	schemaLocation="world.xsd" />
+
+	<xs:annotation>
+		<xs:documentation xml:lang="en">
+		KriWeb world objects definitions.
+		</xs:documentation>
+	</xs:annotation>
+
+	<xs:element name="Test">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Rast" type="r:TRast"			minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="Material" type="w:TMaterial"	minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

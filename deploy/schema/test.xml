@@ -1,29 +1,50 @@
 <?xml version="1.0"?>
-<kri:Rast
-		xmlns:kri="http://www.kri.org/rast"
-		xmlns:kw="http://www.kri.org/world"
-		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<t:Test	xmlns:t		= "http://www.kri.org/test"
+		xmlns:r		= "http://www.kri.org/rast"
+		xmlns:w		= "http://www.kri.org/world"
+		xmlns:xsi	= "http://www.w3.org/2001/XMLSchema-instance"
 		xsi:schemaLocation="
 			rast.xsd
-			world.xsd">
+			world.xsd
+			test.xsd">
 
-	<kri:Primitive front="ccw" cull="back" lineWidth="0.5" />
-	<kri:Offset units="0.4" factor="1.0" />
-	<kri:Scissor x="0" y="0" w="100" h="100" />
-	<kri:MultiSample alpha="true">
-		<kri:Coverage value="2" invert="false" />
-	</kri:MultiSample>
-	<kri:Stencil>
-		<kri:Channel face="all">
-			<kri:Test func="==" ref="1" mask="3" />
-			<kri:Operation fail="" depthFail="+" pass="~" />
-		</kri:Channel>
-	</kri:Stencil>
-	<kri:Depth func="&lt;=" />
-	<kri:Blend>
-		<kri:Channel on="color" equation="d-s" source="Sa" destination="Cc"/>
-		<kri:Channel on="alpha" equation="s+d" source="Sc" destination="1" />
-		<kri:Ref r="0.4" g="0.3" b="0.2" a="0.1" />
-	</kri:Blend>
-	<kri:Mask stencilFront="-1" stencilBack="-2" depth="true" color="RGB" />
-</kri:Rast>
+	<t:Rast>
+		<r:Primitive front="ccw" cull="back" lineWidth="0.5" />
+		<r:Offset units="0.4" factor="1.0" />
+		<r:Scissor x="0" y="0" w="100" h="100" />
+		<r:MultiSample alpha="true">
+			<r:Coverage value="2" invert="false" />
+		</r:MultiSample>
+		<r:Stencil>
+			<r:Channel face="all">
+				<r:Test func="==" ref="1" mask="3" />
+				<r:Operation fail="" depthFail="+" pass="~" />
+			</r:Channel>
+		</r:Stencil>
+		<r:Depth func="&lt;=" />
+		<r:Blend>
+			<r:Channel on="color" equation="d-s" source="Sa" destination="Cc"/>
+			<r:Channel on="alpha" equation="s+d" source="Sc" destination="1" />
+			<r:Ref r="0.4" g="0.3" b="0.2" a="0.1" />
+		</r:Blend>
+		<r:Mask stencilFront="-1" stencilBack="-2" depth="true" color="RGB" />
+	</t:Rast>
+	
+	<t:Material name="metal">
+		<w:Data>
+			<w:Float	name="height">3.4</w:Float>
+			<w:IVector	name="boneids">1 2 3 4</w:IVector>
+		</w:Data>
+		<w:Technique name="main">
+			<w:State>
+				<r:Depth func="!=" />
+			</w:State>
+			<w:Program>
+				<w:Object path="simple.glslv" />
+				<w:Object type="fragment">
+					void main(){ gl_FragColor = vec4(0.5); }
+				</w:Object>
+			</w:Program>
+		</w:Technique>
+	</t:Material>
+</t:Test>

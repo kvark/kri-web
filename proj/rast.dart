@@ -188,7 +188,9 @@ class MultiSample implements IPipe	{
 		}
 		if (!cover && (cache==null || cache.cover))	{
 			gl.disable(stateCover);
-			return new MultiSample( alpha, false, cache.value, cache.invert );
+			return new MultiSample( alpha, false,
+				cache!=null ? cache.value : null,
+				cache!=null ? cache.invert: null);
 		}
 		if (cover && (cache==null || !cache.cover))
 			gl.enable(stateCover);
@@ -419,8 +421,8 @@ class State implements IPipe	{
 	State.initial(): this( new Primitive.ccw(), new Offset.none(), new Scissor.off(), new MultiSample.off(),
 		new Stencil.off(), new Depth.on('<='), new Blend.off(), new Mask.all() );
 	
-	State changePixel( final Scissor newScissor, final Mask newMask ) => new State( primitive, offset,
-		newScissor, multiSample, stencil, depth, blend, newMask );
+	State changePixel( final Scissor newScissor, final Mask newMask ) => new State(
+		primitive, offset, newScissor, multiSample, stencil, depth, blend, newMask );
 	
 	State activate( final dom.WebGLRenderingContext gl, final State cache, final String polyType ){
 		return new State(
@@ -435,21 +437,13 @@ class State implements IPipe	{
 	}
 	
 	void verify( final dom.WebGLRenderingContext gl ){
-		if (primitive!=null)
-			primitive	.verify( gl );
-		if (offset!=null)
-			offset		.verify( gl );
-		if (scissor!=null)
-			scissor		.verify( gl );
-		if (multiSample!=null)
-			multiSample	.verify( gl );
-		if (stencil!=null)
-			stencil		.verify( gl );
-		if (depth!=null)
-			depth		.verify( gl );
-		if (blend!=null)
-			blend		.verify( gl );
-		if (mask!=null)
-			mask		.verify( gl );
+		primitive	.verify( gl );
+		offset		.verify( gl );
+		scissor		.verify( gl );
+		multiSample	.verify( gl );
+		stencil		.verify( gl );
+		depth		.verify( gl );
+		blend		.verify( gl );
+		mask		.verify( gl );
 	}
 }
