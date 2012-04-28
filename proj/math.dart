@@ -17,13 +17,14 @@ class Vector implements IDoubleList {
   String toString() => "(${x},${y},${z},${w})";
   
   Vector( this.x, this.y, this.z, this.w );
-  Vector.mono(double d): this(d,d,d,d);
+  Vector.mono(double d):	this(d,d,d,d);
   Vector.zero():  this.mono(0.0);
   Vector.one():   this.mono(1.0);
   Vector.unitX(): this(1.0,0.0,0.0,0.0);
   Vector.unitY(): this(0.0,1.0,0.0,0.0);
   Vector.unitZ(): this(0.0,0.0,1.0,0.0);
   Vector.unitW(): this(0.0,0.0,0.0,1.0);
+  Vector.fromList( List<double> l ): this(l[0],l[1],l[2],l[3]);
 
   Vector operator+(final Vector v) => new Vector( x+v.x, y+v.y, z+v.z, w+v.w );
   Vector operator-(final Vector v) => new Vector( x-v.x, y-v.y, z-v.z, w-v.w );
@@ -169,6 +170,7 @@ class Quaternion implements IDoubleList  {
   Quaternion( this.x, this.y, this.z, this.w );
   Quaternion.identity(): this(0.0,0.0,0.0,1.0);
   Quaternion.fromBase( final Vector v, this.w ): x=v.x, y=v.y, z=v.z;
+  Quaternion.fromList( List<double> l ): this(l[0],l[1],l[2],l[3]);
   
   factory Quaternion.fromSum( final Quaternion a, final double wa, final Quaternion b, final double wb) =>
   	new Quaternion( wa*a.x+wb*b.x, wa*a.y+wb*b.y, wa*a.z+wb*b.z, wa*a.w+wb*b.w );

@@ -14,6 +14,7 @@
 		</xs:documentation>
 	</xs:annotation>
 
+	<!-- Material specification -->
 	<xs:simpleType name="TShaderType">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="vertex" />
@@ -38,18 +39,12 @@
 	
 
 	<xs:complexType name="TDataFloat">
-		<xs:simpleContent>
-			<xs:extension base="xs:float">
-				<xs:attribute name="name" type="xs:string" />
-			</xs:extension>
-		</xs:simpleContent>
+		<xs:attribute name="name"	type="xs:string" />
+		<xs:attribute name="value"	type="xs:float" />
 	</xs:complexType>
 	<xs:complexType name="TDataInt">
-		<xs:simpleContent>
-			<xs:extension base="xs:int">
-				<xs:attribute name="name" type="xs:string" />
-			</xs:extension>
-		</xs:simpleContent>
+		<xs:attribute name="name"	type="xs:string" />
+		<xs:attribute name="value"	type="xs:int" />
 	</xs:complexType>
 
 	<xs:simpleType name="TFloatList">
@@ -61,23 +56,15 @@
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:complexType name="TDataVector">
-		<xs:simpleContent>
-			<xs:extension base="this:TFloatList4">
-				<xs:attribute name="name" type="xs:string"/>
-			</xs:extension>
-		</xs:simpleContent>
+		<xs:attribute name="name"	type="xs:string" />
+		<xs:attribute name="value"	type="this:TFloatList4" />
 	</xs:complexType>
-	<xs:simpleType name="TFloatList44">
-		<xs:restriction base="this:TFloatList">
-			<xs:maxLength value="16" />
-		</xs:restriction>
-	</xs:simpleType>
 	<xs:complexType name="TDataMatrix">
-		<xs:simpleContent>
-			<xs:extension base="this:TFloatList44">
-				<xs:attribute name="name" type="xs:string"/>
-			</xs:extension>
-		</xs:simpleContent>
+		<xs:attribute name="name"	type="xs:string" />
+		<xs:attribute name="row0"	type="this:TFloatList4" />
+		<xs:attribute name="row1"	type="this:TFloatList4" />
+		<xs:attribute name="row2"	type="this:TFloatList4" />
+		<xs:attribute name="row3"	type="this:TFloatList4" />
 	</xs:complexType>
 	
 	<xs:simpleType name="TIntList">
@@ -89,11 +76,8 @@
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:complexType name="TDataIVector">
-		<xs:simpleContent>
-			<xs:extension base="this:TIntList4">
-				<xs:attribute name="name" type="xs:string"/>
-			</xs:extension>
-		</xs:simpleContent>
+		<xs:attribute name="name"	type="xs:string" />
+		<xs:attribute name="value"	type="this:TIntList4" />
 	</xs:complexType>
 
 	
@@ -123,15 +107,22 @@
 		<xs:attribute name="name" type="xs:string" />
 	</xs:complexType>
 	
+	<!-- Wolrd objects specification -->
 	<xs:complexType name="TEntity">
-		<xs:attribute name="material"	type="xs:string" />
-		<xs:attribute name="mesh"		type="xs:string" />
+		<xs:attribute name="material"		type="xs:string" />
+		<xs:attribute name="mesh"			type="xs:string" />
+		<xs:attribute name="indexOffset"	type="r:TIntPositive" />
+		<xs:attribute name="indexNumber"	type="r:TIntPositive" />
 	</xs:complexType>
 
 	<xs:complexType name="TNode">
 		<xs:sequence>
-			<xs:element name="Node"		type="this:TNode"	minOccurs="0" maxOccurs="unbounded" />
 			<xs:element name="Entity"	type="this:TEntity"	minOccurs="0" maxOccurs="unbounded" />
+			<xs:element name="Node"		type="this:TNode"	minOccurs="0" maxOccurs="unbounded" />
 		</xs:sequence>
+		<xs:attribute	name="name"		type="xs:string" />
+		<xs:attribute	name="move"		type="this:TFloatList4" />
+		<xs:attribute	name="rotate"	type="this:TFloatList4" />
+		<xs:attribute	name="scale"	type="xs:float" />
 	</xs:complexType>
 </xs:schema>

@@ -18,8 +18,9 @@
 	<xs:element name="Test">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="Rast" type="r:TRast"			minOccurs="0" maxOccurs="unbounded" />
-				<xs:element name="Material" type="w:TMaterial"	minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="Rast"		type="r:TRast"		minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="Material"	type="w:TMaterial"	minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="Node"		type="w:TNode"		minOccurs="0" maxOccurs="unbounded" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>

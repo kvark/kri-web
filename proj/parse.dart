@@ -2,9 +2,11 @@
 #import('dart:html',	prefix:'dom');
 #import('frame.dart',	prefix:'frame');
 #import('math.dart',	prefix:'math');
+#import('mesh.dart',	prefix:'m');
 #import('rast.dart');
 #import('ren.dart',		prefix:'ren');
 #import('shade.dart',	prefix:'shade');
+#import('space.dart',	prefix:'space');
 
 
 // Rasterization State Builder
@@ -68,20 +70,35 @@ final Map<String,int> faceCode = const{
 };
 typedef Object FConvert(String str);
 
+class Entity	{
+	space.Node node			= null;
+	ren.Material material	= null;
+	final m.Mesh mesh;
+	final int iOffset, iNumber;
+	
+	Entity( this.mesh, this.iOffset, this.iNumber );
+	Entity.solo( m.Mesh me ): this( me, 0, me.nInd );
+}
+
+class Tree	{
+	final Map<String,space.Node> nodeMap;
+	final List<Entity> entities;
+}
+
 
 class Parse	{
 	final String nsRast, nsWorld;
 	Parse( this.nsRast, this.nsWorld );
 
-	int readInt( dom.Element root, String name, int fallback )	{
+	int readInt( dom.Element root, String name, int fallback ){
 		String str = root.attributes[name];
 		return str!=null ? Math.parseInt(str) : fallback;
 	}
-	double readDouble( dom.Element root, String name, double fallback )	{
+	double readDouble( dom.Element root, String name, double fallback ){
 		String str = root.attributes[name];
 		return str!=null ? Math.parseDouble(str) : fallback;
 	}
-	bool readBool( dom.Element root, String name, bool fallback )	{
+	bool readBool( dom.Element root, String name, bool fallback ){
 		String str = root.attributes[name];
 		switch (str)	{
 			case 'false':	case '0':	return false;
@@ -91,6 +108,20 @@ class Parse	{
 				return fallback;
 		}
 	}
+	List convertList( String content, FConvert fun, int num, Object filler ){
+		if (content==null)
+			return null;
+		final List<String> sList = content.split( new RegExp(@"(\s+)") );
+		List ls = []; int i=0;
+		for (String sv in sList)	{
+			if ((++i & 1) != 0)	//only odd numbers
+				ls.add( fun(sv) );
+		}
+		while (ls.length<num)
+			ls.add(filler);
+		return ls;
+	}
+	List convertDoubleList4( String content )=> convertList( content, Math.parseDouble, 4, 0.0 );
 	
 	frame.Color getFrameColor( final dom.Element root )=>
 		new frame.Color(
@@ -294,20 +325,20 @@ class Parse	{
 			if (el is! dom.Element)
 				continue;
 			assert( el.tagName=="${nsWorld}:Object" );
-			final String stype = el.attributes['type'];
-			final int itype =
-				(stype=='vertex' 	? dom.WebGLRenderingContext.VERTEX_SHADER	: 
-				(stype=='fragment'	? dom.WebGLRenderingContext.FRAGMENT_SHADER	: 
-				0));
 			final String path = el.attributes['path'];
 			shade.Unit un = null;
 			if (path!=null)	{
 				if (pathList!=null)
 					pathList.add(path);
-				un = man.loadUnit(path,itype);
+				un = man.loadUnit(path,0);
 			}else	{
 				pathList = null;
-				un = new shade.Unit( man.gl, itype, el.nodes[0].text );
+				final String text = el.nodes[0].text;
+				final String stype = el.attributes['type'];
+				if (stype=='vertex')
+					un = new shade.Unit.vertex( man.gl, text );
+				if (stype=='fragment')
+					un = new shade.Unit.fragment( man.gl, text );
 			}
 			units.add(un);
 		}
@@ -331,45 +362,35 @@ class Parse	{
 	}
 	
 	void getDataBlock( final dom.Element root, final Map<String,Object> data ){
-		List convert(List<String> str, FConvert fun, int num, Object filler)	{
-			List ls = [];
-			int i=0;
-			for (String sv in str)	{
-				if ((++i & 1) != 0)	//only odd numbers
-					ls.add( fun(sv) );
-			}
-			while (ls.length<num)
-				ls.add(filler);
-			return ls;
-		}
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
 			Object value = null;
 			final String name = el.attributes['name'];
-			final String content = el.nodes[0].text;
-			final List<String> sar = content.split( new RegExp(@"(\s+)") );
+			final String sval = el.attributes['value'];
 			switch (el.tagName)	{
 				case "${nsWorld}:Float":
-					value = Math.parseDouble(content);
+					value = Math.parseDouble(sval);
 					break;
 				case "${nsWorld}:Vector":
-					List ls = convert( sar, Math.parseDouble, 4, 0.0 );
-					value = new math.Vector( ls[0], ls[1], ls[2], ls[3] );
+					List ls = convertDoubleList4(sval);
+					value = new math.Vector.fromList(ls);
 					break;
 				case "${nsWorld}:Matrix":
-					List ls = convert( sar, Math.parseDouble, 16, 0.0 );
+					List<List<double>> lss = new List<List<double>>(4);
+					for (int i=0; i<4; ++i)
+						lss[i] = convertDoubleList4( el.attributes["row${i}"] );
 					value = new math.Matrix(
-						new math.Vector( ls[0x0], ls[0x1], ls[0x2], ls[0x3] ),
-						new math.Vector( ls[0x4], ls[0x5], ls[0x6], ls[0x7] ),
-						new math.Vector( ls[0x8], ls[0x9], ls[0xA], ls[0xB] ),
-						new math.Vector( ls[0xC], ls[0xD], ls[0xE], ls[0xF] ));
+						new math.Vector.fromList(lss[0]),
+						new math.Vector.fromList(lss[1]),
+						new math.Vector.fromList(lss[2]),
+						new math.Vector.fromList(lss[3]));
 					break;
 				case "${nsWorld}:Int":
-					value = Math.parseInt(content);
+					value = Math.parseInt(sval);
 					break;
 				case "${nsWorld}:IVector":
-					List ls = convert( sar, Math.parseInt, 4, 0 );
+					List ls = convertList( sval, Math.parseInt, 4, 0 );
 					print("Int vector ${name}? not supported yet...");
 					break;
 				default: print("Unknown data element: ${el.tagName}");
@@ -389,5 +410,48 @@ class Parse	{
 				getDataBlock( el, mat.data );
 		}
 		return mat;
+	}
+	
+	space.Node getNode( final dom.Element root, final Tree tree, final List<ren.Material> ml ){
+		// read transformation
+		List<double> ls;
+		ls = convertDoubleList4( root.attributes['move'] );
+		final math.Vector vMove = ls!=null ? new math.Vector.fromList(ls) : new math.Vector.zero();
+		ls = convertDoubleList4( root.attributes['rotate'] );
+		final math.Quaternion vRot = ls!=null ? new math.Quaternion.fromList(ls) : new math.Quaternion.identity();
+		final scale = root.attributes['scale']!=null ? Math.parseDouble(root.attributes['scale']) : 1.0;
+		// create a node
+		final space.Node parent = new space.Node( root.attributes['name'] );
+		parent.space = new space.Space( vMove, vRot, scale );
+		tree.nodeMap[parent.name] = parent;
+		// read children
+		for (final dom.Element el in root.nodes)	{
+			if (el is! dom.Element)
+				continue;
+			if (el.tagName=="${nsWorld}:Node")	{
+				final space.Node node = getNode( el, tree, ml );
+				node.parent = parent;
+				continue;
+			}
+			if (el.tagName!="${nsWorld}:Entity")	{
+				print("Unknown node child: ${el.tagName}");
+				continue;
+			}
+			// find material
+			final String matName = el.attributes['material'];
+			ren.Material mat = null;
+			for (ren.Material m in ml)	{
+				if (m.name == matName)
+					mat = m;
+			}
+			// create Entity
+			final String meshPath = el.attributes['mesh'];
+			final Entity ent = new Entity( null,
+				readInt( el, 'indexOffset', 0 ),
+				readInt( el, 'indexNumber', 100 ));	// mesh.nInd
+			ent.node = parent;
+			ent.material = mat;
+			tree.entities.add(ent);
+		}
 	}
 }

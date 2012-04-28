@@ -32,8 +32,8 @@
 	
 	<t:Material name="metal">
 		<w:Data>
-			<w:Float	name="height">3.4</w:Float>
-			<w:IVector	name="boneids">1 2 3 4</w:IVector>
+			<w:Float	name="height"	value="3.4" />
+			<w:IVector	name="boneids"	value="1 2 3 4" />
 		</w:Data>
 		<w:Technique name="main">
 			<w:State>
@@ -47,4 +47,9 @@
 			</w:Program>
 		</w:Technique>
 	</t:Material>
+	
+	<t:Node name="root" move="0.1 0.2 0.4 5" rotate="1 0 0 0" scale="0.5">
+		<w:Entity material="metal" mesh="dummy" indexOffset="0" indexNumber="100" />
+		<w:Node name="child" rotate="0 1 0 0" />
+	</t:Node>
 </t:Test>
