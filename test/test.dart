@@ -10,6 +10,7 @@
 #import('../proj/rast.dart',	prefix:'rast');
 #import('../proj/ren.dart',		prefix:'ren');
 #import('../proj/shade.dart',	prefix:'shade');
+#import('../proj/space.dart',	prefix:'space');
 
 
 void main()	{
@@ -108,18 +109,24 @@ void main()	{
 		unit.test('Parse', (){
 			final dom.Document doc = parser.parseFromString(text,'text/xml');
 			final parse.Parse ps = new parse.Parse('r','w');
+			final parse.TreeContext tree = new parse.TreeContext();
+			// iter elements
 			for (final dom.Element el in doc.documentElement.nodes)	{
 				if (el is! dom.Element)
 					continue;
-				if (el.tagName == 't:Rast')	{
-					final rast.State state = ps.getRast(el);
-					print( "${state}" );
-				}else
-				if (el.tagName == 't:Material')	{
-					final ren.Material mat = ps.getMaterial( el, shMan );
-					print( "${mat}" );
-				}else
-					Expect.fail("Unknown tag: ${el.tagName}");
+				switch (el.tagName)	{
+					case 't:Rast':
+						final rast.State state = ps.getRast(el);
+						print( "${state}" ); break;
+					case 't:Material':
+						final ren.Material mat = ps.getMaterial( el, shMan );
+						print( "${mat}" ); break;
+					case 't:Node':
+						final space.Node node = ps.getNode( el, tree );
+						print( "${node}" ); break;
+					default:
+						Expect.fail("Unknown tag: ${el.tagName}");	
+				}
 			}
 		});
 	});

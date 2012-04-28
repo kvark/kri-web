@@ -80,9 +80,24 @@ class Entity	{
 	Entity.solo( m.Mesh me ): this( me, 0, me.nInd );
 }
 
-class Tree	{
+class TreeContext	{
 	final Map<String,space.Node> nodeMap;
 	final List<Entity> entities;
+	final List<ren.Material> matLib;
+	m.Manager meshMan = null;
+	
+	TreeContext():
+		nodeMap = new Map<String,space.Node>(),
+		entities = new List<Entity>(),
+		matLib = new List<ren.Material>();
+	
+	ren.Material findMaterial(final String name)	{
+		for (ren.Material m in matLib)	{
+			if (m.name == name)
+				return m;
+		}
+		return null;
+	}
 }
 
 
@@ -412,7 +427,7 @@ class Parse	{
 		return mat;
 	}
 	
-	space.Node getNode( final dom.Element root, final Tree tree, final List<ren.Material> ml ){
+	space.Node getNode( final dom.Element root, final TreeContext tree ){
 		// read transformation
 		List<double> ls;
 		ls = convertDoubleList4( root.attributes['move'] );
@@ -429,7 +444,7 @@ class Parse	{
 			if (el is! dom.Element)
 				continue;
 			if (el.tagName=="${nsWorld}:Node")	{
-				final space.Node node = getNode( el, tree, ml );
+				final space.Node node = getNode( el, tree );
 				node.parent = parent;
 				continue;
 			}
@@ -437,21 +452,17 @@ class Parse	{
 				print("Unknown node child: ${el.tagName}");
 				continue;
 			}
-			// find material
-			final String matName = el.attributes['material'];
-			ren.Material mat = null;
-			for (ren.Material m in ml)	{
-				if (m.name == matName)
-					mat = m;
-			}
 			// create Entity
-			final String meshPath = el.attributes['mesh'];
-			final Entity ent = new Entity( null,
+			final String matName	= el.attributes['material'];
+			final String meshPath	= el.attributes['mesh'];
+			final Entity ent = new Entity(
+				tree.meshMan != null ? tree.meshMan.load( meshPath, null ) : null,
 				readInt( el, 'indexOffset', 0 ),
-				readInt( el, 'indexNumber', 100 ));	// mesh.nInd
+				readInt( el, 'indexNumber', 0 ));	// mesh.nInd
 			ent.node = parent;
-			ent.material = mat;
+			ent.material = tree.findMaterial(matName);
 			tree.entities.add(ent);
 		}
+		return parent;
 	}
 }
