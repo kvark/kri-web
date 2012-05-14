@@ -18,105 +18,120 @@
 
 
 class App {
-  view.DataSource viewData = null;
-  dom.WebGLRenderingContext gl = null;
-  dom.CanvasElement canvas = null;
-  space.Node controlNode = null;
-  arm.Armature skeleton = null;
-  int timerHandle = -1;
-  int canvasOffX = 0, canvasOffY = 0;
-  static final localOnly = false;
-  
-  mesh.Mesh axisMesh = null;
-  shade.Effect axisShader = null;
-  
-  final ren.EntityBase entity;
-  final ren.Process process;
- 
-  App():
-  	entity = new ren.EntityBase(),
-  	process = new ren.Process(true)
-  {
-  	entity.state = new parse.Build().setDepth('<=').end();
-  }
-  
-  void run() {
-    canvas = dom.document.query('#canvas');
-    gl = canvas.getContext('experimental-webgl');
-    canvas.rect.then((final dom.ElementRect rect)	{
-    	canvasOffX = rect.offset.left;
-    	canvasOffY = rect.offset.top;
-    });
-    
-    print( new cap.System(gl) );
-
-    entity.mesh = new gen.Mesh(gl).cubeUnit();
-    tex.Texture texture = new gen.Texture(gl).white();
-
-    final view.Camera camera = new view.Camera();
-    final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
-    camera.projector = new view.Projector.perspective( 60.0, rect.aspect(), 1.0, 10.0 );
-    final space.Node node = new space.Node( 'model-node' );
-		node.space = new space.Space.fromMoveScale(0.0,0.0,-5.0,1.0);    	
-    final space.Node child = new space.Node('child');
-    child.parent = node;
-    child.space = new space.Space(
-    	new math.Vector(0.0,2.0,0.0,0.0),
-    	new math.Quaternion.fromAxis(new math.Vector.unitY(),180.0) *
-    	new math.Quaternion.fromAxis(new math.Vector.unitX(),90.0),
-    	2.0 );
-    //child.space = new space.Space.identity();
-    viewData = new view.DataSource( child, camera );
-    viewData.fillData( entity.data );
-    controlNode = node;
+	view.DataSource viewData = null;
+	dom.WebGLRenderingContext gl = null;
+	dom.CanvasElement canvas = null;
+	space.Node controlNode = null;
+	arm.Armature skeleton = null;
+	int timerHandle = -1;
+	int canvasOffX = 0, canvasOffY = 0;
+	static final localOnly = false;
 	
-    if (!localOnly)	{
-    	final String home = '';
-    	final tex.Manager texLoader = new tex.Manager( gl, "${home}/image/" );
-    	//texture = texLoader.load( 'CAR.TGA', texture );
-    	texture = texLoader.load( 'SexyFem_Texture.tga', texture );
-    	final tex.Binding texBind = new tex.Binding.tex2d(gl);
-    	texBind.state( texture, false, false, 0 );
-    	//log.debug( texture );
-    	final mesh.Manager meLoader = new mesh.Manager( gl, "${home}/mesh/" );
-    	//me = meLoader.load( 'cube.k3mesh', me );
-    	entity.mesh = meLoader.load( 'jazz_dancing.k3mesh', entity.mesh );
-    	final arm.Manager arLoader = new arm.Manager( "${home}/arm/" );
-    	//skeleton = arLoader.load( 'cube.k3arm', null );
-    	skeleton = arLoader.load( 'jazz_dancing.k3arm', skeleton );
-	    final shade.Manager shMan = new shade.Manager( gl, "${home}/shade/");
-	    entity.shader = shMan.assemble( ['simple-arm.glslv','simple.glslf'] );
-	    //entity.shader = shMan.assemble( ['simple.glslv','simple.glslf'] );
-    }else	{
-    	String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
-			'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
-		String fragText = 'void main() {gl_FragColor=vec4(1.0);}';
-		shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
-	    shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
-    	entity.shader = new shade.Effect( gl, [shVert,shFrag] );
-    }
+	mesh.Mesh axisMesh = null;
+	shade.Effect axisShader = null;
+	
+	final ren.EntityBase entity;
+	final ren.Process process;
+ 	
+ 	App():
+		entity = new ren.EntityBase(),
+		process = new ren.Process(true)
+	{
+		entity.state = new parse.Build().setDepth('<=').end();
+	}
+  
+  	void run() {
+  		//if (!dom.window.WebGLRenderingContext) {
+	    	// the browser doesn't even know what WebGL is
+		//	dom.window.location = 'http://get.webgl.org';
+		//	return;
+		//}
+		canvas = dom.document.query('#canvas');
+		gl = canvas.getContext('webgl');
+		if (gl==null) {
+			print('Normal WebGL not detected. Trying experimental...');
+			gl = canvas.getContext('experimental-webgl');
+		}
+		if (gl==null)	{
+			print('Unable to get WebGL context.');
+			dom.window.location = 'http://get.webgl.org/troubleshooting';
+			return;
+		}
 
-    entity.data['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
-    entity.data['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
-    entity.data['t_main'] = texture;
-    //log.debug( shader );
-    
-	/* rudimentary direct access routines
-	gl.enable( dom.WebGLRenderingContext.DEPTH_TEST );
-    gl.enable( dom.WebGLRenderingContext.CULL_FACE );
-    gl.depthMask(true);
-    con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
-    me.draw( gl, shader, block );*/
-    
-    int err = gl.getError();
-    if(err!=0)
-      print("Error: ${err}");
-    
-    timerHandle = dom.window.setInterval(frame, 20);
-    dom.window.on.mouseMove.add( mouseMove );
-    dom.window.on.mouseDown.add( mouseDown );
-    dom.window.on.mouseUp.add( mouseUp );
-  }
+		canvas.rect.then((final dom.ElementRect rect)	{
+			canvasOffX = rect.offset.left;
+			canvasOffY = rect.offset.top;
+		});
+		
+		print( new cap.System(gl) );
+		
+		entity.mesh = new gen.Mesh(gl).cubeUnit();
+		tex.Texture texture = new gen.Texture(gl).white();
+		
+		final view.Camera camera = new view.Camera();
+		final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
+		camera.projector = new view.Projector.perspective( 60.0, rect.aspect(), 1.0, 10.0 );
+		final space.Node node = new space.Node( 'model-node' );
+			node.space = new space.Space.fromMoveScale(0.0,0.0,-5.0,1.0);    	
+		final space.Node child = new space.Node('child');
+		child.parent = node;
+		child.space = new space.Space(
+			new math.Vector(0.0,2.0,0.0,0.0),
+			new math.Quaternion.fromAxis(new math.Vector.unitY(),180.0) *
+			new math.Quaternion.fromAxis(new math.Vector.unitX(),90.0),
+			2.0 );
+		//child.space = new space.Space.identity();
+		viewData = new view.DataSource( child, camera );
+		viewData.fillData( entity.data );
+		controlNode = node;
+		
+		if (!localOnly)	{
+			final String home = '';
+			final tex.Manager texLoader = new tex.Manager( gl, "${home}/image/" );
+			//texture = texLoader.load( 'CAR.TGA', texture );
+			texture = texLoader.load( 'SexyFem_Texture.tga', texture );
+			final tex.Binding texBind = new tex.Binding.tex2d(gl);
+			texBind.state( texture, false, false, 0 );
+			//log.debug( texture );
+			final mesh.Manager meLoader = new mesh.Manager( gl, "${home}/mesh/" );
+			//me = meLoader.load( 'cube.k3mesh', me );
+			entity.mesh = meLoader.load( 'jazz_dancing.k3mesh', entity.mesh );
+			final arm.Manager arLoader = new arm.Manager( "${home}/arm/" );
+			//skeleton = arLoader.load( 'cube.k3arm', null );
+			skeleton = arLoader.load( 'jazz_dancing.k3arm', skeleton );
+			final shade.Manager shMan = new shade.Manager( gl, "${home}/shade/");
+			entity.shader = shMan.assemble( ['simple-arm.glslv','simple.glslf'] );
+			//entity.shader = shMan.assemble( ['simple.glslv','simple.glslf'] );
+		}else	{
+			String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
+				'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
+			String fragText = 'void main() {gl_FragColor=vec4(1.0);}';
+			shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
+			shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
+			entity.shader = new shade.Effect( gl, [shVert,shFrag] );
+		}
+		
+		entity.data['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
+		entity.data['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
+		entity.data['t_main'] = texture;
+		//log.debug( shader );
+		
+		/* rudimentary direct access routines
+		gl.enable( dom.WebGLRenderingContext.DEPTH_TEST );
+		gl.enable( dom.WebGLRenderingContext.CULL_FACE );
+		gl.depthMask(true);
+		con.clear( new frame.Color(0.0,0.5,1.0,1.0), 1.0, null );
+		me.draw( gl, shader, block );*/
+		
+		int err = gl.getError();
+		if(err!=0)
+		  print("Error: ${err}");
+		
+		timerHandle = dom.window.setInterval(frame, 20);
+		dom.window.on.mouseMove.add( mouseMove );
+		dom.window.on.mouseDown.add( mouseDown );
+		dom.window.on.mouseUp.add( mouseUp );
+	}
   
   int gripX, gripY;
   math.Quaternion gripBase = null;
@@ -196,5 +211,5 @@ class App {
 
 
 void main() {
-  new App().run();
+    new App().run();
 }
