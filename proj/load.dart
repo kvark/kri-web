@@ -17,6 +17,7 @@ class Manager<Type>	{
 	
 	Manager.text	( String path ): this( path, 'text' );
 	Manager.buffer	( String path ): this( path, 'arraybuffer' );
+	Manager.doc		( String path ): this( path, 'document' );
 	
 	Type load( final String name, final Type fallback ){
 		Type result = _cache[name];
@@ -31,8 +32,12 @@ class Manager<Type>	{
 				if (dataType=='arraybuffer')
 					//fill( result, req.response );
 					fill( result, new TextReader(req.responseText) );
-				else
+				else if (dataType == 'text')
 					fill( result, req.responseText );
+				else if (dataType == 'document')
+					fill( result, req.responseXML );
+				else
+					fill( result, req.response );
 			});
 			req.send();
 		}
@@ -191,46 +196,45 @@ class TextReader extends ChunkReader	{
 
 
 class Loader {
-  final String home;
-  Loader( this.home );
-  
-  dom.XMLHttpRequest makeRequestMime( String path, String responseType, String mimeType ){
-    final req = new dom.XMLHttpRequest();
-    bool async = responseType!=null;
-    req.open( 'GET', home+path, async );
-    if (async)
-	    req.responseType = responseType;
-    if (mimeType!=null)
-	    req.overrideMimeType(mimeType);
-    return req;
-  }
-  
-  dom.XMLHttpRequest makeRequest( String path, String type )=>
-  	makeRequestMime( path, type, 'text/plain; charset=x-user-defined' );
-  
-  String getNowText( String path ){
-    final req = makeRequest( path, null );
-    req.send();
-    if (req.status != 200)
-      return null;
-    return req.responseText;
-  }
-
-  dom.Document getNowXML( String path ){
-    final req = makeRequestMime( path, 'document', 'text/xml' );
-    req.send();
-    if (req.status != 200)
-      return null;
-    return req.responseXML;
-  }
-  
-  dom.XMLHttpRequest getLater( String path, void callback(String text) ){
-    final req = makeRequest( path, 'text' );
-    req.onreadystatechange = () {
-      //if (req.readyState==req.DONE)
-      callback( req.responseText );
-    };
-    req.send();
-    return req;
-  }
+	final String home;
+	Loader( this.home );
+	
+	dom.XMLHttpRequest makeRequestMime( String path, String responseType, String mimeType ){
+		final dom.XMLHttpRequest req = new dom.XMLHttpRequest();
+		final bool async = responseType!=null;
+		req.open( 'GET', home+path, async );
+		if (async)
+			req.responseType = responseType;
+		if (mimeType!=null)
+			req.overrideMimeType(mimeType);
+		return req;
+	}
+	
+	dom.XMLHttpRequest makeRequest( String path, String type )=>
+		makeRequestMime( path, type, 'text/plain; charset=x-user-defined' );
+	
+	String getNowText( String path ){
+		final dom.XMLHttpRequest req = makeRequest( path, null );
+		req.send();
+		assert (req.readyState == req.DONE);
+		return req.responseText;
+	}
+	
+	dom.Document getNowXML( String path ){
+		final dom.XMLHttpRequest req = makeRequestMime( path, 'document', 'text/xml' );
+		req.send();
+		assert (req.readyState == req.DONE);
+		return req.responseXML;
+	}
+	
+	Future<String> getFuture( String path ){
+		final Completer completer = new Completer();
+		final dom.XMLHttpRequest req = makeRequest( path, 'text' );
+		req.on.readyStateChange.add(() {
+			if (req.readyState==req.DONE)
+				completer.complete( req.responseText );
+		});
+		req.send();
+		return completer.future;
+	}
 }

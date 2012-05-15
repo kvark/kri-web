@@ -103,8 +103,7 @@ void main()	{
 		dom.Document doc = null;
 		unit.test('Load', (){
 			String text = new load.Loader('schema/').getNowText('test.xml');
-			final dom.DOMParser parser = new dom.DOMParser();
-			doc = parser.parseFromString(text,'text/xml');
+			doc = new dom.DOMParser().parseFromString(text,'text/xml');
 			//doc = new load.Loader('schema/').getNowXML('test.xml');
 			Expect.isTrue( doc!=null );
 		});
