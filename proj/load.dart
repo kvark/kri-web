@@ -194,23 +194,38 @@ class Loader {
   final String home;
   Loader( this.home );
   
-  dom.XMLHttpRequest makeRequest( String path, bool async ){
+  dom.XMLHttpRequest makeRequestMime( String path, String responseType, String mimeType ){
     final req = new dom.XMLHttpRequest();
+    bool async = responseType!=null;
     req.open( 'GET', home+path, async );
-    req.overrideMimeType('text/plain; charset=x-user-defined');
+    if (async)
+	    req.responseType = responseType;
+    if (mimeType!=null)
+	    req.overrideMimeType(mimeType);
     return req;
   }
   
-  String getNow( String path ){
-    final req = makeRequest( path, false );
+  dom.XMLHttpRequest makeRequest( String path, String type )=>
+  	makeRequestMime( path, type, 'text/plain; charset=x-user-defined' );
+  
+  String getNowText( String path ){
+    final req = makeRequest( path, null );
     req.send();
     if (req.status != 200)
       return null;
     return req.responseText;
   }
+
+  dom.Document getNowXML( String path ){
+    final req = makeRequestMime( path, 'document', 'text/xml' );
+    req.send();
+    if (req.status != 200)
+      return null;
+    return req.responseXML;
+  }
   
   dom.XMLHttpRequest getLater( String path, void callback(String text) ){
-    final req = makeRequest( path, true );
+    final req = makeRequest( path, 'text' );
     req.onreadystatechange = () {
       //if (req.readyState==req.DONE)
       callback( req.responseText );

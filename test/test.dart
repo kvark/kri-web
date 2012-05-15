@@ -99,15 +99,16 @@ void main()	{
 	   	});
 	});
 	unit.group('XML:', (){
-		final dom.DOMParser parser = new dom.DOMParser();
 		final shade.Manager shMan = new shade.Manager( gl, '/shade/' );
-		String text = '';
+		dom.Document doc = null;
 		unit.test('Load', (){
-			text = new load.Loader('schema/').getNow('test.xml');
-			Expect.isTrue( text!=null && text!='' );
+			String text = new load.Loader('schema/').getNowText('test.xml');
+			final dom.DOMParser parser = new dom.DOMParser();
+			doc = parser.parseFromString(text,'text/xml');
+			//doc = new load.Loader('schema/').getNowXML('test.xml');
+			Expect.isTrue( doc!=null );
 		});
 		unit.test('Parse', (){
-			final dom.Document doc = parser.parseFromString(text,'text/xml');
 			final parse.Parse ps = new parse.Parse('r','w');
 			final parse.TreeContext tree = new parse.TreeContext();
 			// iter elements

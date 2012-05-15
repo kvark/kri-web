@@ -174,7 +174,7 @@ class Manager	{
 	Unit loadUnit( final String path, int type ){
 		Unit un = _cacheUnit[path];
 		if (un == null)	{
-			final String text = loader.getNow(path);
+			final String text = loader.getNowText(path);
 			if (type<=0 && path.endsWith('.glslv'))
 				type = dom.WebGLRenderingContext.VERTEX_SHADER;
 			if (type<=0 && path.endsWith('.glslf'))

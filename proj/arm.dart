@@ -25,14 +25,14 @@ class Bone extends Node implements Hashable  {
 
 class Armature extends Node implements shade.IDataSource	{
     final List<Bone> bones;
-    static final int maxBones = 90;
+    static final int maxBones = 100;
 
 	void fillData( final Map<String,Object> data ){
     	for(int i=0; i<maxBones; ++i)	{
 	    	final Space space = i>0 && i<=bones.length ?
 	    		bones[i-1].transform : new Space.identity();
-    		data["bones[${i}].pos"]	= space.getMoveScale();
-			data["bones[${i}].rot"]	= space.rotation;
+    		data["bones[${i}].pos"]	= data["bones[${i}].pos[0]"] = space.getMoveScale();
+			data["bones[${i}].rot"]	= data["bones[${i}].rot[0]"] = space.rotation;
     	}
 	}
    
