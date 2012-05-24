@@ -93,10 +93,10 @@ class Mesh	{
 
 
 class Texture	{
-	final tex.Binding bind;
+	final tex.Binding2D bind;
 	final tex.LevelInfo infoColor;
 
-	Texture(gl): bind = new tex.Binding.tex2d(gl),
+	Texture(gl): bind = new tex.Binding2D(gl),
 		infoColor = new tex.LevelInfo.color(1,1,true);
 	
 	tex.Texture white()	{

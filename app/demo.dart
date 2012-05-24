@@ -90,7 +90,7 @@ class App {
 			final tex.Manager texLoader = new tex.Manager( gl, "${home}/image/" );
 			//texture = texLoader.load( 'CAR.TGA', texture );
 			texture = texLoader.load( 'SexyFem_Texture.tga', texture );
-			final tex.Binding texBind = new tex.Binding.tex2d(gl);
+			final tex.Binding texBind = new tex.Binding2D(gl);
 			texBind.state( texture, false, false, 0 );
 			//log.debug( texture );
 			final mesh.Manager meLoader = new mesh.Manager( gl, "${home}/mesh/" );

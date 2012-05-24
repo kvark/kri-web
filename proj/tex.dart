@@ -55,9 +55,6 @@ class Binding	{
 	
 	Binding( this.gl, this.target );
 	
-	Binding.tex2d( dom.WebGLRenderingContext context ):
-	  this( context, dom.WebGLRenderingContext.TEXTURE_2D );
-	  
 	Texture spawn() => new Texture( gl, null );
 	
 	void _bind( dom.WebGLTexture handle ){
@@ -67,13 +64,7 @@ class Binding	{
 	void bindRead( final Texture tex )=> _bind( tex.getLiveHandle() );
 	void unbind() => _bind( null );
 	
-	void _initRaw( final LevelInfo lev ){
-		gl.texImage2D( target, lev.level, lev.internalFormat, lev.width, lev.height, 0 );
-	}
-	void _loadRaw( final LevelInfo lev, final Data data ){
-		gl.texImage2D( target, lev.level, lev.internalFormat,
-			lev.width, lev.height, 0, data.format, data.type, data.buffer );
-	}
+	abstract void _initRaw( final LevelInfo lev );
 	
 	void init( final Texture tex, final LevelInfo lev)	{
 		_bind( tex.getInitHandle() );
@@ -81,13 +72,7 @@ class Binding	{
 		tex.setAllocated();
 		_bind( null );
 	}
-	void load( final Texture tex, final LevelInfo lev, final Data data){
-		_bind( tex.getInitHandle() );
-		_loadRaw( lev, data );
-		tex.setFull();
-		_bind( null );
-	}
-	
+
 	void state( final Texture tex, bool filter, bool mips, int wrap ){
 		_bind( tex.getInitHandle() );
 		if (mips)
@@ -109,12 +94,62 @@ class Binding	{
 	}
 }
 
+class Binding2D extends Binding	{
+	Binding2D( dom.WebGLRenderingContext context ):
+		super( context, dom.WebGLRenderingContext.TEXTURE_2D );
+	
+	void _initRaw( final LevelInfo lev ){
+		gl.texImage2D( target, lev.level, lev.internalFormat, lev.width, lev.height, 0 );
+	}
+	void _loadRaw( final LevelInfo lev, final Data data ){
+		gl.texImage2D( target, lev.level, lev.internalFormat,
+			lev.width, lev.height, 0, data.format, data.type, data.buffer );
+	}
+	void load( final Texture tex, final LevelInfo lev, final Data data){
+		_bind( tex.getInitHandle() );
+		_loadRaw( lev, data );
+		tex.setFull();
+		_bind( null );
+	}
+}
 
-class Accumulator extends Binding	{
+class BindingCube extends Binding	{
+	final List<int> subFaces;
+	BindingCube( dom.WebGLRenderingContext context ):
+		super( context, dom.WebGLRenderingContext.TEXTURE_CUBE_MAP ),
+		subFaces = [
+			dom.WebGLRenderingContext.TEXTURE_CUBE_MAP_POSITIVE_X,
+			dom.WebGLRenderingContext.TEXTURE_CUBE_MAP_NEGATIVE_X,
+			dom.WebGLRenderingContext.TEXTURE_CUBE_MAP_POSITIVE_Y,
+			dom.WebGLRenderingContext.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+			dom.WebGLRenderingContext.TEXTURE_CUBE_MAP_POSITIVE_Z,
+			dom.WebGLRenderingContext.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+			];
+
+	void _initRaw( final LevelInfo lev ){
+		for (int subTarget in subFaces)
+			gl.texImage2D( subTarget, lev.level, lev.internalFormat, lev.width, lev.height, 0 );
+	}
+	void _loadRaw( final LevelInfo lev, final List<Data> data ){
+		for (int i=0; i<subFaces.length; ++i)	{
+			gl.texImage2D( subFaces[i], lev.level, lev.internalFormat,
+				lev.width, lev.height, 0, data[i].format, data[i].type, data[i].buffer );
+		}
+	}
+	void load( final Texture tex, final LevelInfo lev, final List<Data> data ){
+		_bind( tex.getInitHandle() );
+		_loadRaw( lev, data );
+		tex.setFull();
+		_bind( null );
+	}
+}
+
+
+class Accumulator extends Binding2D	{
 	final List<Texture> slots;
 	final Texture nullTexture;
 	
-	Accumulator( dom.WebGLRenderingContext gl ): super.tex2d(gl),
+	Accumulator( dom.WebGLRenderingContext gl ): super(gl),
 		slots = new List<Texture>(), nullTexture = new Texture.zero();
 
 	int append(final Texture tex)	{
@@ -138,9 +173,9 @@ class Accumulator extends Binding	{
 
 // image TGA loader
 class Manager extends load.Manager<Texture>	{
-	final Binding bid;
+	final Binding2D bid;
 	
-	Manager( dom.WebGLRenderingContext gl, String path ): super.buffer( path ), bid = new Binding.tex2d(gl);
+	Manager( dom.WebGLRenderingContext gl, String path ): super.buffer( path ), bid = new Binding2D(gl);
 	
 	Texture spawn( Texture fallback )=> new Texture( bid.gl, fallback );
 	
