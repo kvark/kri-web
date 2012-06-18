@@ -3,6 +3,7 @@
 #import('../proj/arm.dart',		prefix:'arm');
 #import('../proj/buff.dart',	prefix:'buff');
 #import('../proj/cap.dart',		prefix:'cap');
+#import('../proj/draw.dart',	prefix:'draw');
 #import('../proj/frame.dart',	prefix:'frame');
 #import('../proj/gen.dart',		prefix:'gen');
 #import('../proj/load.dart',	prefix:'load');
@@ -30,11 +31,11 @@ class App {
 	mesh.Mesh axisMesh = null;
 	shade.Effect axisShader = null;
 	
-	final ren.EntityBase entity;
+	final draw.EntityBase entity;
 	final ren.Process process;
  	
  	App():
-		entity = new ren.EntityBase(),
+		entity = new draw.EntityBase(),
 		process = new ren.Process(true)
 	{
 		entity.state = new parse.Build().setDepth('<=').end();
@@ -127,16 +128,16 @@ class App {
 		if(err!=0)
 		  print("Error: ${err}");
 		
-		timerHandle = dom.window.setInterval(frame, 20);
-		dom.window.on.mouseMove.add( mouseMove );
-		dom.window.on.mouseDown.add( mouseDown );
-		dom.window.on.mouseUp.add( mouseUp );
+		timerHandle = dom.window.setInterval(onFrame, 20);
+		dom.window.on.mouseMove.add( onMouseMove );
+		dom.window.on.mouseDown.add( onMouseDown );
+		dom.window.on.mouseUp.add( onMouseUp );
 	}
   
   int gripX, gripY;
   math.Quaternion gripBase = null;
   
-  void mouseMove( final dom.MouseEvent e ){
+  void onMouseMove( final dom.MouseEvent e ){
   	// move light
     final double dist = 5.0; //controlNode.getWorld().position.z;
   	final double hx = canvas.width.toDouble() * 0.5;
@@ -165,16 +166,16 @@ class App {
   	}
   }
   
-  void mouseDown( final dom.MouseEvent e ){
+  void onMouseDown( final dom.MouseEvent e ){
   	gripX = e.clientX; gripY = e.clientY;
   	gripBase = controlNode.space.rotation;
   }
   
-  void mouseUp( final dom.MouseEvent e ){
+  void onMouseUp( final dom.MouseEvent e ){
   	gripBase = null;
   }
   
-  void frame()	{
+  void onFrame()	{
   	final Date dateNow = new Date.now();
   	double time = dateNow.value.toDouble() / 1000.0;
 
@@ -204,7 +205,7 @@ class App {
    	process.clear( target.buffer,
    		new frame.Color(0.0,0.0,0.0,0.0), 1.0, null,
    		null, mask );
-   	process.draw( target, entity );
+   	process.draw( target, entity.mesh, entity.effect, entity.state, entity );
    	process.flush( gl );
   }
 }

@@ -1,16 +1,10 @@
 #library('kri:ren');
 //#import('dart:html',	prefix:'dom');	//need only for WebGLRenderingContext
 #import('frame.dart',	prefix:'frame');
-#import('mesh.dart',	prefix:'m');
+#import('mesh.dart',	prefix:'me');
 #import('rast.dart',	prefix:'rast');
 #import('shade.dart',	prefix:'shade');
 
-
-interface IEntity extends shade.IDataSource	{
-	m.Mesh			getMesh();
-	shade.Effect	getEffect();
-	rast.State		getState();
-}
 
 interface ICall	{
 	rast.State issue( final frame.Control control, final rast.State cache );
@@ -35,54 +29,12 @@ class Target	{
 }
 
 
-class EntityBase implements IEntity	{
-	m.Mesh mesh			= null;
-	shade.Effect shader	= null;
-	rast.State state	= null;
-	final Map<String,Object> data;
-	
-	EntityBase():
-		data = new Map<String,Object>();
-
-	m.Mesh getMesh()			=> mesh;
-	shade.Effect getEffect()	=> shader;
-	rast.State getState()		=> state;
-
-	void fillData( final Map<String,Object> block ){
-		for (String key in data.getKeys())
-			block[key] = data[key];
-	}
-}
-
-class Technique	{
-	final rast.State state;
-	final shade.Effect effect;
-	
-	Technique( this.state, this.effect );
-}
-
-class Material implements shade.IDataSource	{
-	final String name;
-	final Map<String,Object> data;
-	final Map<String,Technique> techniques;
-	
-	Material( this.name ):
-		data = new Map<String,Object>(),
-		techniques = new Map<String,Technique>();
-	
-	void fillData(final Map<String,Object> block)	{
-		for (String key in block.getKeys())
-			data[key] = block[key];
-	}
-}
-
-
 // Calls argument conventions: target, what, how
 
 class CallDraw implements ICall	{
 	final Target target;
 	// data
-	final m.Mesh mesh;
+	final me.Mesh mesh;
 	// program
 	final shade.Effect shader;
 	final Map<String,Object> parameters;
@@ -140,9 +92,9 @@ class Process	{
 
 	void resetCache()	{ _cache = null; }
 	
-	void draw( Target target, IEntity ent ){
-		final CallDraw call = new CallDraw( target, ent.getMesh(), ent.getEffect(), ent.getState() );
-		ent.fillData( call.parameters );
+	void draw( Target target, me.Mesh mesh, shade.Effect effect, rast.State state, shade.IDataSource source ){
+		final CallDraw call = new CallDraw( target, mesh, effect, state );
+		source.fillData( call.parameters );
 		batches.add(call);
 	}
 	

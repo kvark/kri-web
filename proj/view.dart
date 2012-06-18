@@ -74,7 +74,7 @@ class DataSource implements shade.IDataSource {
   
   DataSource( this.modelNode, this.camera );
   
-  void fillData( final shade.Map<String,Object> data ){
+  void fillData( final Map<String,Object> data ){
   	final Matrix modelMatrix = (modelNode==null ?
 	    new Matrix.identity() : modelNode.getWorld().getMatrix() );
 	final Matrix invCamera = camera.getInverseWorld();

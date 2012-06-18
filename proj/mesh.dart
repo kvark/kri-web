@@ -64,7 +64,7 @@ class Mesh {
     return el!=null;  //todo: check all fields
   }
   
-  bool draw( final dom.WebGLRenderingContext gl, final shade.Effect shader, final shade.Map<String,Object> data ){
+  bool draw( final dom.WebGLRenderingContext gl, final shade.Effect shader, final Map<String,Object> data ){
   	// try fallback
   	if (nVert==0)	{
   		if (fallback!=null)

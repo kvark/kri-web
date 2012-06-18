@@ -47,7 +47,7 @@ class Manager<Type>	{
 
 
 class IntReader	{
-	final dom.Iterator<int> _iter;
+	final Iterator<int> _iter;
 	int _offset = 0;
 	
 	IntReader( this._iter );
@@ -183,8 +183,9 @@ class BinaryReader extends ChunkReader	{
 class TextReader extends ChunkReader	{
 	final String text;
 	
-	TextReader( this.text ):
-		super( text.charCodes().iterator() );
+	TextReader( String str ):
+		super( str.charCodes().iterator() ),
+		text = str;
 
 	dom.Uint8Array getArray(int size)	{
 		final String sub = text.substring( _offset, _offset+size );
@@ -216,14 +217,14 @@ class Loader {
 	String getNowText( String path ){
 		final dom.XMLHttpRequest req = makeRequest( path, null );
 		req.send();
-		assert (req.readyState == req.DONE);
+		assert (req.readyState == dom.XMLHttpRequest.DONE);
 		return req.responseText;
 	}
 	
 	dom.Document getNowXML( String path ){
 		final dom.XMLHttpRequest req = makeRequestMime( path, 'document', 'text/xml' );
 		req.send();
-		assert (req.readyState == req.DONE);
+		assert (req.readyState == dom.XMLHttpRequest.DONE);
 		return req.responseXML;
 	}
 	

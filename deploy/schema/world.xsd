@@ -91,6 +91,10 @@
 		</xs:sequence>
 	</xs:complexType>
 	
+	<xs:simpleType name="TMeta">
+		<xs:list itemType="xs:string" />
+	</xs:simpleType>
+	
 	<xs:complexType name="TTechnique">
 		<xs:all>
 			<xs:element name="State"	type="r:TRast" />
@@ -101,8 +105,9 @@
 
 	<xs:complexType name="TMaterial">
 		<xs:sequence>
+			<xs:element name="Meta"			type="this:TMeta" />
 			<xs:element name="Data"			type="this:TDataBlock" />
-			<xs:element name="Technique"	type="this:TTechnique" maxOccurs="unbounded" />
+			<xs:element name="Program"		type="this:TProgram" />
 		</xs:sequence>
 		<xs:attribute name="name" type="xs:string" />
 	</xs:complexType>

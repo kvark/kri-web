@@ -13,9 +13,11 @@ class Bone extends Node implements Hashable  {
     static int nextCreateId = 0;
 	final int createdId;
 	
-	int hashCode()	{ return createdId; }
+	int hashCode() => createdId;
 
-	Bone( final String str, this.bindPose ): super(str), createdId=++nextCreateId { reset(); }
+	Bone( final String str, this.bindPose ):
+		super(str), createdId=++nextCreateId { reset(); }
+	
 	void reset()    {
 		space = bindPose;
 		transform = new Space.identity();

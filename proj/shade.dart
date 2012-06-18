@@ -10,10 +10,11 @@ class Unit extends core.Handle<dom.WebGLShader> {
 
   Unit( final dom.WebGLRenderingContext gl, int type, String text ):
   super( gl.createShader(type), null ) {
-    gl.shaderSource( _handle, text );
-    gl.compileShader( _handle );
-    _infoLog = gl.getShaderInfoLog( _handle );
-    if( gl.getShaderParameter( _handle, dom.WebGLRenderingContext.COMPILE_STATUS ))
+  	final dom.WebGLShader h = getInitHandle();
+    gl.shaderSource( h, text );
+    gl.compileShader( h );
+    _infoLog = gl.getShaderInfoLog( h );
+    if( gl.getShaderParameter( h, dom.WebGLRenderingContext.COMPILE_STATUS ))
     	setFull();
     else
 	    print(_infoLog);
@@ -26,7 +27,7 @@ class Unit extends core.Handle<dom.WebGLShader> {
   Unit.fragment	( dom.WebGLRenderingContext gl, String text ):
   	this( gl, dom.WebGLRenderingContext.FRAGMENT_SHADER, text );
   
-  Unit.invalid(): handle=null;
+  Unit.invalid(): super(null,null);
 }
 
 
@@ -74,7 +75,20 @@ class Uniform {
 
 
 interface IDataSource  {
-  void fillData(final Map<String,Object> data);
+	void fillData(final Map<String,Object> data);
+}
+
+class SourceAdapter implements IDataSource	{
+	final IEnumerable<IDataSource> sourceList;
+	
+	SourceAdapter( this.sourceList );
+	
+	void fillData(final Map<String,Object> data)	{
+		for (IDataSource ds in sourceList)	{
+			if (ds != null)
+				ds.fillData(data);
+		}
+	}
 }
 
 

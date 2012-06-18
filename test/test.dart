@@ -2,6 +2,7 @@
 #import('dart:html',			prefix:'dom');
 #import('../proj/buff.dart',	prefix:'buff');
 #import('../proj/cap.dart',		prefix:'cap');
+#import('../proj/draw.dart',	prefix:'draw');
 #import('../proj/frame.dart',	prefix:'frame');
 #import('../proj/load.dart',	prefix:'load');
 #import('../proj/math.dart',	prefix:'math');
@@ -55,7 +56,7 @@ void main()	{
 		});
 	});
 	unit.group('Render:', (){
-		final ren.EntityBase entity = new ren.EntityBase();
+		final draw.EntityBase entity = new draw.EntityBase();
 		entity.state = new parse.Build().setDepth('<=').end();
 		final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
 		
@@ -75,7 +76,7 @@ void main()	{
 		unit.test('Shader link', (){
 			final String textVert = 'attribute vec3 a_pos; void main() {gl_Position=vec4(a_pos,1.0);}';
 			final String textFrag = 'void main() {gl_FragColor=vec4(1.0);}';
-	  		entity.shader = new shade.Effect(gl, [
+	  		entity.effect = new shade.Effect(gl, [
   				new shade.Unit.vertex(gl,textVert),
   				new shade.Unit.fragment(gl,textFrag)
   				]);
@@ -87,7 +88,7 @@ void main()	{
 		   	process.clear( target.buffer,
 		   		new frame.Color(0.0,0.0,0.0,0.0), 1.0, null,
 		   		null, entity.state.mask );
-	   		process.draw( target, entity );
+	   		process.draw( target, entity.mesh, entity.effect, entity.state, entity );
 	   		process.flush( gl );
 	   	});
 	   	
@@ -119,7 +120,7 @@ void main()	{
 						final rast.State state = ps.getRast(el);
 						print( "${state}" ); break;
 					case 't:Material':
-						final ren.Material mat = ps.getMaterial( el, shMan );
+						final draw.Material mat = ps.getMaterial( el, shMan );
 						print( "${mat}" ); break;
 					case 't:Node':
 						final space.Node node = ps.getNode( el, tree );

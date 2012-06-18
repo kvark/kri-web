@@ -1,5 +1,6 @@
 #library('kri:parse');
 #import('dart:html',	prefix:'dom');
+#import('draw.dart',	prefix:'draw');
 #import('frame.dart',	prefix:'frame');
 #import('math.dart',	prefix:'math');
 #import('mesh.dart',	prefix:'m');
@@ -72,7 +73,7 @@ typedef Object FConvert(String str);
 
 class Entity	{
 	space.Node node			= null;
-	ren.Material material	= null;
+	draw.Material material	= null;
 	final m.Mesh mesh;
 	final int iOffset, iNumber;
 	
@@ -83,16 +84,16 @@ class Entity	{
 class TreeContext	{
 	final Map<String,space.Node> nodeMap;
 	final List<Entity> entities;
-	final List<ren.Material> matLib;
+	final List<draw.Material> matLib;
 	m.Manager meshMan = null;
 	
 	TreeContext():
 		nodeMap = new Map<String,space.Node>(),
 		entities = new List<Entity>(),
-		matLib = new List<ren.Material>();
+		matLib = new List<draw.Material>();
 	
-	ren.Material findMaterial(final String name)	{
-		for (ren.Material m in matLib)	{
+	draw.Material findMaterial(final String name)	{
+		for (draw.Material m in matLib)	{
 			if (m.name == name)
 				return m;
 		}
@@ -207,18 +208,17 @@ class Parse	{
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
-			switch (el.tagName)	{
-				case "${nsRast}:Test":
-					func		= el.attributes['func'];
-					ref			= readInt(el,'ref',ref);
-					mask		= readInt(el,'mask',mask);
-					break;
-				case "${nsRast}:Operation":
-					onFail		= el.attributes['fail'];
-					onDepthFail	= el.attributes['depthFail'];
-					onPass		= el.attributes['pass'];
-					break;
-			}
+			if (el.tagName=="${nsRast}:Test")	{
+				func		= el.attributes['func'];
+				ref			= readInt(el,'ref',ref);
+				mask		= readInt(el,'mask',mask);
+			}else
+			if (el.tagName=="${nsRast}:Operation")	{
+				onFail		= el.attributes['fail'];
+				onDepthFail	= el.attributes['depthFail'];
+				onPass		= el.attributes['pass'];
+			}else
+				print("Unknown stencil param: ${el.tagName}");
 		}
 		return new StencilChannel( func,ref,mask, onFail,onDepthFail,onPass );
 	}
@@ -314,17 +314,29 @@ class Parse	{
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
-			switch (el.tagName)	{
-				case "${nsRast}:Primitive"	: b.primitive	= getRastPrimitive	(el); break;
-				case "${nsRast}:Offset"		: b.offset		= getRastOffset		(el); break;
-				case "${nsRast}:Scissor"	: b.scissor		= getRastScissor	(el); break;
-				case "${nsRast}:MultiSample": b.multiSample = getRastMultiSample(el); break;
-				case "${nsRast}:Stencil"	: b.stencil		= getRastStencil	(el); break;
-				case "${nsRast}:Depth"		: b.depth		= getRastDepth		(el); break;
-				case "${nsRast}:Blend"		: b.blend		= getRastBlend		(el); break;
-				case "${nsRast}:Mask"		: b.mask		= getRastMask		(el); break;
-				default: print("Unknown XML tag: ${el.tagName}");
-			}
+			if (el.tagName=="${nsRast}:Primitive")
+				b.primitive	= getRastPrimitive(el);
+			else
+			if (el.tagName=="${nsRast}:Offset")
+				b.offset	= getRastOffset(el);
+			else
+			if (el.tagName=="${nsRast}:Scissor")
+				b.scissor		= getRastScissor(el);
+			if (el.tagName=="${nsRast}:MultiSample")
+				b.multiSample	= getRastMultiSample(el);
+			if (el.tagName=="${nsRast}:Stencil")
+				b.stencil		= getRastStencil(el);
+			else
+			if (el.tagName=="${nsRast}:Depth")
+				b.depth	= getRastDepth(el);
+			else
+			if (el.tagName=="${nsRast}:Blend")
+				b.blend	= getRastBlend(el);
+			else
+			if (el.tagName=="${nsRast}:Mask")
+				b.mask	= getRastMask(el);
+			else
+				print("Unknown XML tag: ${el.tagName}");
 		}
 		return b.end();
 	}
@@ -361,20 +373,22 @@ class Parse	{
 			new shade.Effect( man.gl, units );
 	}
 	
-	ren.Technique getMatTechnique( final dom.Element root, final shade.Manager man ){
+	/*ren.Technique getMatTechnique( final dom.Element root, final shade.Manager man ){
 		State state = null;
 		shade.Effect prog = null;
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;
-			switch (el.tagName)	{
-				case "${nsWorld}:State":		state = getRast(el);			break;
-				case "${nsWorld}:Program":	prog = getMatProgram(el,man);	break;
-				default: print("Unknown technique node: ${el.tagName}");
-			}
+			if (el.tagName=="${nsWorld}:State")
+				state = getRast(el);
+			else
+			if (el.tagName=="${nsWorld}:Program")
+				prog = getMatProgram(el,man);
+			else
+				print("Unknown technique node: ${el.tagName}");
 		}
 		return new ren.Technique(state,prog);
-	}
+	}*/
 	
 	void getDataBlock( final dom.Element root, final Map<String,Object> data ){
 		for (final dom.Element el in root.nodes)	{
@@ -383,39 +397,38 @@ class Parse	{
 			Object value = null;
 			final String name = el.attributes['name'];
 			final String sval = el.attributes['value'];
-			switch (el.tagName)	{
-				case "${nsWorld}:Float":
-					value = Math.parseDouble(sval);
-					break;
-				case "${nsWorld}:Vector":
-					List ls = convertDoubleList4(sval);
-					value = new math.Vector.fromList(ls);
-					break;
-				case "${nsWorld}:Matrix":
-					List<List<double>> lss = new List<List<double>>(4);
-					for (int i=0; i<4; ++i)
-						lss[i] = convertDoubleList4( el.attributes["row${i}"] );
-					value = new math.Matrix(
-						new math.Vector.fromList(lss[0]),
-						new math.Vector.fromList(lss[1]),
-						new math.Vector.fromList(lss[2]),
-						new math.Vector.fromList(lss[3]));
-					break;
-				case "${nsWorld}:Int":
-					value = Math.parseInt(sval);
-					break;
-				case "${nsWorld}:IVector":
-					List ls = convertList( sval, Math.parseInt, 4, 0 );
-					print("Int vector ${name}? not supported yet...");
-					break;
-				default: print("Unknown data element: ${el.tagName}");
+			if (el.tagName=="${nsWorld}:Float")	{
+				value = Math.parseDouble(sval);
+			}else
+			if (el.tagName=="${nsWorld}:Vector")	{
+				List ls = convertDoubleList4(sval);
+				value = new math.Vector.fromList(ls);
+			}else
+			if (el.tagname=="${nsWorld}:Matrix")	{
+				List<List<double>> lss = new List<List<double>>(4);
+				for (int i=0; i<4; ++i)
+					lss[i] = convertDoubleList4( el.attributes["row${i}"] );
+				value = new math.Matrix(
+					new math.Vector.fromList(lss[0]),
+					new math.Vector.fromList(lss[1]),
+					new math.Vector.fromList(lss[2]),
+					new math.Vector.fromList(lss[3]));
+			}else
+			if (el.tagname=="${nsWorld}:Int")	{
+				value = Math.parseInt(sval);
+			}else
+			if (el.tagname=="${nsWorld}:IVector")	{
+				List ls = convertList( sval, Math.parseInt, 4, 0 );
+				print("Int vector ${name}? not supported yet...");
+			}else	{
+				print("Unknown data element: ${el.tagName}");
 			}
 			data[name] = value;
 		}
 	}
 	
-	ren.Material getMaterial( final dom.Element root, final shade.Manager man ){
-		final ren.Material mat = new ren.Material( root.attributes['name'] );
+	draw.Material getMaterial( final dom.Element root, final shade.Manager man ){
+		final draw.Material mat = new draw.Material( root.attributes['name'] );
 		for (final dom.Element el in root.nodes)	{
 			if (el is! dom.Element)
 				continue;

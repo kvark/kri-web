@@ -283,11 +283,11 @@ class Depth implements IPipe	{
 	final bool on;
 	final int compare;
 	
-	Depth( this.on, this.compare );
-	
-	Depth.on( final String funCode ): this( true, comparison[funCode] ){
-		assert( compare != null );
+	Depth( this.on, this.compare ){
+		assert( !on || compare != null );
 	}
+	
+	Depth.on( final String funCode ): this( true, comparison[funCode] );
 	Depth.off(): this(false,0);
 	
 	Depth activate( final dom.WebGLRenderingContext gl, final Depth cache ){

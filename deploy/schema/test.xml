@@ -31,21 +31,18 @@
 	</t:Rast>
 	
 	<t:Material name="metal">
+		<w:Meta>
+		</w:Meta>
 		<w:Data>
 			<w:Float	name="height"	value="3.4" />
 			<w:IVector	name="boneids"	value="1 2 3 4" />
 		</w:Data>
-		<w:Technique name="main">
-			<w:State>
-				<r:Depth func="!=" />
-			</w:State>
-			<w:Program>
-				<w:Object path="simple.glslv" />
-				<w:Object type="fragment">
-					void main(){ gl_FragColor = vec4(0.5); }
-				</w:Object>
-			</w:Program>
-		</w:Technique>
+		<w:Program>
+			<w:Object path="simple.glslv" />
+			<w:Object type="fragment">
+				void main(){ gl_FragColor = vec4(0.5); }
+			</w:Object>
+		</w:Program>
 	</t:Material>
 	
 	<t:Node name="root" move="0.1 0.2 0.4 5" rotate="1 0 0 0" scale="0.5">
