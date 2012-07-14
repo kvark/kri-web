@@ -25,7 +25,7 @@ class Manager<Type>	{
 			_cache[name] = result = spawn( fallback );
 			// send AJAX request
 			final dom.XMLHttpRequest req = new dom.XMLHttpRequest();
-			req.open( 'GET', home+name, callAsync );
+			req.open( 'GET', "${home}/${name}", callAsync );
 			req.overrideMimeType('text/plain; charset=x-user-defined');
 			//req.responseType = dataType;
 			req.on.load.add((e) {
@@ -203,7 +203,7 @@ class Loader {
 	dom.XMLHttpRequest makeRequestMime( String path, String responseType, String mimeType ){
 		final dom.XMLHttpRequest req = new dom.XMLHttpRequest();
 		final bool async = responseType!=null;
-		req.open( 'GET', home+path, async );
+		req.open( 'GET', "${home}/${path}", async );
 		if (async)
 			req.responseType = responseType;
 		if (mimeType!=null)
@@ -222,20 +222,27 @@ class Loader {
 	}
 	
 	dom.Document getNowXML( String path ){
-		final dom.XMLHttpRequest req = makeRequestMime( path, 'document', 'text/xml' );
-		req.send();
-		assert (req.readyState == dom.XMLHttpRequest.DONE);
-		return req.responseXML;
+		final String text = getNowText( path );
+		return new dom.DOMParser().parseFromString(text,'text/xml');
 	}
 	
-	Future<String> getFuture( String path ){
+	Future<Object> getFuture( dom.XMLHttpRequest req ){
 		final Completer completer = new Completer();
-		final dom.XMLHttpRequest req = makeRequest( path, 'text' );
 		req.on.readyStateChange.add(() {
 			if (req.readyState==req.DONE)
-				completer.complete( req.responseText );
+				completer.complete( req.response );
 		});
 		req.send();
 		return completer.future;
+	}
+	
+	Future<dom.Document> getFutureXML( String path ){
+		req = makeRequestMime( path, 'document', 'text/xml' );
+		return getFuture( req );
+	}
+	
+	Future<String> getFutureText( String path ){
+		req = makeRequest( path, 'text' );
+		return getFuture( req );
 	}
 }

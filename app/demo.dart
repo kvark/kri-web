@@ -88,20 +88,20 @@ class App {
 		
 		if (!localOnly)	{
 			final String home = '';
-			final tex.Manager texLoader = new tex.Manager( gl, "${home}/image/" );
+			final tex.Manager texLoader = new tex.Manager( gl, "${home}/image" );
 			//texture = texLoader.load( 'CAR.TGA', texture );
 			texture = texLoader.load( 'SexyFem_Texture.tga', texture );
 			final tex.Binding texBind = new tex.Binding2D(gl);
 			texBind.state( texture, false, false, 0 );
 			//log.debug( texture );
-			final mesh.Manager meLoader = new mesh.Manager( gl, "${home}/mesh/" );
+			final mesh.Manager meLoader = new mesh.Manager( gl, "${home}/mesh" );
 			//me = meLoader.load( 'cube.k3mesh', me );
 			entity.mesh = meLoader.load( 'jazz_dancing.k3mesh', entity.mesh );
-			final arm.Manager arLoader = new arm.Manager( "${home}/arm/" );
+			final arm.Manager arLoader = new arm.Manager( "${home}/arm" );
 			//skeleton = arLoader.load( 'cube.k3arm', null );
 			skeleton = arLoader.load( 'jazz_dancing.k3arm', skeleton );
-			final shade.Manager shMan = new shade.Manager( gl, "${home}/shade/");
-			entity.shader = shMan.assemble( ['simple-arm.glslv','simple.glslf'] );
+			final shade.Manager shMan = new shade.Manager( gl, "${home}/shade");
+			entity.effect = shMan.assemble( ['simple-arm.glslv','simple.glslf'] );
 			//entity.shader = shMan.assemble( ['simple.glslv','simple.glslf'] );
 		}else	{
 			String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
@@ -109,7 +109,7 @@ class App {
 			String fragText = 'void main() {gl_FragColor=vec4(1.0);}';
 			shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
 			shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
-			entity.shader = new shade.Effect( gl, [shVert,shFrag] );
+			entity.effect = new shade.Effect( gl, [shVert,shFrag] );
 		}
 		
 		entity.data['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
@@ -177,7 +177,7 @@ class App {
   
   void onFrame()	{
   	final Date dateNow = new Date.now();
-  	double time = dateNow.value.toDouble() / 1000.0;
+  	double time = dateNow.millisecondsSinceEpoch.toDouble() / 1000.0;
 
     if (skeleton!=null)	{
     	for(final String aniName in skeleton.records.getKeys())	{

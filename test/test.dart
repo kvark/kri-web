@@ -100,12 +100,10 @@ void main()	{
 	   	});
 	});
 	unit.group('XML:', (){
-		final shade.Manager shMan = new shade.Manager( gl, '/shade/' );
+		final shade.Manager shMan = new shade.Manager( gl, '/shade' );
 		dom.Document doc = null;
 		unit.test('Load', (){
-			String text = new load.Loader('schema/').getNowText('test.xml');
-			doc = new dom.DOMParser().parseFromString(text,'text/xml');
-			//doc = new load.Loader('schema/').getNowXML('test.xml');
+			doc = new load.Loader('/schema').getNowXML('test.xml');
 			Expect.isTrue( doc!=null );
 		});
 		unit.test('Parse', (){

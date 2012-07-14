@@ -150,7 +150,7 @@ class Manager extends load.Manager<Armature>	{
 	void fill( final Armature a, final load.ChunkReader br ){
 		final String signature = br.enter();
 		if (signature != 'k3arm')	{
-			print('Armature signature is bad: ' + signature);
+			print("Armature signature is bad: ${signature}");
 			return;
 		}
 		// read bones
@@ -159,7 +159,7 @@ class Manager extends load.Manager<Armature>	{
 		for (int i=0; i<numBones; ++i)	{
 			final String name = br.getString();
 			final int parent = br.getByte()-1;
-			//print('Bone ' +name + ', parent: '+parent.toString());
+			//print("Bone ${name}, parent: ${parent}");
 			final Space space = br.getSpace();
 			//print(space.toString());
 			final Bone b = new Bone(name,space);

@@ -132,7 +132,7 @@ class Manager extends load.Manager<Mesh>	{
 		final log = dom.window.console;
 		final String signature = br.enter();
 		if (signature != 'k3mesh')	{
-			log.debug('Mesh signature is bad: ' + signature);
+			log.debug("Mesh signature is bad: ${signature}");
 			return;
 		}
 		int nv = br.getLarge(4);
@@ -144,7 +144,7 @@ class Manager extends load.Manager<Mesh>	{
 			final buff.Unit unit = new buff.Unit( gl, null );
 			final int stride = br.getByte();
 			final String format = br.getString();
-			log.debug(':'+format);
+			log.debug(":${format}");
 			int offset = 0;
 			for (int i=0; i<format.length; i+=2)	{
 				final int count = Math.parseInt( format[i+0] );
@@ -164,10 +164,10 @@ class Manager extends load.Manager<Mesh>	{
 				case 'f':	type = dom.WebGLRenderingContext.FLOAT;
 					eSize = 4; break;
 				}
-				final String name = 'a_' + br.getString();
+				final String name = "a_${br.getString()}";
 				final bool fixedPoint	= br.getByte() > 0;
 				final bool interpolate	= br.getByte() > 0;
-				log.debug(' ' + name);
+				log.debug(" ${name}");
 				final Element elem = new Element( type, fixedPoint, interpolate, count, unit, stride, offset );
 				if (stride==0)	{
 					assert (count==1);
@@ -178,16 +178,16 @@ class Manager extends load.Manager<Mesh>	{
 				offset += eSize * count;
 			}
 			assert (stride==0 || offset == stride);
-			//log.debug('Offset before block: ' + br.tell().toString());
+			//log.debug("Offset before block: ${br.tell()}");
 			if (stride==0)	{
 				final buff.Binding indexBinding = new buff.Binding.index(gl);
 				indexBinding.load( unit, br.getArray(offset * m.nInd) );
 			}else	{
 				arrayBinding.load( unit, br.getArray(stride * m.nVert) );
 			}
-			//log.debug('Offset after block: ' + br.tell().toString());
+			//log.debug("Offset after block: ${br.tell()}");
 		}
-		log.debug('nVert: ' + m.nVert.toString());
+		log.debug("nVert: ${m.nVert}");
 		br.finish();
 	}
 }
