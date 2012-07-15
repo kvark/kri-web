@@ -226,7 +226,7 @@ class Loader {
 		return new dom.DOMParser().parseFromString(text,'text/xml');
 	}
 	
-	Future<Object> getFuture( dom.XMLHttpRequest req ){
+	Future<Object> getFuture( final dom.XMLHttpRequest req ){
 		final Completer completer = new Completer();
 		req.on.readyStateChange.add(() {
 			if (req.readyState==req.DONE)
@@ -237,12 +237,12 @@ class Loader {
 	}
 	
 	Future<dom.Document> getFutureXML( String path ){
-		req = makeRequestMime( path, 'document', 'text/xml' );
+		final dom.XMLHttpRequest req = makeRequestMime( path, 'document', 'text/xml' );
 		return getFuture( req );
 	}
 	
 	Future<String> getFutureText( String path ){
-		req = makeRequest( path, 'text' );
+		final dom.XMLHttpRequest req = makeRequest( path, 'text' );
 		return getFuture( req );
 	}
 }

@@ -1,6 +1,5 @@
 #library('kri:draw');
 #import('ani.dart',		prefix:'ani');
-#import('arm.dart',		prefix:'arm');
 #import('mesh.dart',	prefix:'me');
 #import('phys.dart',	prefix:'phys');
 #import('rast.dart',	prefix:'rast');
@@ -8,18 +7,17 @@
 #import('shade.dart',	prefix:'shade');
 
 
-abstract class Modifier extends ani.Player implements shade.IDataSource	{
-	final String name;
-	String codeVertex	= '';
-	
-	Modifier( this.name );
+interface IModifier extends shade.IDataSource, ani.IPlayer	{
+	String getName();
+	String getVertexCode();
 }
 
-class ModDummy extends Modifier	{
-	ModDummy(): super('Dummy')	{
-		codeVertex = 'vec3 modifyPosition(vec3 pos)	{ return pos; }'
-			"\n"'vec3 modifyVector(vec3 vec) { return vec; }'"\n";
-	}
+class ModDummy implements IModifier	{
+	String getName()	=> 'Dummy';
+	String getVertexCode()	=>
+			'vec3 modifyPosition(vec3 pos)	{ return pos; }'"\n"
+			'vec3 modifyVector	(vec3 vec)	{ return vec; }'"\n";
+
 	void fillData( final Map<String,Object> block ){}
 }
 
@@ -61,9 +59,17 @@ class Entity	{
 	final me.Mesh		mesh		= null;
 	final Material		material	= null;
 	final phys.Body		body		= null;
-	final List<Modifier>	modifiers;
+	final List<IModifier>	modifiers;
 	
-	Entity(): modifiers = new List<Modifier>();
+	Entity(): modifiers = new List<IModifier>();
+	
+	bool isReady()	{
+		for (final IModifier m in modifiers)	{
+			if (m.getVertexCode() == null)
+				return false;
+		}
+		return true;
+	}
 }
 
 
@@ -90,15 +96,15 @@ class Technique implements shade.IDataSource	{
 		return count;
 	}
 	
-	String makeVertex( final String codeMaterial, final Collection<Modifier> mods ){
+	String makeVertex( final String codeMaterial, final Collection<IModifier> mods ){
 		final StringBuffer buf = new StringBuffer();
 		buf.add("//--- Material ---//\n");
 		buf.add( codeMaterial );
 		// add modifier bases
-		for (Modifier m in mods)	{
-			final String target = "${sMod}${m.name}";
-			buf.add("//--- Modifier: ${m.name} ---//\n");
-			buf.add( m.codeVertex.replaceAll(sMod,target) );
+		for (final IModifier m in mods)	{
+			final String target = "${sMod}${m.getName()}";
+			buf.add("//--- Modifier: ${m.getName()} ---//\n");
+			buf.add( m.getVertexCode().replaceAll(sMod,target) );
 		}
 		// add technique start code
 		buf.add("//--- Technique: ${toString()} ---//\n");
@@ -108,13 +114,13 @@ class Technique implements shade.IDataSource	{
 		// extract position and vector names
 		final List<String> split = baseVertex.substring(modStart,modEnd).split(' ');
 		// add modifier calls
-		for (final Modifier m in mods)	{
+		for (final IModifier m in mods)	{
 			int count = 0;
 			for (final String s in split)	{
 				String type = count>1 ? 'Vector' : 'Position';
 				if (count++ == 0)
 					continue;
-				buf.add("\t${s} = ${sMod}${m.name}${type}(${s});\n");
+				buf.add("\t${s} = ${sMod}${m.getName()}${type}(${s});\n");
 			}
 		}
 		// return
@@ -146,6 +152,8 @@ class Technique implements shade.IDataSource	{
 		final rast.State state = null;
 		int num = 0;
 		for (final Entity e in entities)	{
+			if (!e.isReady())
+				continue;
 			shade.Effect effect = null;
 			if (_effectMap.containsKey(e))
 				effect = _effectMap[e];

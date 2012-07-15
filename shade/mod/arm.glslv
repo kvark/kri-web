@@ -8,7 +8,7 @@ uniform Space bones[90];
 vec3 qrot(vec4 q, vec3 v)	{
 	return v + 2.0*cross(q.xyz, cross(q.xyz,v) + q.w*v);
 }
-vec3 transForward(Spatial s, vec3 v)	{
+vec3 transForward(Space s, vec3 v)	{
 	return qrot(s.rot, v*s.pos.w) + s.pos.xyz;
 }
 
@@ -21,12 +21,12 @@ vec3 modifyPosition(vec3 pos)	{
 		float w = a_BoneWeight[i];
 		Space s = bones[bid];
 		trans.pos += w * vec4( transForward(s,pos), 1.0);
-		trans.quat += w * s.rot;
+		trans.rot += w * s.rot;
 	}
-	trans.quat = normalize( trans.quat );
-	return trans.pos;
+	trans.rot = normalize( trans.rot );
+	return trans.pos.xyz;
 }
 
 vec3 modifyVector(vec3 vector)	{
-	return qrot( trans.quat, vector );
+	return qrot( trans.rot, vector );
 }

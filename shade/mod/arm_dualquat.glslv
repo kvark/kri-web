@@ -14,7 +14,7 @@ vec4 qmul(vec4 a, vec4 b)	{
 vec3 qrot(vec4 q, vec3 v)	{
 	return v + 2.0*cross(q.xyz, cross(q.xyz,v) + q.w*v);
 }
-vec3 transForward(Spatial s, vec3 v)	{
+vec3 transForward(Space s, vec3 v)	{
 	return qrot(s.rot, v*s.pos.w) + s.pos.xyz;
 }
 
@@ -24,11 +24,11 @@ struct DualQuat	{
 	float scale;
 };
 
-Spatial normalizeDq(DualQuat dq)	{
+Space normalizeDq(DualQuat dq)	{
 	float k = 1.0 / length(dq.re);
 	vec4 tmp = qmul( dq.im, qinv(dq.re) );
 	vec4 pos = vec4( 2.0*k*k*tmp.xyz, dq.scale );
-	return Spatial( pos, k * dq.re );
+	return Space( pos, k * dq.re );
 }
 
 
@@ -50,5 +50,5 @@ vec3 modifyPosition(vec3 pos)	{
 }
 
 vec3 modifyVector(vec3 vector)	{
-	return qrot( trans.quat, vector );
+	return qrot( trans.rot, vector );
 }

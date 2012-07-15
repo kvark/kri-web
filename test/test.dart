@@ -1,5 +1,6 @@
 #import('../../dart-sdk/lib/unittest/unittest.dart', prefix:'unit');
 #import('dart:html',			prefix:'dom');
+#import('../proj/arm.dart',		prefix:'arm');
 #import('../proj/buff.dart',	prefix:'buff');
 #import('../proj/cap.dart',		prefix:'cap');
 #import('../proj/draw.dart',	prefix:'draw');
@@ -144,9 +145,12 @@ void main()	{
 			Expect.isTrue(tech.baseVertex != null && tech.baseFragment != null && num>0 );
 		});
 		final draw.Entity ent = new draw.Entity();
-		final draw.Modifier mod = new draw.ModDummy();
+		final draw.IModifier mod = new draw.ModDummy();
 		ent.material = mat;
 		ent.modifiers.add(mod);
+		final arm.Armature skel = new arm.Armature('Arma');
+		skel.initialize( ld, true, false );
+		ent.modifiers.add(skel);
 		unit.test('Link', (){
 			final shade.LinkHelp help = new shade.LinkHelp(gl);
 			final shade.Effect eff = tech.link(help,ent);

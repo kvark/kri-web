@@ -1,5 +1,6 @@
 #library('kri:arm');
 #import('ani.dart',		prefix:'ani');
+#import('draw.dart',	prefix:'draw');
 #import('math.dart',	prefix:'math');
 #import('load.dart',	prefix:'load');
 #import('shade.dart',	prefix:'shade');
@@ -25,9 +26,20 @@ class Bone extends Node implements Hashable  {
 }
 
 
-class Armature extends Node implements shade.IDataSource	{
+class Armature extends Node implements draw.IModifier	{
     final List<Bone> bones;
     static final int maxBones = 100;
+    String _code = null;
+
+	Armature( final String str ): super(str), bones = new List<Bone>();
+	
+	void initialize( final load.Loader loader, final bool doNow, final bool useDualQuat ){
+		final String path = useDualQuat ? "/mod/arm_dualquat.glslv" : "/mod/arm.glslv";
+		if (doNow)
+			_code = loader.getNowText(path);
+		else
+			loader.getFutureText(path).then((str) { _code=str; });
+	}
 
 	void fillData( final Map<String,Object> data ){
     	for(int i=0; i<maxBones; ++i)	{
@@ -37,9 +49,10 @@ class Armature extends Node implements shade.IDataSource	{
 			data["bones[${i}].rot"]	= data["bones[${i}].rot[0]"] = space.rotation;
     	}
 	}
-   
-	Armature(String name): super(name), bones = new List<Bone>();
 	
+	String getName()		=> name;
+	String getVertexCode()	=> _code;
+   
 	bool setMoment( String animation, double time ){
 		bool rez = super.setMoment( animation, time );
 		for (final Bone b in bones)	{
