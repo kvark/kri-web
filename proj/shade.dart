@@ -210,3 +210,17 @@ class Manager	{
 		return ef;
 	}
 }
+
+
+class Helper	{
+	final dom.WebGLRenderingContext _gl;
+
+	Helper( this._gl );
+
+	Effect link( String sVert, String sFrag ){
+		return new Effect(_gl,[
+			new Unit.vertex(_gl,sVert),
+			new Unit.fragment(_gl,sFrag)
+			]);
+	}
+}

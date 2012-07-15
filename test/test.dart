@@ -1,4 +1,4 @@
-#import('unittest.dart',		prefix:'unit');
+#import('../../dart-sdk/lib/unittest/unittest.dart', prefix:'unit');
 #import('dart:html',			prefix:'dom');
 #import('../proj/buff.dart',	prefix:'buff');
 #import('../proj/cap.dart',		prefix:'cap');

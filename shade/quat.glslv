@@ -1,4 +1,4 @@
-struct Spatial	{ vec4 pos,rot; };
+struct Space	{ vec4 pos,rot; };
 
 //rotate vector
 vec3 qrot(vec4 q, vec3 v)	{
@@ -21,17 +21,17 @@ vec4 qvec(vec3 axis, float angle)	{
 }
 
 //combine transformations
-Spatial trans_combine(Spatial sa, Spatial sb)	{
+Space transCombine(Space sa, Space sb)	{
 	vec4 pos = vec4( qrot(sb.rot,sa.pos.xyz), sb.pos.w*sa.pos.w );
 	return Spatial( pos, qmul(sb.rot,sa.rot) );
 }
 
 //transform by Spatial forward
-vec3 trans_for(vec3 v, Spatial s)	{
+vec3 transForward(vec3 v, Space s)	{
 	return qrot(s.rot, v*s.pos.w) + s.pos.xyz;
 }
 
 //transform by Spatial inverse
-vec3 trans_inv(vec3 v, Spatial s)	{
+vec3 transInverse(vec3 v, Space s)	{
 	return qrot( vec4(-s.rot.xyz, s.rot.w), (v-s.pos.xyz)/s.pos.w );
 }
