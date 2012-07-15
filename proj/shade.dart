@@ -79,7 +79,7 @@ interface IDataSource  {
 }
 
 class SourceAdapter implements IDataSource	{
-	final IEnumerable<IDataSource> sourceList;
+	final Iterable<IDataSource> sourceList;
 	
 	SourceAdapter( this.sourceList );
 	
@@ -212,10 +212,10 @@ class Manager	{
 }
 
 
-class Helper	{
+class LinkHelp	{
 	final dom.WebGLRenderingContext _gl;
 
-	Helper( this._gl );
+	LinkHelp( this._gl );
 
 	Effect link( String sVert, String sFrag ){
 		return new Effect(_gl,[

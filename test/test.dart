@@ -96,7 +96,7 @@ void main()	{
 		   	final frame.Control control = new frame.Control(gl);
 	   		final dom.Uint8Array result = control.readUint8( rect, 'rgba' );
 	   		for (int x in result)
-	   			Expect.isTrue( x==0xFF );
+	   			Expect.equals( x, 0xFF );
 	   	});
 	});
 	unit.group('XML:', (){
@@ -104,7 +104,7 @@ void main()	{
 		dom.Document doc = null;
 		unit.test('Load', (){
 			doc = new load.Loader('/schema').getNowXML('test.xml');
-			Expect.isTrue( doc!=null );
+			Expect.isNotNull( doc );
 		});
 		unit.test('Parse', (){
 			final parse.Parse ps = new parse.Parse('r','w');
@@ -127,6 +127,30 @@ void main()	{
 						Expect.fail("Unknown tag: ${el.tagName}");	
 				}
 			}
+		});
+	});
+	unit.group('Draw:', (){
+		final draw.Material mat = new draw.Material('test');
+		final draw.Technique tech = new draw.Technique();
+		final load.Loader ld = new load.Loader('/shade');
+		unit.test('Load', (){
+			mat.metas.add('getFinalColor');
+			mat.codeVertex		= ld.getNowText('mat/test.glslv');
+			mat.codeFragment	= ld.getNowText('mat/test.glslf');
+			Expect.isTrue( mat.codeVertex != null && mat.codeFragment != null );
+			tech.baseVertex		= ld.getNowText('tech/test.glslv');
+			tech.baseFragment	= ld.getNowText('tech/test.glslf');
+			int num = tech.extractMetas();
+			Expect.isTrue(tech.baseVertex != null && tech.baseFragment != null && num>0 );
+		});
+		final draw.Entity ent = new draw.Entity();
+		final draw.Modifier mod = new draw.ModDummy();
+		ent.material = mat;
+		ent.modifiers.add(mod);
+		unit.test('Link', (){
+			final shade.LinkHelp help = new shade.LinkHelp(gl);
+			final shade.Effect eff = tech.link(help,ent);
+			Expect.isNotNull( eff );
 		});
 	});
 }

@@ -3,6 +3,7 @@
 #import('arm.dart',		prefix:'arm');
 #import('mesh.dart',	prefix:'me');
 #import('phys.dart',	prefix:'phys');
+#import('rast.dart',	prefix:'rast');
 #import('ren.dart',		prefix:'ren');
 #import('shade.dart',	prefix:'shade');
 
@@ -12,6 +13,14 @@ abstract class Modifier extends ani.Player implements shade.IDataSource	{
 	String codeVertex	= '';
 	
 	Modifier( this.name );
+}
+
+class ModDummy extends Modifier	{
+	ModDummy(): super('Dummy')	{
+		codeVertex = 'vec3 modifyPosition(vec3 pos)	{ return pos; }'
+			"\n"'vec3 modifyVector(vec3 vec) { return vec; }'"\n";
+	}
+	void fillData( final Map<String,Object> block ){}
 }
 
 
@@ -35,12 +44,11 @@ class Material implements shade.IDataSource	{
 	final String name;
 	final Map<String,Object> data;
 	final List<String> metas;
-	final Map<int,String> code;
+	String codeVertex='', codeFragment='';
 	
 	Material( this.name ):
 		data = new Map<String,Object>(),
-		metas = new List<String>(),
-		code = new Map<int,String>();
+		metas = new List<String>();
 	
 	void fillData(final Map<String,Object> block)	{
 		for (String key in block.getKeys())
@@ -60,42 +68,54 @@ class Entity	{
 
 
 class Technique implements shade.IDataSource	{
-	final Collection<String>		_usedMetas;
+	final List<String>				_usedMetas;
 	final Map<Entity,shade.Effect>	_effectMap;
 	String baseVertex = '', baseFragment = '';
-	final String sMod = 'modify'; 
+	final String sMod = 'modify', sMeta = 'meta';
 
-	Technique( this._usedMetas ):
+	Technique():
+		_usedMetas = new List<String>(),
 		_effectMap = new Map<Entity,shade.Effect>();
 	
-	String makeVertex( final ICollection<Modifier> mods ){
+	int extractMetas()	{
+		_usedMetas.clear();
+		int metaStart	= baseFragment.indexOf("//%${sMeta}");
+		int metaEnd		= baseFragment.indexOf("\n",metaStart);
+		final List<String> split = baseFragment.substring(metaStart,metaEnd).split(' ');
+		int count = 0;
+		for (final String s in split)	{
+			if (count++ > 0)
+				_usedMetas.add(s);
+		}
+		return count;
+	}
+	
+	String makeVertex( final String codeMaterial, final Collection<Modifier> mods ){
 		final StringBuffer buf = new StringBuffer();
+		buf.add("//--- Material ---//\n");
+		buf.add( codeMaterial );
 		// add modifier bases
 		for (Modifier m in mods)	{
 			final String target = "${sMod}${m.name}";
-			buf.add( m.codeVertex.replace(sMod,target) );
+			buf.add("//--- Modifier: ${m.name} ---//\n");
+			buf.add( m.codeVertex.replaceAll(sMod,target) );
 		}
 		// add technique start code
-		final int modStart = baseVertex.indexOf("%${sMod}");
+		buf.add("//--- Technique: ${toString()} ---//\n");
+		final int modStart = baseVertex.indexOf("//%${sMod}");
 		buf.add( baseVertex.substring(0,modStart) );
 		final int modEnd = baseVertex.indexOf("\n",modStart);
 		// extract position and vector names
-		// %modify posName v1name v2name ...
-		int begin = baseVertex.indexOf(' ',modStart)+1;
-		int end = baseVertex.indexOf(' ',begin);
-		final String posName = baseVertex.substring(begin,end);
-		final List<String> vecNames = new List<String>();
-		while(end>=0 && end<modEnd)	{
-			begin = end+1;
-			end = baseVertex.indexOf(' ',begin);
-			vecNames += baseVertex.substring( begin,
-				end<0 || end>modEnd ? modEnd : end );
-		}
+		final List<String> split = baseVertex.substring(modStart,modEnd).split(' ');
 		// add modifier calls
 		for (final Modifier m in mods)	{
-			buf.add("\t${posName} = ${sMod}${m.name}Position(${posName});\n");
-			for (final String vec in vecNames)
-				buf.add("\t${vec} = ${sMod}${m.name}Vector(${vec});\n");
+			int count = 0;
+			for (final String s in split)	{
+				String type = count>1 ? 'Vector' : 'Position';
+				if (count++ == 0)
+					continue;
+				buf.add("\t${s} = ${sMod}${m.name}${type}(${s});\n");
+			}
 		}
 		// return
 		buf.add( baseVertex.substring(modEnd) );
@@ -103,18 +123,27 @@ class Technique implements shade.IDataSource	{
 	}
 	
 	String makeFragment( final Material mat ){
-		return '';
+		final StringBuffer buf = new StringBuffer();
+		buf.add("//--- Material: ${mat.name} ---//\n");
+		buf.add( mat.codeFragment );
+		buf.add("//--- Technique: ${toString()} ---//\n");
+		buf.add( baseFragment );
+		return buf.toString();
 	}
 	
-	shade.Effect link( final shade.Helper help, final Entity e ){
-		String sv = makeVertex( e.modifiers );
+	shade.Effect link( final shade.LinkHelp help, final Entity e ){
+		for (String meta in _usedMetas)	{
+			if (e.material.metas.indexOf(meta) < 0)
+				return null;
+		}
+		String sv = makeVertex( e.material.codeVertex, e.modifiers );
 		String sf = makeFragment( e.material );
 		return help.link(sv,sf);
 	}
 
-	int draw( final shade.Helper help, final Iterable<Entity> entities, final ren.Process processor ){
+	int draw( final shade.LinkHelp help, final Iterable<Entity> entities, final ren.Process processor ){
 		final ren.Target target = null;
-		final ren.State state = null;
+		final rast.State state = null;
 		int num = 0;
 		for (final Entity e in entities)	{
 			shade.Effect effect = null;
