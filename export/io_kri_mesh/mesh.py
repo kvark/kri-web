@@ -357,28 +357,28 @@ def collect_attributes(mesh,armature,groups):
 	km = Mesh()
 	
 	if 'putVertex':
-		vat = Attribute('position', '3f', 0)
+		vat = Attribute('Position', '3f', 0)
 		km.attribs.append(vat)
 		for v in ar_vert:
 			vat.data.append( v.coord.to_3d() )
 			
 	if Settings.putNormal:
-		#vat = Attribute('normal', '3f', 0)
-		vat = Attribute('normal', '4h', 2)
+		#vat = Attribute('Normal', '3f', 0)
+		vat = Attribute('Normal', '4h', 2)
 		# WebGL only accept multiples of 4 for the attribute size
 		km.attribs.append(vat)
 		for v in ar_vert:
 			vat.data.append( v.normal.to_4d() )
 			
 	if hasTangent:
-		vat = Attribute('tangent', '4b', 2)
+		vat = Attribute('Tangent', '4b', 2)
 		km.attribs.append(vat)
 		for v in ar_vert:
 			vat.data.append( [v.tangent.x, v.tangent.y, v.tangent.z, v.face.hand] )
 
 	if hasQuat:
-		vat2 = Attribute('handedness', '1f')	# has to be aligned
-		vat1 = Attribute('quaternion', '4h', 2)
+		vat2 = Attribute('Handedness', '1f')	# has to be aligned
+		vat1 = Attribute('Quaternion', '4h', 2)
 		vat1.interpolate = vat2.interpolate = Settings.doQuatInt
 		km.attribs.extend([ vat2,vat1 ])
 		for v in ar_vert:
@@ -389,7 +389,7 @@ def collect_attributes(mesh,armature,groups):
 		all = mesh.uv_textures
 		out.log(1,'i', 'UV layers: %d' % (len(all)))
 		for i,layer in enumerate(all):
-			name = 'tex%d' % i
+			name = 'Tex%d' % i
 			vat = None
 			if Settings.normUv:
 				vat = Attribute(name, '2H', 2)
@@ -405,7 +405,7 @@ def collect_attributes(mesh,armature,groups):
 		all = mesh.vertex_colors
 		out.log(1,'i', 'Color layers: %d' % (len(all)))
 		for i,layer in enumerate(all):
-			vat = Attribute('color%d' % i, '4B', 2)
+			vat = Attribute('Color%d' % i, '4B', 2)
 			km.attribs.append(vat)
 			for v in ar_vert:
 				assert i<len(v.color)
@@ -431,8 +431,8 @@ def collect_attributes(mesh,armature,groups):
 
 	# 8: bone weights
 	if armature:
-		vat1 = Attribute('bone_ids', '4B', 0)
-		vat2 = Attribute('bone_weights', '4B', 1)
+		vat1 = Attribute('BoneIndex', '4B', 0)
+		vat2 = Attribute('BoneWeight', '4B', 1)
 		km.attribs.extend([ vat1,vat2 ])
 		nempty, avg = 0, 0.0
 		for v in ar_vert:

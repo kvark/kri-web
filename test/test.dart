@@ -136,11 +136,11 @@ void main()	{
 		final load.Loader ld = new load.Loader('/shade');
 		unit.test('Load', (){
 			mat.metas.add('getFinalColor');
-			mat.codeVertex		= ld.getNowText('mat/test.glslv');
-			mat.codeFragment	= ld.getNowText('mat/test.glslf');
+			mat.codeVertex		= ld.getNowText('mat/phong.glslv');
+			mat.codeFragment	= ld.getNowText('mat/phong.glslf');
 			Expect.isTrue( mat.codeVertex != null && mat.codeFragment != null );
-			tech.baseVertex		= ld.getNowText('tech/test.glslv');
-			tech.baseFragment	= ld.getNowText('tech/test.glslf');
+			tech.baseVertex		= ld.getNowText('tech/main.glslv');
+			tech.baseFragment	= ld.getNowText('tech/main.glslf');
 			int num = tech.extractMetas();
 			Expect.isTrue(tech.baseVertex != null && tech.baseFragment != null && num>0 );
 		});
