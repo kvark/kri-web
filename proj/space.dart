@@ -37,18 +37,18 @@ class Space implements IMatrix {
 class Node extends ani.Player {
   final String name;
   Space space, _oldLocal=null, _parWorld=null, _world=null;
-  Node parent, _oldParent=null;
+  Node parent;
   
   Node(this.name);
   
-  Space getWorld()  {
+  Space getWorldSpace()  {
     final Space local = space==null ? new Space.identity() : space;
     if (parent==null)
         return local;
-    final Space parWorld = parent.getWorld();
-    if (parent==_oldParent && parWorld==_parWorld)
+    final Space parWorld = parent.getWorldSpace();
+    if (local==_oldLocal && parWorld==_parWorld)
         return _world;
-    _oldParent = parent;
+    _oldLocal = local;
     _parWorld = parWorld;
     _world = parWorld * local;
     return _world;

@@ -19,7 +19,6 @@
 
 
 class App {
-	view.DataSource viewData = null;
 	dom.WebGLRenderingContext gl = null;
 	dom.CanvasElement canvas = null;
 	space.Node controlNode = null;
@@ -31,14 +30,18 @@ class App {
 	mesh.Mesh axisMesh = null;
 	shade.Effect axisShader = null;
 	
-	final draw.EntityBase entity;
+	final draw.EntityBase entityBase;
+	draw.Entity entity = null;
+	final draw.Technique tech;
+	
 	final ren.Process process;
  	
  	App():
-		entity = new draw.EntityBase(),
+		entityBase = new draw.EntityBase(),
+		tech = new draw.Technique(),
 		process = new ren.Process(true)
 	{
-		entity.state = new parse.Build().setDepth('<=').end();
+		entityBase.state = new parse.Build().setDepth('<=').end();
 	}
   
   	void run() {
@@ -66,7 +69,7 @@ class App {
 		
 		print( new cap.System(gl) );
 		
-		entity.mesh = new gen.Mesh(gl).cubeUnit();
+		entityBase.mesh = new gen.Mesh(gl).cubeUnit();
 		tex.Texture texture = new gen.Texture(gl).white();
 		
 		final view.Camera camera = new view.Camera();
@@ -82,8 +85,6 @@ class App {
 			new math.Quaternion.fromAxis(new math.Vector.unitX(),90.0),
 			2.0 );
 		//child.space = new space.Space.identity();
-		viewData = new view.DataSource( child, camera );
-		viewData.fillData( entity.data );
 		controlNode = node;
 		
 		if (!localOnly)	{
@@ -96,26 +97,54 @@ class App {
 			//log.debug( texture );
 			final mesh.Manager meLoader = new mesh.Manager( gl, "${home}/mesh" );
 			//me = meLoader.load( 'cube.k3mesh', me );
-			entity.mesh = meLoader.load( 'jazz_dancing.k3mesh', entity.mesh );
+			entityBase.mesh = meLoader.load( 'jazz_dancing.k3mesh', entityBase.mesh );
 			final arm.Manager arLoader = new arm.Manager( "${home}/arm" );
 			//skeleton = arLoader.load( 'cube.k3arm', null );
 			skeleton = arLoader.load( 'jazz_dancing.k3arm', skeleton );
 			final shade.Manager shMan = new shade.Manager( gl, "${home}/shade");
-			entity.effect = shMan.assemble( ['simple-arm.glslv','simple.glslf'] );
-			//entity.shader = shMan.assemble( ['simple.glslv','simple.glslf'] );
+			entityBase.effect = shMan.assemble( ['simple-arm.glslv','simple.glslf'] );
+			//entityBase.shader = shMan.assemble( ['simple.glslv','simple.glslf'] );
 		}else	{
 			String vertText = 'attribute vec3 a_position; uniform mat4 mx_mvp; ' +
 				'void main() {gl_Position=mx_mvp*vec4(a_position,1.0);}';
 			String fragText = 'void main() {gl_FragColor=vec4(1.0);}';
 			shade.Unit shVert = new shade.Unit.vertex( gl, vertText );
 			shade.Unit shFrag = new shade.Unit.fragment( gl, fragText );
-			entity.effect = new shade.Effect( gl, [shVert,shFrag] );
+			entityBase.effect = new shade.Effect( gl, [shVert,shFrag] );
 		}
 		
-		entity.data['u_color'] = new math.Vector(1.0,0.0,0.0,1.0);
-		entity.data['pos_light'] = new math.Vector(1.0,2.0,-3.0,1.0);
-		entity.data['t_main'] = texture;
+		entityBase.data['u_Color'] = new math.Vector(1.0,0.0,0.0,1.0);
+		entityBase.data['u_PosLight'] = new math.Vector(1.0,2.0,-3.0,1.0);
+		entityBase.data['t_Main'] = texture;
 		//log.debug( shader );
+
+		if (true)	{		
+			final draw.Material mat = new draw.Material('test');
+			mat.data['u_PosLight'] = new math.Vector(1.0,2.0,-3.0,1.0);
+			mat.data['t_Main'] = texture;
+			mat.metas.add('getFinalColor');
+
+			final load.Loader ld = new load.Loader('/shade');
+			//ld.getFutureText('mat/phong.glslv').then((text) { mat.codeVertex=text; });
+			//ld.getFutureText('mat/phong.glslf').then((text) { mat.codeFragment=text; });
+			//ld.getFutureText('tech/main.glslv').then((text) { tech.baseVertex=text; });
+			//ld.getFutureText('tech/main.glslf').then((text) { tech.baseFragment=text; });
+			
+			mat.codeVertex		= ld.getNowText('mat/phong.glslv');
+			mat.codeFragment	= ld.getNowText('mat/phong.glslf');
+			
+			String sv = ld.getNowText('tech/main.glslv');
+			String sf = ld.getNowText('tech/main.glslf');
+			tech.setShaders(sv,sf);
+
+			final ren.Target target = new ren.Target( new frame.Buffer.main(), rect, 0.0, 1.0 );
+			tech.setTargetState( camera, target, entityBase.state );
+			skeleton.loadShaders( ld, true, false );
+
+			entity = new draw.Entity( entityBase.mesh, mat, null );
+			entity.node = child;
+			entity.modifiers.add( skeleton );
+		}
 		
 		/* rudimentary direct access routines
 		gl.enable( dom.WebGLRenderingContext.DEPTH_TEST );
@@ -146,7 +175,7 @@ class App {
   		((e.clientX-canvasOffX).toDouble() - hx) / (hx/dist),
   		(hy - (e.clientY-canvasOffY).toDouble())  / (hy/dist),
   		0.0, 1.0 );
-  	entity.data['pos_light'] = v;
+  	entityBase.data['pos_light'] = v;
   	// move object
   	if (controlNode!=null && gripBase != null && (e.clientX!=gripX || e.clientY!=gripY))	{
   		final math.Vector voff = new math.Vector(
@@ -162,7 +191,7 @@ class App {
 		}			
 		controlNode.space = new space.Space( controlNode.space.movement,
 	    	  rot * gripBase, controlNode.space.scale );
-		viewData.fillData( entity.data );
+		//viewData.fillData( entity.data );
   	}
   }
   
@@ -187,7 +216,7 @@ class App {
     		break;
     	}
     	skeleton.update();
-    	skeleton.fillData( entity.data );
+    	skeleton.fillData( entityBase.data );
     }
     //final view.DataSource data = shader.dataSources[0];
     //data.modelNode.space = new space.Space( data.modelNode.space.position,
@@ -199,13 +228,19 @@ class App {
    	if (gl.isContextLost())
    		return;
 
-    final frame.Rect rect = new frame.Rect( 0, 0, canvas.width, canvas.height );
    	final rast.Mask mask = new rast.Mask.all();
-   	final ren.Target target = new ren.Target( new frame.Buffer.main(), rect, 0.0, 1.0 );
-   	process.clear( target.buffer,
+   	process.clear( tech.getTarget().buffer,
    		new frame.Color(0.0,0.0,0.0,0.0), 1.0, null,
    		null, mask );
-   	process.draw( target, entity.mesh, entity.effect, entity.state, entity );
+   	
+   	if (0)	{
+   		process.draw( tech.getTarget(), entityBase.mesh,
+   			entityBase.effect, entityBase.state, entityBase );
+   	}else	{
+   		final shade.LinkHelp help = new shade.LinkHelp(gl);
+   		tech.draw( help, [entity], process );
+   	}
+
    	process.flush( gl );
   }
 }

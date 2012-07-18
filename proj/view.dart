@@ -47,45 +47,30 @@ class Projector implements space.IMatrix  {
 }
 
 
-class Camera  {
-  space.Node node;
-  Projector projector;
-  
-  Camera();
-  
-  Matrix getInverseWorld()  {
-    final Matrix local = projector==null ? new Matrix.identity() : projector.getMatrix();
-    if (node==null)
-      return local;
-    final Matrix base = node.getWorld().inverse().getMatrix();
-    return local * base;
-  }
+class Camera implements shade.IDataSource {
+	space.Node node;
+	Projector projector;
+	
+	Camera();
+	
+	Matrix getInverseWorld()  {
+		final Matrix local = projector==null ?
+			new Matrix.identity() : projector.getMatrix();
+		if (node==null)
+			return local;
+		final Matrix base = node.getWorldSpace().inverse().getMatrix();
+		return local * base;
+	}
+	
+	void fillData( final Map<String,Object> data ){
+		data['mx_ViewProj']	= getInverseWorld();
+		data['u_PosCamera']	= (node==null ?
+			new Vector.zero() :	node.getWorldSpace().movement );
+	}
 }
 
 
-class Light {
-  Light();
+class Light implements shade.IDataSource {
+	space.Node node;
+	Light();
 }
-
-
-class DataSource implements shade.IDataSource {
-  final space.Node modelNode;
-  final Camera camera;
-  
-  DataSource( this.modelNode, this.camera );
-  
-  void fillData( final Map<String,Object> data ){
-  	final Matrix modelMatrix = (modelNode==null ?
-	    new Matrix.identity() : modelNode.getWorld().getMatrix() );
-	final Matrix invCamera = camera.getInverseWorld();
-	data['mx_model']		= modelMatrix;
-	data['mx_modelview']	= (camera.node==null ? modelNode.getWorld() :
-        modelNode.getWorld() * camera.node.getWorld().inverse()).
-        getMatrix();
-    data['mx_projection']	= camera.projector.getMatrix();
-    data['mx_viewproj']		= invCamera;
-    data['mx_mvp']			= invCamera * modelMatrix;
-    data['pos_camera']		= (camera.node==null ? new Vector.zero() :
-    	camera.node.getWorld().movement );
-  }
-} 

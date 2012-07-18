@@ -1,10 +1,13 @@
 #library('kri:draw');
 #import('ani.dart',		prefix:'ani');
+#import('math.dart',	prefix:'math');		// for Entity.getModelMatrix()
 #import('mesh.dart',	prefix:'me');
 #import('phys.dart',	prefix:'phys');
 #import('rast.dart',	prefix:'rast');
 #import('ren.dart',		prefix:'ren');
 #import('shade.dart',	prefix:'shade');
+#import('space.dart',	prefix:'space');	// for Entity.node
+#import('view.dart',	prefix:'view');		// for Technique.camera
 
 
 interface IModifier extends shade.IDataSource, ani.IPlayer	{
@@ -48,27 +51,38 @@ class Material implements shade.IDataSource	{
 		data = new Map<String,Object>(),
 		metas = new List<String>();
 	
-	void fillData(final Map<String,Object> block)	{
-		for (String key in block.getKeys())
-			data[key] = block[key];
+	void fillData( final Map<String,Object> block ){
+		for (String key in data.getKeys())
+			block[key] = data[key];
 	}
 }
 
 
-class Entity	{
+class Entity implements shade.IDataSource, Hashable	{
+	space.Node			node		= null;
 	final me.Mesh		mesh		= null;
 	final Material		material	= null;
 	final phys.Body		body		= null;
 	final List<IModifier>	modifiers;
 	
-	Entity(): modifiers = new List<IModifier>();
+	Entity( this.mesh, this.material, this.body ):
+		modifiers = new List<IModifier>();
+	
+	int hashCode() => mesh.nVert ^ material.name.length;
 	
 	bool isReady()	{
 		for (final IModifier m in modifiers)	{
 			if (m.getVertexCode() == null)
 				return false;
 		}
-		return true;
+		return mesh != null;
+	}
+	
+	math.Matrix getModelMatrix() => (node==null ?
+	    	new math.Matrix.identity() : node.getWorldSpace().getMatrix() );
+	
+	void fillData( final Map<String,Object> data ){
+		data['mx_Model']	= getModelMatrix();
 	}
 }
 
@@ -76,18 +90,37 @@ class Entity	{
 class Technique implements shade.IDataSource	{
 	final List<String>				_usedMetas;
 	final Map<Entity,shade.Effect>	_effectMap;
-	String baseVertex = '', baseFragment = '';
+	view.Camera	_camera = null;
+	ren.Target	_target = null;
+	rast.State	_state = null;
+	String _baseVertex = null, _baseFragment = null;
 	final String sMod = 'modify', sMeta = 'meta';
 
 	Technique():
 		_usedMetas = new List<String>(),
 		_effectMap = new Map<Entity,shade.Effect>();
 	
-	int extractMetas()	{
+	bool isReady()	=> _target!=null && _state!=null
+		&& _baseVertex!=null && _baseFragment!=null;
+	
+	void fillData(data)	{}
+	
+	void setTargetState( view.Camera cam, ren.Target tg, rast.State st ){
+		_camera = cam; _target = tg; _state = st;
+	}
+	
+	ren.Target getTarget()	=> _target;
+	
+	int setShaders( final String sVert, final String sFrag ){
+		_baseVertex = sVert; _baseFragment = sFrag;
+		return _extractMetas();
+	}
+	
+	int _extractMetas()	{
 		_usedMetas.clear();
-		int metaStart	= baseFragment.indexOf("//%${sMeta}");
-		int metaEnd		= baseFragment.indexOf("\n",metaStart);
-		final List<String> split = baseFragment.substring(metaStart,metaEnd).split(' ');
+		int metaStart	= _baseFragment.indexOf("//%${sMeta}");
+		int metaEnd		= _baseFragment.indexOf("\n",metaStart);
+		final List<String> split = _baseFragment.substring(metaStart,metaEnd).split(' ');
 		int count = 0;
 		for (final String s in split)	{
 			if (count++ > 0)
@@ -108,11 +141,11 @@ class Technique implements shade.IDataSource	{
 		}
 		// add technique start code
 		buf.add("//--- Technique: ${toString()} ---//\n");
-		final int modStart = baseVertex.indexOf("//%${sMod}");
-		buf.add( baseVertex.substring(0,modStart) );
-		final int modEnd = baseVertex.indexOf("\n",modStart);
+		final int modStart = _baseVertex.indexOf("//%${sMod}");
+		buf.add( _baseVertex.substring(0,modStart) );
+		final int modEnd = _baseVertex.indexOf("\n",modStart);
 		// extract position and vector names
-		final List<String> split = baseVertex.substring(modStart,modEnd).split(' ');
+		final List<String> split = _baseVertex.substring(modStart,modEnd).split(' ');
 		// add modifier calls
 		for (final IModifier m in mods)	{
 			int count = 0;
@@ -124,7 +157,7 @@ class Technique implements shade.IDataSource	{
 			}
 		}
 		// return
-		buf.add( baseVertex.substring(modEnd) );
+		buf.add( _baseVertex.substring(modEnd) );
 		return buf.toString();
 	}
 	
@@ -133,7 +166,7 @@ class Technique implements shade.IDataSource	{
 		buf.add("//--- Material: ${mat.name} ---//\n");
 		buf.add( mat.codeFragment );
 		buf.add("//--- Technique: ${toString()} ---//\n");
-		buf.add( baseFragment );
+		buf.add( _baseFragment );
 		return buf.toString();
 	}
 	
@@ -148,8 +181,8 @@ class Technique implements shade.IDataSource	{
 	}
 
 	int draw( final shade.LinkHelp help, final Iterable<Entity> entities, final ren.Process processor ){
-		final ren.Target target = null;
-		final rast.State state = null;
+		if (!isReady())
+			return 0;
 		int num = 0;
 		for (final Entity e in entities)	{
 			if (!e.isReady())
@@ -161,8 +194,10 @@ class Technique implements shade.IDataSource	{
 				_effectMap[e] = effect = link(help,e);
 			if (effect == null)
 				continue;
-			final shade.IDataSource ds = new shade.SourceAdapter( [this,e.material] + e.modifiers );
-			processor.draw( target, e.mesh, effect, state, ds );
+			final List<shade.IDataSource> sources = [this,_camera,e,e.material];
+			sources.addAll( e.modifiers );
+			final shade.IDataSource ds = new shade.SourceAdapter(sources);
+			processor.draw( _target, e.mesh, effect, _state, ds );
 			++num;
 		}
 		return num;

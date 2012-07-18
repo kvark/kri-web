@@ -33,8 +33,8 @@ class Armature extends Node implements draw.IModifier	{
 
 	Armature( final String str ): super(str), bones = new List<Bone>();
 	
-	void initialize( final load.Loader loader, final bool doNow, final bool useDualQuat ){
-		final String path = useDualQuat ? "/mod/arm_dualquat.glslv" : "/mod/arm.glslv";
+	void loadShaders( final load.Loader loader, final bool doNow, final bool useDualQuat ){
+		final String path = useDualQuat ? "mod/arm_dualquat.glslv" : "mod/arm.glslv";
 		if (doNow)
 			_code = loader.getNowText(path);
 		else
@@ -64,7 +64,7 @@ class Armature extends Node implements draw.IModifier	{
     void update()	{
    		final Map<Bone,Space> mapPose = new Map<Bone,Space>();
    		final Map<Bone,Space> mapBind = new Map<Bone,Space>();
-    	final Space invArm = getWorld().inverse();
+    	final Space invArm = getWorldSpace().inverse();
 		for (final Bone b in bones)	{
 			if (b.parent == this)	{
 				final Space inv = b.bindPose.inverse();
@@ -77,7 +77,7 @@ class Armature extends Node implements draw.IModifier	{
 				final Space parBind = mapBind[b.parent];
 				assert (parPose!=null && parBind!=null);
 				final Space curPose = mapPose[b] = parPose * b.space;
-				//final Space curPose = mapPose[b] = invArm * b.getWorld();
+				//final Space curPose = mapPose[b] = invArm * b.getWorldSpace();
 				final Space curBind = mapBind[b] = b.bindPose.inverse() * parBind;
 				//final Bone bpar = p;
 				//final Space curBind = mapBind[b] = bp.transform b.bindPose.inverse() * parBind;
