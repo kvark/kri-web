@@ -78,6 +78,17 @@ interface IDataSource  {
 	void fillData(final Map<String,Object> data);
 }
 
+class DataHolder implements IDataSource	{
+	final Map<String,Object> data;
+
+	DataHolder(): data = new Map<String,Object>();
+
+	void fillData( final Map<String,Object> block )	{
+		for (String key in data.getKeys())
+			block[key] = data[key];
+	}
+}
+
 class SourceAdapter implements IDataSource	{
 	final Iterable<IDataSource> sourceList;
 	

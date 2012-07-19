@@ -25,36 +25,19 @@ class ModDummy implements IModifier	{
 }
 
 
-class EntityBase implements shade.IDataSource	{
+class EntityBase extends shade.DataHolder	{
 	me.Mesh mesh		= null;
 	shade.Effect effect	= null;
 	rast.State state	= null;
-	final Map<String,Object> data;
-	
-	EntityBase():
-		data = new Map<String,Object>();
-
-	void fillData( final Map<String,Object> block ){
-		for (String key in data.getKeys())
-			block[key] = data[key];
-	}
 }
 
 
-class Material implements shade.IDataSource	{
+class Material extends shade.DataHolder	{
 	final String name;
-	final Map<String,Object> data;
-	final List<String> metas;
+	final List<String> metas = [];
 	String codeVertex='', codeFragment='';
 	
-	Material( this.name ):
-		data = new Map<String,Object>(),
-		metas = new List<String>();
-	
-	void fillData( final Map<String,Object> block ){
-		for (String key in data.getKeys())
-			block[key] = data[key];
-	}
+	Material( this.name );
 }
 
 
